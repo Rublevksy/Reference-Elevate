@@ -32,6 +32,7 @@ export function Process() {
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
             as="h2"
+            id="proces-title"
             className="mt-4 font-display text-[clamp(1.8rem,4.2vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />

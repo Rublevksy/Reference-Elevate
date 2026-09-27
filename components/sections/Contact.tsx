@@ -143,6 +143,7 @@ export function Contact({ preselectIndex }: { preselectIndex?: number }) {
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
             as="h2"
+            id="kontakt-title"
             className="mt-4 font-display text-[clamp(1.7rem,4vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />

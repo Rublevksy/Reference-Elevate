@@ -2,7 +2,7 @@
   "nav": {
     "services": "Služby",
     "process": "Proces",
-    "references": "Reference",
+    "references": "Práce",
     "pricing": "Ceník",
     "contact": "Kontakt",
     "cta": "Nezávazná konzultace",
@@ -16,7 +16,7 @@
     "eyebrow": "Digitální studio z Prahy",
     "title": "Digitální řešení, která posouvají",
     "titleAccent": "vaše podnikání.",
-    "subtitle": "Tvoříme moderní weby, e-shopy a aplikace, které spojují design, výkon a výsledky.",
+    "subtitle": "Weby, e-shopy a aplikace, které fungují.",
     "tags": [
       "Design",
       "Výkon",
@@ -29,38 +29,11 @@
     "mascot": "Ahoj! Jsem tvůj průvodce. Pojď, ukážu ti, co umíme.",
     "laptopAlt": "Notebook s logem ELEVATE na kamenném podstavci"
   },
-  "problem": {
-    "eyebrow": "Známý začátek",
-    "title": "Nevíte, kde",
-    "titleAccent": "začít?",
-    "lead": "Máte skvělý nápad nebo firmu, ale online vás nikdo nenajde? Přesně tohle řešíme každý den.",
-    "cta": "Ukažte mi řešení",
-    "before": "Kavárna, blok a čtyři otazníky",
-    "after": "Plán, který dává smysl",
-    "pairs": [
-      {
-        "q": "Web?",
-        "a": "Moderní web"
-      },
-      {
-        "q": "Marketing?",
-        "a": "SEO"
-      },
-      {
-        "q": "Klienti?",
-        "a": "Konverze"
-      },
-      {
-        "q": "Branding?",
-        "a": "Design"
-      }
-    ]
-  },
   "services": {
     "eyebrow": "Služby",
     "title": "Kompletní řešení pro",
     "titleAccent": "váš růst",
-    "subtitle": "Posouvejte se s námi na další úroveň.",
+    "subtitle": "Vyberte si kartu.",
     "learnMore": "Zjistit více",
     "pickCard": "Vyberte kartu",
     "included": "Co je",
@@ -79,7 +52,7 @@
         "lead": "Tvoříme weby, které přináší výsledky. Design, výkon a strategie v jednom.",
         "cta": "Nezávazná konzultace",
         "ctaSecondary": "Detail služby",
-        "mascotLine": "Web je vaše vizitka 24/7. Uděláme ho tak, aby prodával.",
+        "mascotLine": "Web, který prodává.",
         "features": [
           {
             "title": "Moderní",
@@ -150,7 +123,7 @@
         "lead": "Zlepšíme vaši viditelnost ve vyhledávání a přivedeme relevantní návštěvníky.",
         "cta": "Růst začíná dnes",
         "ctaSecondary": "Detail služby",
-        "mascotLine": "Co nejde najít, neexistuje. Dostaneme vás nahoru.",
+        "mascotLine": "Dostaneme vás nahoru.",
         "features": [
           {
             "title": "Vyšší",
@@ -217,7 +190,7 @@
         "lead": "Vytváříme výkonné e-shopy zaměřené na konverze a růst.",
         "cta": "E-shop na míru",
         "ctaSecondary": "Detail služby",
-        "mascotLine": "Obchod, který prodává i když spíte.",
+        "mascotLine": "Obchod, co nespí.",
         "features": [
           {
             "title": "Vyšší",
@@ -284,7 +257,7 @@
         "lead": "Tvoříme unikátní design, který buduje značku a důvěru.",
         "cta": "Web, který pracuje za vás",
         "ctaSecondary": "Návrh designu",
-        "mascotLine": "První dojem máte jen jeden. Postaráme se, aby zaujal.",
+        "mascotLine": "První dojem je jen jeden.",
         "features": [
           {
             "title": "Unikátní",
@@ -344,14 +317,14 @@
         "tab": "Aplikace",
         "card": "Aplikace",
         "headline": [
-          "Vyvíjíme ",
-          "aplikace,",
-          " které lidé skutečně používají"
+          "",
+          "Aplikace,",
+          " které lidé používají"
         ],
         "lead": "Vytváříme moderní aplikace pro iOS a Android, které zjednodušují a zvyšují váš byznys.",
         "cta": "Aplikace, které rostou",
         "ctaSecondary": "Vývoj aplikace",
-        "mascotLine": "Aplikace, kterou lidé nebudou chtít smazat.",
+        "mascotLine": "Appka, co lidé nesmažou.",
         "features": [
           {
             "title": "Vývoj aplikací",
@@ -364,10 +337,6 @@
           {
             "title": "Optimalizace pro",
             "sub": "Google Play"
-          },
-          {
-            "title": "Rychlé, stabilní",
-            "sub": "a uživatelsky přívětivé"
           }
         ],
         "includes": [
@@ -411,7 +380,8 @@
           "description": "Vyvíjíme moderní aplikace pro iOS a Android — od MVP po publikaci ve storech. Rychlé, stabilní a uživatelsky přívětivé."
         }
       }
-    }
+    },
+    "faqLabel": "Časté otázky"
   },
   "mockups": {
     "illustrative": "Ilustrativní ukázka",
@@ -512,11 +482,11 @@
     "eyebrow": "Proč animace",
     "title": "Weby, které",
     "titleAccent": "žijí.",
-    "lead": "Statický web lidé přelétnou. Animovaný web si zapamatují. Každý náš web má pohyb, který vede oko, vypráví příběh a vede k akci.",
+    "lead": "Statický web se zapomíná. Animovaný ne.",
     "static": "Statický",
     "animated": "Animovaný",
     "toggleLabel": "Přepnout mezi statickou a animovanou ukázkou",
-    "hint": "Skrolujte — stránka uvnitř notebooku se hýbe s vámi.",
+    "hint": "Skrolujte — web se hýbe s vámi.",
     "args": [
       {
         "title": "Delší čas na webu",
@@ -531,44 +501,48 @@
         "text": "Tlačítko, které reaguje, vypadá jako pozvánka — ne jako obrázek."
       }
     ],
-    "footnote": "A přitom rychlé — optimalizujeme každou animaci.",
+    "footnote": "Rychlé i s animacemi.",
     "mascotBored": "Statický web. Nic se neděje. Nuda.",
-    "mascotHappy": "Tohle je ono! Vidíš ten rozdíl?"
+    "mascotHappy": "Tohle je ono! Vidíš ten rozdíl?",
+    "pills": [
+      "Zapamatují si vás",
+      "Déle na webu",
+      "Víc kliknutí"
+    ]
   },
   "process": {
     "eyebrow": "Proces",
     "title": "Jak to u nás",
     "titleAccent": "funguje",
-    "lead": "Pět kroků od prvního hovoru k webu, který vydělává. Žádné překvapení uprostřed projektu.",
+    "lead": "Pět kroků, žádné překvapení.",
     "steps": [
       {
         "title": "Konzultace",
-        "text": "Probereme vaše cíle, zdarma a nezávazně."
+        "text": "Probereme cíle zdarma."
       },
       {
         "title": "Návrh",
-        "text": "Připravíme design a strukturu webu."
+        "text": "Design a struktura webu."
       },
       {
         "title": "Vývoj & animace",
-        "text": "Oživíme design do rychlého, animovaného webu."
+        "text": "Rychlý, animovaný web."
       },
       {
         "title": "Spuštění",
-        "text": "Web spustíme, nastavíme SEO a analytiku."
+        "text": "SEO a analytika od startu."
       },
       {
         "title": "Podpora & růst",
-        "text": "Staráme se, aby web dál vydělával."
+        "text": "Staráme se dál."
       }
     ]
   },
   "cases": {
-    "eyebrow": "Reference",
-    "title": "Weby, které jsme postavili",
+    "eyebrow": "",
+    "title": "Weby",
     "titleAccent": "od nuly",
-    "lead": "Tři klienti, kteří před námi web neměli. Návrh, vývoj i spuštění jsou naše.",
-    "note": "Klient neměl web — navrhli a vytvořili jsme ho od nuly.",
+    "lead": "",
     "tags": [
       "Web od nuly",
       "Návrh",
@@ -579,18 +553,15 @@
     "items": {
       "euromotors": {
         "name": "EURO-MOTORS",
-        "kind": "Autoservis v Praze 10",
-        "text": "Opravy a údržba vozů všech značek."
+        "kind": "Autoservis, Praha 10"
       },
       "inhome": {
         "name": "InHome Praha",
-        "kind": "Úklidová firma",
-        "text": "Úklidové služby po celé ČR."
+        "kind": "Úklidová firma, celá ČR"
       },
       "biodent": {
         "name": "BioDent",
-        "kind": "Stomatologická klinika",
-        "text": "Zubní péče v Praze 2."
+        "kind": "Stomatologická klinika, Praha 2"
       }
     }
   },
@@ -598,7 +569,7 @@
     "eyebrow": "Ceník",
     "title": "Investice, která",
     "titleAccent": "se vrátí",
-    "lead": "Transparentní ceny. Finální nabídku připravíme po nezávazné konzultaci.",
+    "lead": "Transparentní ceny, žádné skryté poplatky.",
     "from": "od",
     "badge": "Nejčastější volba",
     "cta": "Chci tenhle balíček",
@@ -656,40 +627,26 @@
         "Aplikace",
         "Dlouhodobé SEO"
       ]
-    }
-  },
-  "faq": {
-    "eyebrow": "FAQ",
-    "title": "Časté",
-    "titleAccent": "dotazy",
-    "lead": "Nenašli jste odpověď? Napište nám — ozveme se do 24 hodin.",
-    "items": [
+    },
+    "faq": [
       {
-        "q": "Kolik stojí web?",
-        "a": "Cena vždy vychází z rozsahu — jiná je jednostránková prezentace, jiná e-shop s napojením na sklad. Po nezávazné konzultaci dostanete pevnou nabídku s rozpadem na položky, takže víte, za co platíte."
-      },
-      {
-        "q": "Jak dlouho trvá realizace?",
-        "a": "Menší prezentační web zvládneme obvykle za 4–6 týdnů, rozsáhlejší projekty a e-shopy za 8–12 týdnů. Termín potvrdíme po odsouhlasení zadání."
+        "q": "Kolik to trvá?",
+        "a": "4–8 týdnů podle rozsahu."
       },
       {
         "q": "Zpomalí animace web?",
-        "a": "Ne, pokud se dělají správně. Animujeme jen vlastnosti, které prohlížeč zvládá bez přepočítávání layoutu, scény načítáme až když jsou potřeba a na slabších zařízeních i při zapnutém „omezit pohyb“ se web sám přepne do klidné verze. Rychlost měříme na každém projektu."
-      },
-      {
-        "q": "Postaráte se i o obsah a SEO?",
-        "a": "Ano. Umíme připravit strukturu i texty, vyřešit technické SEO a nastavit měření. Pokud máte vlastního copywritera, rádi se s ním sladíme."
+        "a": "Ne — měříme rychlost u všeho."
       },
       {
         "q": "Co když už web mám?",
-        "a": "Začneme auditem — někdy stačí redesign několika sekcí, zrychlení a doladění konverzní cesty, jindy se vyplatí postavit web znovu. Vždy doporučíme levnější cestu, pokud dává smysl."
+        "a": "Auditujeme a navrhneme další krok."
       }
     ]
   },
   "contact": {
     "eyebrow": "Kontakt",
-    "title": "Připraveni posunout váš projekt na",
-    "titleAccent": "vyšší úroveň?",
+    "title": "Posuňme projekt",
+    "titleAccent": "na vyšší úroveň?",
     "stepLabel": "Krok",
     "steps": [
       "Co potřebujete?",
@@ -754,7 +711,7 @@
     }
   },
   "footer": {
-    "tagline": "Digitální studio z Prahy. Tvoříme animované weby, e-shopy a aplikace, které posouvají podnikání našich klientů.",
+    "tagline": "Digitální studio z Prahy. Weby, e-shopy, aplikace.",
     "services": "Služby",
     "studio": "Studio",
     "contact": "Kontakt",
@@ -778,16 +735,15 @@
       "Kafe mám, nápady taky. Do toho."
     ],
     "cues": {
-      "hero": "Ahoj! Jsem tvůj průvodce. Pojď, ukážu ti, co umíme.",
-      "problem": "Tohle znám. Sedíš v kavárně a nevíš, kde začít.",
-      "sluzby": "Vyber si kartu — ukážu ti, co za ní je.",
-      "detaily": "Každá karta je jedna služba. Skroluj dál.",
-      "proc-animace": "Přepni ten vypínač. Uvidíš ten rozdíl sám.",
-      "proces": "Pět kroků. Projdu je s tebou.",
-      "reference": "Tohle jsou weby, které jsme postavili od nuly.",
-      "cenik": "Ceny na rovinu. Žádné hvězdičky.",
-      "faq": "Ptáš se na cenu? Klikni na první otázku.",
-      "kontakt": "Tři kroky a máme se o čem bavit."
+      "hero": "Ahoj! Ukážu ti, co umíme.",
+      "macbook": "Pojď dovnitř.",
+      "sluzby": "Vyber si kartu.",
+      "detaily": "Skroluj dál.",
+      "proc-animace": "Zkus ten přepínač.",
+      "proces": "Projdu to s tebou.",
+      "reference": "Weby od nuly.",
+      "cenik": "Ceny na rovinu.",
+      "kontakt": "Pojďme na to."
     }
   },
   "meta": {

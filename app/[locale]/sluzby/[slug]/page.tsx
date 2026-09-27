@@ -78,7 +78,7 @@ export default async function ServicePage({ params }: Params) {
 
       <ServiceShowcase slug={slug} />
 
-      <Faq items={faq} title={t('included')} accent={tItem('tab')} id="faq-sluzba" />
+      <Faq items={faq} title={t('faqLabel')} accent={tItem('tab')} id="faq-sluzba" />
 
       <div className="shell">
         <Link href="/#sluzby" className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink">

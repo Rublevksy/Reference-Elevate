@@ -2,54 +2,101 @@
 
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useRef, useState, type ComponentType } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
+import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/FeatureIcon';
 import { Mascot } from '@/components/mascot/Mascot';
-import { AppMockup, DesignMockup, SeoDashboard, ShopMockup, WebMockup } from '@/components/mockups';
-import { services, type MockupKind } from '@/content/services';
+import { services } from '@/content/services';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-
-const MOCKUPS: Record<MockupKind, ComponentType<{ active: boolean }>> = {
-  web: WebMockup,
-  seo: SeoDashboard,
-  shop: ShopMockup,
-  design: DesignMockup,
-  app: AppMockup,
-};
+import { ServiceScene } from './ServiceScene';
 
 const COUNT = services.length;
 
-const item = {
-  hidden: { opacity: 0, y: 22 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } },
-};
+/**
+ * Z celého scroll-rozpočtu jednoho panelu (1/COUNT stránky) je většina
+ * jen klidné „čtecí" okno (karta stojí, uvnitř doběhne stagger reveal) —
+ * samotný přechod do dalšího panelu se odehraje až v posledním úseku.
+ * Bez týhle rezervy by karta začala mizet hned od první píxelu scrollu
+ * a nešlo by ji vůbec přečíst.
+ */
+const DWELL = 0.62;
+const transitionT = (local: number) => (local <= DWELL ? 0 : (local - DWELL) / (1 - DWELL));
 
-function CardBody({ index, active }: { index: number; active: boolean }) {
+/** Přechod mezi panelem `i` a `i+1` — každá dvojice má jiný pohyb. */
+const TRANSITIONS = ['flip', 'stack', 'diagonal', 'fold'] as const;
+type Transition = (typeof TRANSITIONS)[number];
+
+type Role = 'current' | 'next' | 'hidden';
+
+/**
+ * Framer Motion nikdy sám neresetuje transform vlastnost, kterou `animate`
+ * mezi rendery vynechá — prostě zůstane na poslední hodnotě, kterou
+ * dostala. Když by tedy jeden typ přechodu vracel `rotateY`, ale druhý
+ * ho vynechal, karta by po přeskoku (rychlý scroll, návrat prohlížeče
+ * na uloženou pozici) mohla „uvíznout" pootočená. Proto obě funkce vždy
+ * vrací STEJNOU úplnou sadu klíčů — neutrální hodnotu tam, kde ji daný
+ * přechod nepoužívá.
+ */
+const IDENTITY = { x: 0, y: 0, rotate: 0, rotateY: 0, scale: 1, scaleX: 1, opacity: 1, clipPath: 'inset(0% 0% 0% 0%)' };
+
+function currentStyle(type: Transition, local: number) {
+  switch (type) {
+    case 'flip':
+      return { ...IDENTITY, rotateY: -local * 180, opacity: local < 0.5 ? 1 : 0 };
+    case 'stack':
+      return { ...IDENTITY, y: -local * 90, scale: 1 - local * 0.12, opacity: 1 - local * 0.75 };
+    case 'diagonal':
+      return {
+        ...IDENTITY,
+        clipPath: `polygon(0% 0%, 100% 0%, ${100 - local * 150}% 100%, ${-local * 50}% 100%)`,
+      };
+    case 'fold':
+      return { ...IDENTITY, scaleX: 1 - Math.min(1, local * 2), opacity: local < 0.5 ? 1 : 0 };
+  }
+}
+
+function nextStyle(type: Transition, local: number) {
+  switch (type) {
+    case 'flip':
+      return { ...IDENTITY, rotateY: (1 - local) * 180, opacity: local < 0.5 ? 0 : 1 };
+    case 'stack':
+      return { ...IDENTITY, y: (1 - local) * 70, scale: 0.96 + local * 0.04, opacity: 0.15 + local * 0.85 };
+    case 'diagonal':
+      return { ...IDENTITY, opacity: 1 };
+    case 'fold':
+      return { ...IDENTITY, scaleX: Math.max(0, (local - 0.5) * 2), opacity: local < 0.5 ? 0 : 1 };
+  }
+}
+
+function CardBody({ index, role }: { index: number; role: Role }) {
   const service = services[index];
   const t = useTranslations('services');
   const tItems = useTranslations(`services.items.${service.slug}`);
-  const Mockup = MOCKUPS[service.mockup];
   const headline = tItems.raw('headline') as string[];
   const features = tItems.raw('features') as { title: string; sub: string }[];
+  const active = role !== 'hidden';
+
+  const item = {
+    hidden: { opacity: 0, y: 22 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } },
+  };
 
   return (
     <motion.div
-      className="grid h-full grid-rows-[auto_1fr] gap-6 p-6 md:grid-cols-[1.02fr_0.98fr] md:grid-rows-1 md:items-center md:gap-10 md:p-10 lg:p-12"
+      className="grid h-full grid-rows-[auto_1fr] gap-5 p-6 md:grid-cols-[1fr_1.1fr] md:grid-rows-1 md:items-center md:gap-8 md:p-10 lg:p-12"
       initial="hidden"
-      animate={active ? 'show' : 'hidden'}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.12 } } }}
+      animate={role === 'current' ? 'show' : 'hidden'}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
     >
-      <div className="min-w-0">
-        <motion.p variants={item} className="eyebrow flex items-center gap-3">
+      <div className="order-2 min-w-0 md:order-1">
+        <motion.p variants={item} className="flex items-center gap-3 text-xs text-muted">
           <span className="font-display text-[var(--blue-bright)]">{service.num}</span>
-          <span className="inline-block h-px w-8 bg-[var(--line)]" />
-          {tItems('tab')}
         </motion.p>
 
-        {/* nadpis po slovech zpod masky */}
-        <h3 className="mt-4 font-display text-[clamp(1.4rem,2.9vw,2.4rem)] font-bold uppercase leading-[1.08]">
+        {/* nadpis po slovech zpod masky — přesné znění z reklamní karty */}
+        <h3 className="mt-2 font-display text-[clamp(1.5rem,3.1vw,2.5rem)] font-bold uppercase leading-[1.06]">
           {[headline[0], headline[1], headline[2]].map((part, partIndex) =>
             part
               ? part
@@ -72,27 +119,19 @@ function CardBody({ index, active }: { index: number; active: boolean }) {
           )}
         </h3>
 
-        <motion.p variants={item} className="mt-4 max-w-md text-sm text-muted md:text-base">
-          {tItems('lead')}
-        </motion.p>
-
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-6 grid grid-cols-3 gap-3">
           {service.featureIcons.map((icon, i) => (
-            <motion.li key={icon + i} variants={item} className="flex items-center gap-3">
+            <motion.li key={icon + i} variants={item} className="flex flex-col items-start gap-2">
               <motion.span
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.45)] bg-[rgba(10,20,50,0.6)] text-[var(--blue-bright)]"
                 variants={{
                   hidden: { scale: 0.6, opacity: 0 },
-                  show: {
-                    scale: 1,
-                    opacity: 1,
-                    transition: { type: 'spring', stiffness: 420, damping: 18 },
-                  },
+                  show: { scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 420, damping: 18 } },
                 }}
               >
                 <Icon name={icon} className="h-5 w-5" />
               </motion.span>
-              <span className="text-sm leading-tight">
+              <span className="text-xs leading-tight">
                 <span className="block font-semibold text-ink">{features[i]?.title}</span>
                 <span className="text-muted">{features[i]?.sub}</span>
               </span>
@@ -100,21 +139,24 @@ function CardBody({ index, active }: { index: number; active: boolean }) {
           ))}
         </ul>
 
-        <motion.div variants={item} className="mt-7 flex flex-wrap gap-3">
+        <motion.div variants={item} className="mt-7 flex items-center gap-4">
           <Button href="#kontakt" className="!px-5 !py-3 !text-[11px]">
             {tItems('cta')}
           </Button>
           <Link
             href={`/sluzby/${service.slug}`}
-            className="inline-flex items-center rounded-btn border border-[var(--line)] px-5 py-3 font-display text-[11px] uppercase tracking-[0.12em] text-muted transition-colors hover:border-[rgba(80,120,255,0.45)] hover:text-ink"
+            aria-label={t('learnMore')}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--line)] text-ink transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-[var(--blue-bright)]"
           >
-            {t('learnMore')}
+            <ArrowUpRight className="h-4 w-4" aria-hidden />
           </Link>
         </motion.div>
       </div>
 
-      <motion.div variants={item} className="relative min-w-0">
-        <Mockup active={active} />
+      <motion.div variants={item} className="relative order-1 min-w-0 md:order-2">
+        <div className="aspect-[4/3] w-full">
+          <ServiceScene slug={service.slug} meta={service} active={active} />
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -152,20 +194,20 @@ export function ServiceDeck() {
       style={{ height: reduced ? 'auto' : `${COUNT * 105}vh` }}
       aria-label="Detaily služeb"
     >
-      {/* ---- MOBIL / reduced-motion: prostý stack ---- */}
-      <div className={reduced ? 'shell space-y-8 py-16' : 'shell space-y-8 py-16 md:hidden'}>
+      {/* ---- MOBIL / reduced-motion: sticky stack, scéna nahoře, text dole ---- */}
+      <div className={reduced ? 'shell space-y-6 py-16' : 'shell space-y-6 py-16 md:hidden'}>
         {services.map((service, i) => (
           <div
             key={service.slug}
             className="glass overflow-hidden rounded-card"
             style={{ position: 'sticky', top: `${88 + i * 10}px`, zIndex: i + 1 }}
           >
-            <CardBody index={i} active />
+            <CardBody index={i} role="current" />
           </div>
         ))}
       </div>
 
-      {/* ---- DESKTOP: kolota karet ---- */}
+      {/* ---- DESKTOP: kolota s odlišným přechodem pro každou dvojici ---- */}
       {!reduced ? (
         <div className="sticky top-0 hidden h-dvh items-center overflow-hidden md:flex">
           {/* svislý průběh 01–05 */}
@@ -205,62 +247,38 @@ export function ServiceDeck() {
             </div>
           </div>
 
-          {/* vnitřní obal drží karty uvnitř odsazení, aby je nepřekrývala osa 01–05 */}
           <div className="relative mx-auto h-[min(76vh,620px)] w-full max-w-[1180px] px-6 lg:pl-28 lg:pr-8">
-            <div className="relative h-full w-full">
-            {services.map((service, i) => {
-              const depth = i - index;
-              const isActive = depth === 0;
-              const isPast = depth < 0;
+            <div className="relative h-full w-full" style={{ perspective: 1600 }}>
+              {services.map((service, i) => {
+                const role: Role = i === index ? 'current' : i === index + 1 ? 'next' : 'hidden';
+                if (role === 'hidden') return null;
 
-              // aktivní karta odjíždí dozadu podle `local`, další se narovnává
-              const exit = isActive ? local : 0;
-              const stackDepth = isPast ? -1 : Math.min(depth, 3);
+                const type = TRANSITIONS[Math.min(index, TRANSITIONS.length - 1)];
+                const t = transitionT(local);
+                const style = role === 'current' ? currentStyle(type, t) : nextStyle(type, t);
 
-              return (
-                <motion.article
-                  key={service.slug}
-                  className="glass absolute inset-0 overflow-hidden rounded-[28px] border border-[rgba(80,120,255,0.28)]"
-                  initial={false}
-                  animate={{
-                    y: isPast ? -80 : stackDepth * 18 - exit * 70,
-                    scale: isPast ? 0.88 : 1 - stackDepth * 0.045 - exit * 0.06,
-                    opacity: isPast ? 0 : depth > 2 ? 0 : 1 - exit * 0.35,
-                    rotateX: isActive ? exit * 6 : 0,
-                  }}
-                  transition={{ duration: 0.25, ease: 'linear' }}
-                  style={{
-                    zIndex: COUNT - Math.abs(depth),
-                    pointerEvents: isActive ? 'auto' : 'none',
-                    transformPerspective: 1400,
-                  }}
-                >
-                  {/* rubová ornamentální lišta — vizuální pouto se stolem karet */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 rounded-[28px]"
+                return (
+                  <motion.article
+                    key={service.slug}
+                    className="glass absolute inset-0 overflow-hidden rounded-[28px] border border-[rgba(80,120,255,0.28)]"
+                    initial={false}
+                    animate={style}
+                    transition={{ duration: 0.25, ease: 'linear' }}
                     style={{
-                      background:
-                        'radial-gradient(120% 90% at 85% 0%, rgba(31,91,255,0.16), transparent 55%)',
-                      boxShadow: 'inset 0 0 0 1px rgba(120,160,255,0.08)',
+                      zIndex: role === 'current' ? 2 : 1,
+                      transformStyle: 'preserve-3d',
+                      pointerEvents: role === 'current' && local < 0.4 ? 'auto' : 'none',
                     }}
-                  />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
-                    style={{ background: 'linear-gradient(90deg, transparent, rgba(61,123,255,0.8), transparent)' }}
-                  />
-                  {/* ztmavení karet v hloubce stohu */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 rounded-[28px] bg-[#04060b] transition-opacity duration-200"
-                    style={{ opacity: isActive ? exit * 0.45 : Math.min(0.55, stackDepth * 0.28) }}
-                  />
-                  <CardBody index={i} active={isActive && local < 0.85} />
-                </motion.article>
-              );
-            })}
-
+                  >
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[3px]"
+                      style={{ background: 'linear-gradient(90deg, transparent, rgba(61,123,255,0.8), transparent)' }}
+                    />
+                    <CardBody index={i} role={role} />
+                  </motion.article>
+                );
+              })}
             </div>
 
             {/* maskot stojí vedle karty, nikdy nezasahuje do textu ani tlačítek */}

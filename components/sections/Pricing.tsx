@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Plus, Sparkles } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { SplitHeading } from '@/components/ui/SplitHeading';
@@ -24,6 +25,18 @@ export function Pricing() {
   const [alive, setAlive] = useState(false);
 
   const custom = t.raw('custom') as { name: string; tagline: string; items: string[] };
+  const faqPills = t.raw('faq') as { q: string; a: string }[];
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqPills.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
 
   return (
     <section id="cenik" className="relative overflow-hidden py-24 md:py-32" aria-labelledby="cenik-title">
@@ -39,6 +52,7 @@ export function Pricing() {
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
             as="h2"
+            id="cenik-title"
             className="mt-4 font-display text-[clamp(1.8rem,4.2vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />
@@ -191,8 +205,50 @@ export function Pricing() {
           </div>
         </motion.div>
 
-        <p className="mt-6 text-center text-xs text-muted">{t('vat')}</p>
+        {/* tři krátké „otázka-pilulky" — hlavní námitky rovnou u ceny, bez samostatné FAQ sekce */}
+        <div className="mt-10 flex flex-wrap items-start justify-center gap-2.5">
+          {faqPills.map((item, i) => {
+            const isOpen = openFaq === i;
+            return (
+              <button
+                key={item.q}
+                type="button"
+                onClick={() => setOpenFaq(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors ${
+                  isOpen
+                    ? 'border-[rgba(61,123,255,0.6)] bg-[rgba(31,91,255,0.14)] text-ink'
+                    : 'border-[var(--line)] text-muted hover:border-[rgba(80,120,255,0.4)] hover:text-ink'
+                }`}
+              >
+                {item.q}
+                <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }}>
+                  <Plus className="h-3 w-3" aria-hidden />
+                </motion.span>
+              </button>
+            );
+          })}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {openFaq !== null ? (
+            <motion.p
+              key={openFaq}
+              initial={{ opacity: 0, height: 0, y: -6 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mx-auto mt-4 max-w-md overflow-hidden text-center text-sm text-muted"
+            >
+              {faqPills[openFaq].a}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
+
+        <p className="mt-8 text-center text-xs text-muted">{t('vat')}</p>
       </div>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
     </section>
   );
 }

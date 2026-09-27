@@ -41,7 +41,7 @@ export function Logo({
         width={width}
         priority={priority}
         sizes={`${width * 2}px`}
-        className="h-full w-auto select-none"
+        className="h-full w-full select-none"
       />
 
       {/* záře šipky — samostatná vrstva nad logem, tvar zůstává netknutý */}

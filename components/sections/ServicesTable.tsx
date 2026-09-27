@@ -1,10 +1,8 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { AnimatePresence, motion, useInView } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from '@/i18n/navigation';
 import { Icon } from '@/components/ui/FeatureIcon';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { Mascot } from '@/components/mascot/Mascot';
@@ -12,8 +10,13 @@ import { SpeechBubble } from '@/components/mascot/SpeechBubble';
 import { services } from '@/content/services';
 import type { Pose } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { PlatformScene } from './PlatformScene';
 
 const COUNT = services.length;
+const STAGGER = 0.12;
+const SPRING = { type: 'spring' as const, stiffness: 220, damping: 28, mass: 0.9 };
+/** podkmitávající pružina pro let karet dovnitř — vyšší tuhost, nižší tlumení */
+const FLIGHT_SPRING = { type: 'spring' as const, stiffness: 170, damping: 15, mass: 0.9 };
 
 /**
  * Rozložení vějíře je čistě 2D (translate + rotate + scale).
@@ -29,10 +32,22 @@ function layout(index: number, active: number) {
     x: offset * 158,
     y: isActive ? -118 : Math.abs(offset) * 14,
     rotate: isActive ? 0 : offset * 7,
-    // „ležení na stole" naznačíme zploštěním, ne rotací v 3D
     scaleY: isActive ? 1 : 0.82,
     scale: isActive ? 1.06 : 1,
+    opacity: 1,
   };
+}
+
+/** Odkud karta „přilétá" při vstupu do sekce — pro každý index jiná trajektorie. */
+function offscreen(index: number) {
+  const variants = [
+    { x: 0, y: -640, rotate: -130, scale: 0.4, opacity: 0 }, // shora
+    { x: -620, y: 40, rotate: -220, scale: 0.35, opacity: 0 }, // zleva
+    { x: 0, y: 260, rotate: 200, scale: 0.25, opacity: 0 }, // zezadu/zdola
+    { x: 620, y: 40, rotate: 220, scale: 0.35, opacity: 0 }, // zprava
+    { x: 360, y: -520, rotate: -260, scale: 0.4, opacity: 0 }, // diagonála zprava shora
+  ];
+  return variants[index % variants.length];
 }
 
 export function ServicesTable() {
@@ -42,12 +57,20 @@ export function ServicesTable() {
   const [active, setActive] = useState(0);
   const [pose, setPose] = useState<Pose>('point');
   const [visible, setVisible] = useState(false);
-  // will-change držíme jen po dobu přeskupení karet
   const [animating, setAnimating] = useState(false);
   const stage = useRef<HTMLDivElement>(null);
   const walkTimer = useRef<number | null>(null);
 
+  // vstupní choreografie: karty přiletí → kruh zabliká → nadpis/taby → maskot přijde
+  const stageInViewRef = useRef<HTMLDivElement>(null);
+  const stageInView = useInView(stageInViewRef, { once: true, margin: '-15% 0px' });
+  const [entered, setEntered] = useState(reduced);
+  const [flash, setFlash] = useState(reduced);
+  const [showHeading, setShowHeading] = useState(reduced);
+  const [mascotIn, setMascotIn] = useState(reduced);
+
   const slug = services[active].slug;
+  const bubbleSide = active <= (COUNT - 1) / 2 ? 'left' : 'right';
 
   const choose = useCallback(
     (index: number) => {
@@ -68,6 +91,26 @@ export function ServicesTable() {
     [reduced],
   );
 
+  // POZOR: `entered` se schválně nesmí objevit v dependency poli —
+  // jakmile by se effect spustil znovu kvůli změně `entered`, React by
+  // ho nejdřív ÚKLIDIL (zrušil právě nastavené timery) a hned zase
+  // vrátil kvůli guard podmínce, takže by se flash/nadpis/maskot nikdy
+  // nespustily. Opakované spuštění hlídá ref, ne stav.
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (reduced || !stageInView || startedRef.current) return;
+    startedRef.current = true;
+    setEntered(true);
+    const t1 = window.setTimeout(() => setFlash(true), STAGGER * (COUNT - 1) * 1000 + 850);
+    const t2 = window.setTimeout(() => setShowHeading(true), STAGGER * (COUNT - 1) * 1000 + 950);
+    const t3 = window.setTimeout(() => setMascotIn(true), STAGGER * (COUNT - 1) * 1000 + 1250);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
+  }, [reduced, stageInView]);
+
   // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce
   useEffect(() => {
     const node = stage.current;
@@ -84,22 +127,31 @@ export function ServicesTable() {
     if (walkTimer.current) window.clearTimeout(walkTimer.current);
   }, []);
 
-  const spring = { type: 'spring' as const, stiffness: 220, damping: 28, mass: 0.9 };
-
   return (
     <section id="sluzby" className="relative overflow-hidden py-24 md:py-28" aria-labelledby="sluzby-title">
-      <div className="shell text-center">
-        <p className="eyebrow">{t('eyebrow')}</p>
-        <SplitHeading
-          as="h2"
-          className="mx-auto mt-4 max-w-3xl font-display text-[clamp(1.8rem,4.2vw,3.2rem)] font-bold uppercase leading-[1.08]"
-          parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
-        />
-        <p className="mx-auto mt-5 max-w-md text-muted">{t('subtitle')}</p>
+      <div ref={stageInViewRef} className="shell text-center">
+        <motion.div
+          initial={reduced ? undefined : { opacity: 0, y: 16 }}
+          animate={showHeading ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <SplitHeading
+            as="h2"
+            id="sluzby-title"
+            className="mx-auto max-w-3xl font-display text-[clamp(1.8rem,4.2vw,3.2rem)] font-bold uppercase leading-[1.08]"
+            parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
+          />
+          <p className="mx-auto mt-4 max-w-md text-muted">{t('subtitle')}</p>
+        </motion.div>
       </div>
 
       {/* kulaté taby */}
-      <div className="shell mt-10">
+      <motion.div
+        className="shell mt-10"
+        initial={reduced ? undefined : { opacity: 0, y: 12 }}
+        animate={showHeading ? { opacity: 1, y: 0 } : undefined}
+        transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+      >
         <ul className="mx-auto flex max-w-3xl flex-wrap items-start justify-center gap-5 md:gap-9">
           {services.map((item, index) => (
             <li key={item.slug}>
@@ -129,81 +181,20 @@ export function ServicesTable() {
             </li>
           ))}
         </ul>
-      </div>
+      </motion.div>
 
       {/* ===== STŮL (desktop) ===== */}
       <div ref={stage} className="relative mt-2 hidden h-[520px] md:block">
-        {/* celá atmosféra stolu je jedno SVG s jednou rotací, ne desítky uzlů */}
-        <svg
-          viewBox="0 0 900 520"
-          className="pointer-events-none absolute inset-0 mx-auto h-full w-full max-w-5xl"
-          aria-hidden
-        >
-          <defs>
-            <radialGradient id="table-glow" cx="50%" cy="72%" r="50%">
-              <stop offset="0%" stopColor="rgba(31,91,255,0.38)" />
-              <stop offset="100%" stopColor="rgba(31,91,255,0)" />
-            </radialGradient>
-            <linearGradient id="column" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="rgba(61,123,255,0)" />
-              <stop offset="55%" stopColor="rgba(61,123,255,0.55)" />
-              <stop offset="100%" stopColor="rgba(190,214,255,0.95)" />
-            </linearGradient>
-          </defs>
-
-          <ellipse cx="450" cy="380" rx="430" ry="130" fill="url(#table-glow)" />
-
-          {/* světelné sloupy */}
-          <g opacity="0.85">
-            {[90, 190, 300, 420, 540, 660, 770].map((x, i) => (
-              <rect
-                key={x}
-                x={x}
-                y={120 + (i % 3) * 34}
-                width="2"
-                height={190 - (i % 3) * 30}
-                rx="1"
-                fill="url(#column)"
-                className={visible && !reduced ? 'column-breathe' : ''}
-                style={{ animationDelay: `${i * 0.45}s` }}
-              />
-            ))}
-          </g>
-
-          {/* kruhový rastr platformy — jediná rotující skupina */}
-          <g
-            transform="translate(450 380)"
-            className={visible && !reduced ? 'platform-spin' : ''}
-          >
-            <g transform="scale(1 0.3)">
-              <circle r="400" fill="none" stroke="rgba(120,160,255,0.28)" strokeWidth="1.4" />
-              <circle r="340" fill="none" stroke="rgba(120,160,255,0.16)" strokeWidth="1" strokeDasharray="4 14" />
-              <circle r="240" fill="none" stroke="rgba(120,160,255,0.2)" strokeWidth="1" />
-              <circle r="150" fill="none" stroke="rgba(120,160,255,0.24)" strokeWidth="1.2" strokeDasharray="22 16" />
-              {Array.from({ length: 48 }).map((_, i) => {
-                const a = (i / 48) * Math.PI * 2;
-                const inner = i % 4 === 0 ? 352 : 372;
-                return (
-                  <line
-                    key={i}
-                    x1={Math.cos(a) * inner}
-                    y1={Math.sin(a) * inner}
-                    x2={Math.cos(a) * 400}
-                    y2={Math.sin(a) * 400}
-                    stroke="rgba(120,160,255,0.3)"
-                    strokeWidth="1.2"
-                  />
-                );
-              })}
-            </g>
-          </g>
-        </svg>
+        <div className="pointer-events-none absolute inset-0 mx-auto h-full w-full max-w-5xl">
+          <PlatformScene active={visible && !reduced} flash={flash} />
+        </div>
 
         {/* karty */}
         <div className="absolute inset-x-0 bottom-[86px] mx-auto h-[250px] max-w-5xl">
           {services.map((item, index) => {
             const isActive = index === active;
-            const l = layout(index, active);
+            const target = entered ? layout(index, active) : offscreen(index);
+            const start = offscreen(index);
             return (
               <motion.button
                 key={item.slug}
@@ -214,17 +205,38 @@ export function ServicesTable() {
                 style={{
                   perspective: 900,
                   zIndex: isActive ? 40 : 10 + (COUNT - Math.abs(index - active)),
-                  willChange: animating ? 'transform' : 'auto',
+                  willChange: animating || !entered ? 'transform' : 'auto',
                 }}
-                initial={false}
-                animate={l}
-                transition={reduced ? { duration: 0 } : spring}
+                initial={start}
+                animate={target}
+                transition={
+                  reduced
+                    ? { duration: 0 }
+                    : !entered
+                      ? { duration: 0 }
+                      : { ...FLIGHT_SPRING, delay: index * STAGGER }
+                }
               >
+                {/* zbytkový „motion blur" — tlumená kopie na startovní pozici, jen doznívá opacitou */}
+                {entered && !reduced ? (
+                  <motion.span
+                    aria-hidden
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(160deg,#0b1330 0%,#060a18 55%,#0a1430 100%)',
+                      transform: `translate(${start.x}px, ${start.y}px) rotate(${start.rotate}deg) scale(${start.scale})`,
+                    }}
+                    initial={{ opacity: 0.45 }}
+                    animate={{ opacity: 0 }}
+                    transition={{ duration: 0.5, delay: index * STAGGER }}
+                  />
+                ) : null}
+
                 <motion.div
                   className="preserve-3d relative h-full w-full"
                   initial={false}
                   animate={{ rotateY: isActive ? 180 : 0 }}
-                  transition={reduced ? { duration: 0 } : { ...spring, damping: 26 }}
+                  transition={reduced ? { duration: 0 } : { ...SPRING, damping: 26 }}
                 >
                   {/* rub */}
                   <span
@@ -244,12 +256,6 @@ export function ServicesTable() {
                       <Icon name={item.icon} className="h-7 w-7" />
                       <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted">{item.num}</span>
                     </span>
-                    {/* záře: hotový gradient, mění se jen opacity */}
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500"
-                      style={{ boxShadow: '0 0 46px rgba(31,91,255,0.5)' }}
-                    />
                   </span>
 
                   {/* líc */}
@@ -273,12 +279,18 @@ export function ServicesTable() {
           })}
         </div>
 
-        {/* maskot chodí podél stolu — jen translateX */}
+        {/* maskot chodí podél předního okraje stolu — vždy nad kartami */}
         <motion.div
-          className="pointer-events-none absolute bottom-6 left-1/2 z-30 hidden lg:block"
-          initial={false}
-          animate={{ x: -560 + active * 26 }}
-          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 160, damping: 24 }}
+          className="pointer-events-none absolute bottom-6 left-1/2 z-[70] hidden lg:block"
+          initial={reduced ? undefined : { x: -560, opacity: 0 }}
+          animate={
+            mascotIn
+              ? { x: (active - (COUNT - 1) / 2) * 158 + 112, opacity: 1 }
+              : reduced
+                ? { x: (active - (COUNT - 1) / 2) * 158 + 112, opacity: 1 }
+                : undefined
+          }
+          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22 }}
         >
           <div className="relative">
             <Mascot pose={pose} height={290} followCursor={false} />
@@ -288,9 +300,11 @@ export function ServicesTable() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="pointer-events-auto absolute -top-2 left-[78%] w-[224px]"
+                className={`pointer-events-auto absolute -top-2 w-[220px] ${
+                  bubbleSide === 'right' ? 'right-[78%]' : 'left-[78%]'
+                }`}
               >
-                <SpeechBubble text={tItems(`${slug}.mascotLine`)} compact />
+                <SpeechBubble text={tItems(`${slug}.mascotLine`)} compact side={bubbleSide} />
               </motion.div>
             </AnimatePresence>
           </div>
@@ -316,8 +330,17 @@ export function ServicesTable() {
           }}
         >
           {services.map((item, index) => (
-            <li key={item.slug} className="shrink-0 snap-center">
-              <div
+            <motion.li
+              key={item.slug}
+              className="shrink-0 snap-center"
+              initial={reduced ? undefined : { opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-10%' }}
+              transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <button
+                type="button"
+                onClick={() => choose(index)}
                 className={`flex h-[230px] w-[150px] flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-[opacity,transform,border-color] duration-300 ${
                   active === index
                     ? 'scale-100 border-[rgba(61,123,255,0.6)] bg-[rgba(18,30,70,0.95)] opacity-100'
@@ -329,66 +352,10 @@ export function ServicesTable() {
                 <span className="font-display text-sm font-bold uppercase leading-tight text-ink">
                   {tItems(`${item.slug}.card`)}
                 </span>
-              </div>
-            </li>
+              </button>
+            </motion.li>
           ))}
         </ul>
-      </div>
-
-      {/* panel s detailem */}
-      <div className="shell mt-4 md:mt-8">
-        <AnimatePresence mode="wait">
-          <motion.article
-            key={slug}
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: reduced ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="glass mx-auto max-w-4xl rounded-card p-7 md:p-10"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="max-w-xl">
-                <p className="eyebrow">
-                  {services[active].num} — {tItems(`${slug}.tab`)}
-                </p>
-                <h3 className="mt-3 font-display text-2xl font-bold uppercase leading-tight md:text-3xl">
-                  {(tItems.raw(`${slug}.headline`) as string[])[0]}
-                  <span className="text-[var(--blue-bright)]">
-                    {(tItems.raw(`${slug}.headline`) as string[])[1]}
-                  </span>
-                  {(tItems.raw(`${slug}.headline`) as string[])[2]}
-                </h3>
-                <p className="mt-4 text-muted">{tItems(`${slug}.lead`)}</p>
-              </div>
-
-              <Link
-                href={`/sluzby/${slug}`}
-                className="group inline-flex items-center gap-2 rounded-btn border border-[rgba(61,123,255,0.5)] px-5 py-3 font-display text-[11px] uppercase tracking-[0.14em] text-ink transition-shadow hover:shadow-glow"
-              >
-                {t('learnMore')}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
-              </Link>
-            </div>
-
-            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {services[active].featureIcons.map((icon, i) => (
-                <li key={icon + i} className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.4)] bg-[rgba(10,20,50,0.6)] text-[var(--blue-bright)]">
-                    <Icon name={icon} className="h-5 w-5" />
-                  </span>
-                  <span className="text-sm leading-tight">
-                    <span className="block font-semibold text-ink">
-                      {(tItems.raw(`${slug}.features`) as { title: string; sub: string }[])[i]?.title}
-                    </span>
-                    <span className="text-muted">
-                      {(tItems.raw(`${slug}.features`) as { title: string; sub: string }[])[i]?.sub}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </motion.article>
-        </AnimatePresence>
       </div>
     </section>
   );

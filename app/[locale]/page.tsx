@@ -1,13 +1,12 @@
 import { setRequestLocale } from 'next-intl/server';
 import { Hero } from '@/components/sections/Hero';
-import { Problem } from '@/components/sections/Problem';
+import { MacbookIntro } from '@/components/sections/MacbookIntro';
 import { ServicesTable } from '@/components/sections/ServicesTable';
 import { ServiceDeck } from '@/components/sections/ServiceDeck';
 import { WhyAnimatedBlock } from '@/components/sections/WhyAnimated';
 import { Process } from '@/components/sections/Process';
 import { Cases } from '@/components/sections/Cases';
 import { Pricing } from '@/components/sections/Pricing';
-import { HomeFaq } from '@/components/sections/Faq';
 import { Contact } from '@/components/sections/Contact';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
@@ -17,14 +16,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <Hero />
-      <Problem />
+      <MacbookIntro />
       <ServicesTable />
       <ServiceDeck />
       <WhyAnimatedBlock />
       <Process />
       <Cases />
       <Pricing />
-      <HomeFaq />
       <Contact />
     </>
   );

@@ -10,6 +10,8 @@ type Props = {
   as?: ElementType;
   className?: string;
   delay?: number;
+  /** pro aria-labelledby ze sekce, která nadpis obaluje */
+  id?: string;
 };
 
 /**
@@ -17,7 +19,7 @@ type Props = {
  * Slova zůstávají v textovém toku, takže screen reader i SEO
  * čtou souvislou větu.
  */
-export function SplitHeading({ parts, as: Tag = 'h2', className = '', delay = 0 }: Props) {
+export function SplitHeading({ parts, as: Tag = 'h2', className = '', delay = 0, id }: Props) {
   const reduced = useReducedMotion();
   const words = parts.flatMap((part, partIndex) =>
     part.text
@@ -64,5 +66,5 @@ export function SplitHeading({ parts, as: Tag = 'h2', className = '', delay = 0 
     </>
   );
 
-  return createElement(Tag, { className }, content);
+  return createElement(Tag, { className, id }, content);
 }

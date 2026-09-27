@@ -15,8 +15,8 @@
   "hero": {
     "eyebrow": "Digital studio from Prague",
     "title": "Digital solutions that move",
-    "titleAccent": "your business forward.",
-    "subtitle": "We build modern websites, e-shops and apps that combine design, performance and results.",
+    "titleAccent": "your business.",
+    "subtitle": "Websites, e-shops and apps that work.",
     "tags": [
       "Design",
       "Performance",
@@ -29,38 +29,11 @@
     "mascot": "Hi! I'm your guide. Come on, let me show you what we do.",
     "laptopAlt": "Laptop with the ELEVATE logo on a stone pedestal"
   },
-  "problem": {
-    "eyebrow": "A familiar start",
-    "title": "Not sure where to",
-    "titleAccent": "begin?",
-    "lead": "Great idea or a running business, but nobody finds you online? That's exactly what we solve every day.",
-    "cta": "Show me the solution",
-    "before": "A café, a notebook and four question marks",
-    "after": "A plan that makes sense",
-    "pairs": [
-      {
-        "q": "Website?",
-        "a": "Modern website"
-      },
-      {
-        "q": "Marketing?",
-        "a": "SEO"
-      },
-      {
-        "q": "Clients?",
-        "a": "Conversions"
-      },
-      {
-        "q": "Branding?",
-        "a": "Design"
-      }
-    ]
-  },
   "services": {
     "eyebrow": "Services",
     "title": "A complete solution for",
     "titleAccent": "your growth",
-    "subtitle": "Let's take you to the next level.",
+    "subtitle": "Pick a service.",
     "learnMore": "Learn more",
     "pickCard": "Pick a card",
     "included": "What's",
@@ -79,7 +52,7 @@
         "lead": "We build websites that deliver results. Design, performance and strategy in one.",
         "cta": "Free consultation",
         "ctaSecondary": "Service detail",
-        "mascotLine": "Your website is your business card 24/7. We'll make it sell.",
+        "mascotLine": "A site that sells.",
         "features": [
           {
             "title": "Modern",
@@ -150,7 +123,7 @@
         "lead": "We improve your visibility in search and bring in relevant visitors.",
         "cta": "Growth starts today",
         "ctaSecondary": "Service detail",
-        "mascotLine": "What can't be found doesn't exist. Let's get you to the top.",
+        "mascotLine": "Straight to the top.",
         "features": [
           {
             "title": "More",
@@ -217,7 +190,7 @@
         "lead": "We build high-performing online stores focused on conversions and growth.",
         "cta": "Custom e-shop",
         "ctaSecondary": "Service detail",
-        "mascotLine": "A store that sells even while you sleep.",
+        "mascotLine": "A store that never sleeps.",
         "features": [
           {
             "title": "Higher",
@@ -284,7 +257,7 @@
         "lead": "We create unique design that builds your brand and trust.",
         "cta": "A site that works for you",
         "ctaSecondary": "Design proposal",
-        "mascotLine": "You only get one first impression. We'll make it count.",
+        "mascotLine": "First impressions matter most.",
         "features": [
           {
             "title": "Unique",
@@ -344,14 +317,14 @@
         "tab": "Apps",
         "card": "Apps",
         "headline": [
-          "We build ",
-          "apps",
-          " people actually use"
+          "",
+          "Apps",
+          " people use"
         ],
         "lead": "We create modern iOS and Android apps that simplify and grow your business.",
         "cta": "Apps that grow",
         "ctaSecondary": "App development",
-        "mascotLine": "An app people won't want to delete.",
+        "mascotLine": "An app people keep.",
         "features": [
           {
             "title": "App development",
@@ -364,10 +337,6 @@
           {
             "title": "Optimised for",
             "sub": "Google Play"
-          },
-          {
-            "title": "Fast, stable",
-            "sub": "and user friendly"
           }
         ],
         "includes": [
@@ -411,7 +380,8 @@
           "description": "We build modern iOS and Android apps — from MVP to store release. Fast, stable and user friendly."
         }
       }
-    }
+    },
+    "faqLabel": "FAQ"
   },
   "mockups": {
     "illustrative": "Illustrative example",
@@ -512,11 +482,11 @@
     "eyebrow": "Why motion",
     "title": "Websites that",
     "titleAccent": "come alive.",
-    "lead": "People skim a static site. They remember an animated one. Every site we build has motion that guides the eye, tells a story and leads to action.",
+    "lead": "Static is forgotten. Animated isn't.",
     "static": "Static",
     "animated": "Animated",
     "toggleLabel": "Switch between the static and animated example",
-    "hint": "Scroll — the page inside the laptop moves with you.",
+    "hint": "Scroll — the site moves with you.",
     "args": [
       {
         "title": "Longer time on site",
@@ -531,44 +501,48 @@
         "text": "A button that responds looks like an invitation — not like a picture."
       }
     ],
-    "footnote": "And still fast — we optimise every animation.",
+    "footnote": "Fast, even animated.",
     "mascotBored": "A static site. Nothing happens. Boring.",
-    "mascotHappy": "That's it! See the difference?"
+    "mascotHappy": "That's it! See the difference?",
+    "pills": [
+      "They'll remember you",
+      "Longer on site",
+      "More clicks"
+    ]
   },
   "process": {
     "eyebrow": "Process",
     "title": "How we",
     "titleAccent": "work",
-    "lead": "Five steps from the first call to a website that earns. No surprises halfway through.",
+    "lead": "Five steps, no surprises.",
     "steps": [
       {
         "title": "Consultation",
-        "text": "We go through your goals, free and with no commitment."
+        "text": "We discuss your goals, free."
       },
       {
         "title": "Design",
-        "text": "We prepare the design and the structure of the site."
+        "text": "Design and structure."
       },
       {
         "title": "Build & motion",
-        "text": "We turn the design into a fast, animated website."
+        "text": "A fast, animated build."
       },
       {
         "title": "Launch",
-        "text": "We launch the site and set up SEO and analytics."
+        "text": "Launch, SEO and analytics."
       },
       {
         "title": "Support & growth",
-        "text": "We keep the site earning."
+        "text": "We keep it growing."
       }
     ]
   },
   "cases": {
-    "eyebrow": "Work",
-    "title": "Websites we built",
+    "eyebrow": "",
+    "title": "Websites",
     "titleAccent": "from scratch",
-    "lead": "Three clients who had no website before us. Design, build and launch are all ours.",
-    "note": "The client had no website — we designed and built it from scratch.",
+    "lead": "",
     "tags": [
       "Website from scratch",
       "Design",
@@ -579,18 +553,15 @@
     "items": {
       "euromotors": {
         "name": "EURO-MOTORS",
-        "kind": "Car service in Prague 10",
-        "text": "Repairs and maintenance for all car brands."
+        "kind": "Car service, Prague 10"
       },
       "inhome": {
         "name": "InHome Praha",
-        "kind": "Cleaning company",
-        "text": "Cleaning services across Czechia."
+        "kind": "Cleaning company, nationwide"
       },
       "biodent": {
         "name": "BioDent",
-        "kind": "Dental clinic",
-        "text": "Dental care in Prague 2."
+        "kind": "Dental clinic, Prague 2"
       }
     }
   },
@@ -598,7 +569,7 @@
     "eyebrow": "Pricing",
     "title": "An investment that",
     "titleAccent": "pays off",
-    "lead": "Transparent pricing. We prepare the final quote after a free consultation.",
+    "lead": "Transparent pricing, no hidden fees.",
     "from": "from",
     "badge": "Most popular",
     "cta": "I want this package",
@@ -656,40 +627,26 @@
         "Apps",
         "Long-term SEO"
       ]
-    }
-  },
-  "faq": {
-    "eyebrow": "FAQ",
-    "title": "Frequently asked",
-    "titleAccent": "questions",
-    "lead": "Didn't find your answer? Write to us — we reply within 24 hours.",
-    "items": [
-      {
-        "q": "How much does a website cost?",
-        "a": "The price always follows the scope — a one-page presentation is one thing, an e-shop wired to your stock is another. After a free consultation you get a fixed quote broken down into items, so you know what you're paying for."
-      },
+    },
+    "faq": [
       {
         "q": "How long does it take?",
-        "a": "A smaller presentation site usually takes 4–6 weeks, larger projects and e-shops 8–12 weeks. We confirm the date once the brief is agreed."
+        "a": "4–8 weeks, depending on scope."
       },
       {
-        "q": "Will animation slow the site down?",
-        "a": "Not if it's done properly. We only animate properties the browser handles without recalculating layout, scenes load only when needed, and on weaker devices or with “reduce motion” enabled the site switches itself to a calm version. We measure speed on every project."
+        "q": "Will animation slow it down?",
+        "a": "No — we measure speed on everything."
       },
       {
-        "q": "Do you handle content and SEO too?",
-        "a": "Yes. We can prepare structure and copy, handle technical SEO and set up measurement. If you have your own copywriter, we're happy to work with them."
-      },
-      {
-        "q": "What if I already have a website?",
-        "a": "We start with an audit — sometimes a redesign of a few sections, a speed-up and a tuned conversion path is enough, sometimes it's worth rebuilding. We'll always recommend the cheaper route if it makes sense."
+        "q": "I already have a website?",
+        "a": "We audit it and suggest next steps."
       }
     ]
   },
   "contact": {
     "eyebrow": "Contact",
-    "title": "Ready to take your project to",
-    "titleAccent": "the next level?",
+    "title": "Ready for the",
+    "titleAccent": "next level?",
     "stepLabel": "Step",
     "steps": [
       "What do you need?",
@@ -754,7 +711,7 @@
     }
   },
   "footer": {
-    "tagline": "A digital studio from Prague. We build animated websites, e-shops and apps that move our clients' business forward.",
+    "tagline": "A digital studio from Prague. Websites, e-shops, apps.",
     "services": "Services",
     "studio": "Studio",
     "contact": "Contact",
@@ -778,16 +735,15 @@
       "Got coffee, got ideas. Let's go."
     ],
     "cues": {
-      "hero": "Hi! I'm your guide. Come on, let me show you what we do.",
-      "problem": "I know this one. Sitting in a café with no idea where to start.",
-      "sluzby": "Pick a card — I'll show you what's behind it.",
-      "detaily": "Each card is one service. Keep scrolling.",
-      "proc-animace": "Flip that switch. You'll see the difference yourself.",
-      "proces": "Five steps. I'll walk them with you.",
-      "reference": "These are the sites we built from scratch.",
-      "cenik": "Prices straight up. No asterisks.",
-      "faq": "Wondering about the price? Click the first question.",
-      "kontakt": "Three steps and we have something to talk about."
+      "hero": "Hi! Let me show you.",
+      "macbook": "Step inside.",
+      "sluzby": "Pick a card.",
+      "detaily": "Keep scrolling.",
+      "proc-animace": "Try the switch.",
+      "proces": "I'll walk you through.",
+      "reference": "Built from scratch.",
+      "cenik": "Prices, no tricks.",
+      "kontakt": "Let's do this."
     }
   },
   "meta": {

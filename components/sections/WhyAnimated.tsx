@@ -1,17 +1,14 @@
 'use client';
 
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { Eye, MousePointerClick, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { Mascot } from '@/components/mascot/Mascot';
-import { LaptopShell } from '@/components/mockups/LaptopShell';
+import { MacbookFrame } from '@/components/mockups/MacbookFrame';
 import { PhoneFrame } from '@/components/mockups/Frame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import manifest from '@/content/capture-manifest.json';
-
-const ICONS = [Eye, Sparkles, MousePointerClick];
 
 const DESKTOP = manifest.demo.desktop;
 const MOBILE = manifest.demo.mobile;
@@ -90,8 +87,6 @@ export function WhyAnimated() {
     setAnimated((v) => !v);
   };
 
-  const args = t.raw('args') as { title: string; text: string }[];
-
   return (
     <section
       id="proc-animace"
@@ -102,14 +97,14 @@ export function WhyAnimated() {
     >
       <div className={reduced ? '' : 'md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:justify-center'}>
         <div className="shell py-16 md:py-0">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="eyebrow">{t('eyebrow')}</p>
+          <div className="mx-auto max-w-xl text-center">
             <SplitHeading
               as="h2"
-              className="mt-3 font-display text-[clamp(1.7rem,4vw,3rem)] font-bold uppercase leading-[1.08]"
+              id="proc-animace-title"
+              className="font-display text-[clamp(1.7rem,4vw,3rem)] font-bold uppercase leading-[1.08]"
               parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
             />
-            <p className="mx-auto mt-4 max-w-xl text-sm text-muted md:text-base">{t('lead')}</p>
+            <p className="mx-auto mt-3 text-sm text-muted md:text-base">{t('lead')}</p>
           </div>
 
           {/* přepínač */}
@@ -145,8 +140,8 @@ export function WhyAnimated() {
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               style={{ perspective: 1400 }}
             >
-              <LaptopShell screenClassName="aspect-[16/10]">
-                <div ref={screen} className="absolute inset-0 overflow-hidden">
+              <MacbookFrame>
+                <div ref={screen} className="absolute inset-0 overflow-hidden bg-[#04060b]">
                   {/* animovaná verze — scrubbing videa */}
                   <motion.video
                     ref={video}
@@ -188,10 +183,27 @@ export function WhyAnimated() {
                     transition={{ duration: 0.3 }}
                   />
                 </div>
-              </LaptopShell>
+              </MacbookFrame>
             </motion.div>
 
-            <p className="mt-12 text-center text-xs text-muted">{t('hint')}</p>
+            <p className="mt-8 text-center text-xs text-muted">{t('hint')}</p>
+
+            {/* tři krátké pilulky místo argumentačních karet */}
+            <ul className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+              {(t.raw('pills') as string[]).map((pill, i) => (
+                <motion.li
+                  key={pill}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  className="rounded-full border border-[var(--line)] bg-white/[0.03] px-4 py-2 text-xs text-muted"
+                >
+                  {pill}
+                </motion.li>
+              ))}
+            </ul>
+            <p className="mt-4 text-center text-xs text-muted">{t('footnote')}</p>
 
             {/* maskot reaguje na režim */}
             <div className="pointer-events-none absolute -bottom-4 -left-[190px] hidden 2xl:block">
@@ -227,53 +239,23 @@ export function WhyAnimated() {
                 )}
               </div>
             </PhoneFrame>
+
+            <ul className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              {(t.raw('pills') as string[]).map((pill) => (
+                <li key={pill} className="rounded-full border border-[var(--line)] bg-white/[0.03] px-3.5 py-1.5 text-[11px] text-muted">
+                  {pill}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-
     </section>
   );
 }
 
-/** Argumenty jdou do vlastní sekce — uvnitř připnutého bloku by se překrývaly. */
-function Arguments() {
-  const t = useTranslations('whyAnimated');
-  const args = t.raw('args') as { title: string; text: string }[];
-
-  return (
-    <section className="shell relative z-10 pb-20 pt-10">
-      <div className="grid gap-5 md:grid-cols-3">
-          {args.map((arg, index) => {
-            const ItemIcon = ICONS[index];
-            return (
-              <motion.article
-                key={arg.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-10% 0px' }}
-                transition={{ duration: 0.65, delay: index * 0.1 }}
-                className="glass rounded-card p-6"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-xl border border-[rgba(61,123,255,0.4)] bg-[rgba(10,20,50,0.6)] text-[var(--blue-bright)]">
-                  <ItemIcon className="h-5 w-5" aria-hidden />
-                </span>
-                <h3 className="mt-4 font-display text-base font-bold uppercase leading-tight">{arg.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{arg.text}</p>
-              </motion.article>
-            );
-          })}
-      </div>
-      <p className="mt-8 text-center text-sm text-muted">{t('footnote')}</p>
-    </section>
-  );
-}
-
-/** Scéna + argumenty pohromadě, aby se stránka skládala z jednoho importu. */
+/** Alias — od 3. iterace se argumenty nahradily pilulkami přímo u notebooku,
+ * ale ostatní sekce dál importují `WhyAnimatedBlock` jako jeden blok. */
 export function WhyAnimatedBlock() {
-  return (
-    <>
-      <WhyAnimated />
-      <Arguments />
-    </>
-  );
+  return <WhyAnimated />;
 }

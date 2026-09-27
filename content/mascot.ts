@@ -32,13 +32,12 @@ export type MascotCue = { sectionId: string; pose: Pose; cue: string; hidden?: b
 
 export const mascotCues: MascotCue[] = [
   { sectionId: 'hero', pose: 'wave', cue: 'hero', hidden: true },
-  { sectionId: 'problem', pose: 'think', cue: 'problem', hidden: true },
+  { sectionId: 'macbook', pose: 'idle', cue: 'macbook', hidden: true },
   { sectionId: 'sluzby', pose: 'point', cue: 'sluzby', hidden: true },
   { sectionId: 'detaily', pose: 'point', cue: 'detaily', hidden: true },
   { sectionId: 'proc-animace', pose: 'celebrate', cue: 'proc-animace', hidden: true },
   { sectionId: 'proces', pose: 'walk', cue: 'proces', hidden: true },
   { sectionId: 'reference', pose: 'thumbsUp', cue: 'reference' },
   { sectionId: 'cenik', pose: 'point', cue: 'cenik' },
-  { sectionId: 'faq', pose: 'idle', cue: 'faq' },
   { sectionId: 'kontakt', pose: 'point', cue: 'kontakt', hidden: true },
 ];

@@ -2,12 +2,16 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 
 type Item = { q: string; a: string };
 
+/**
+ * Generický FAQ akordeon. Používá se na stránkách jednotlivých služeb
+ * (/sluzby/[slug]) — homepage má od 3. iterace jen tři krátké „pilulky"
+ * přímo v sekci Ceník (viz Pricing.tsx), samostatnou FAQ sekci nemá.
+ */
 export function Faq({
   items,
   title,
@@ -23,20 +27,20 @@ export function Faq({
   lead?: string;
   id?: string;
 }) {
-  const t = useTranslations('faq');
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <section id={id} className="relative py-24 md:py-32" aria-labelledby={`${id}-title`}>
       <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="eyebrow">{eyebrow ?? t('eyebrow')}</p>
+          {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
           <SplitHeading
             as="h2"
+            id={`${id}-title`}
             className="mt-4 font-display text-[clamp(1.7rem,3.8vw,2.6rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: title + ' ' }, { text: accent, accent: true }]}
           />
-          <p className="mt-5 max-w-xs text-sm text-muted">{lead ?? t('lead')}</p>
+          {lead ? <p className="mt-5 max-w-xs text-sm text-muted">{lead}</p> : null}
         </div>
 
         <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
@@ -91,10 +95,4 @@ export function Faq({
       </div>
     </section>
   );
-}
-
-/** FAQ na homepage — bere data přímo z překladů. */
-export function HomeFaq() {
-  const t = useTranslations('faq');
-  return <Faq items={t.raw('items') as Item[]} title={t('title')} accent={t('titleAccent')} />;
 }
