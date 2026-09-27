@@ -3,11 +3,12 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { scrollToId } from '@/lib/scrollTo';
 import { site } from '@/content/site';
 
 const ITEMS = [
@@ -49,6 +50,26 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const lastY = useRef(0);
   const { scrollY } = useScroll();
+  // Po kliknutí přebírá aktivní stav klik sám — pozorovatel scrollu se na
+  // chvíli odmlčí, ať necuká zpátky na starou sekci, dokud Lenis nedojede.
+  const clickSuppress = useRef(false);
+  const clickSuppressTimer = useRef<number | null>(null);
+
+  const handleNavClick = useCallback((id: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    setOpen(false);
+    setActive(id);
+    clickSuppress.current = true;
+    if (clickSuppressTimer.current) window.clearTimeout(clickSuppressTimer.current);
+    scrollToId(id);
+    clickSuppressTimer.current = window.setTimeout(() => {
+      clickSuppress.current = false;
+    }, 1500);
+  }, []);
+
+  useEffect(() => () => {
+    if (clickSuppressTimer.current) window.clearTimeout(clickSuppressTimer.current);
+  }, []);
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     const delta = y - lastY.current;
@@ -67,6 +88,7 @@ export function Navbar() {
 
     const observer = new IntersectionObserver(
       (entries) => {
+        if (clickSuppress.current) return;
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -97,8 +119,8 @@ export function Navbar() {
           animate={{
             paddingLeft: shrunk ? 10 : 14,
             paddingRight: shrunk ? 8 : 10,
-            paddingTop: shrunk ? 6 : 9,
-            paddingBottom: shrunk ? 6 : 9,
+            paddingTop: shrunk ? 8 : 11,
+            paddingBottom: shrunk ? 8 : 11,
           }}
           transition={{ duration: reduced ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
@@ -108,7 +130,7 @@ export function Navbar() {
             aria-label={t('home')}
           >
             <motion.span animate={{ scale: shrunk ? 0.88 : 1 }} transition={{ duration: 0.4 }}>
-              <Logo height={18} priority glow />
+              <Logo height={25} priority glow />
             </motion.span>
           </Link>
 
@@ -119,6 +141,7 @@ export function Navbar() {
                 <li key={item.id} className="relative">
                   <a
                     href={`#${item.id}`}
+                    onClick={handleNavClick(item.id)}
                     className={`group/item relative block rounded-full px-3.5 py-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${
                       isActive ? 'text-ink' : 'text-muted hover:text-ink'
                     }`}
@@ -144,6 +167,7 @@ export function Navbar() {
           {/* CTA s paprskem po rámečku */}
           <a
             href="#kontakt"
+            onClick={handleNavClick('kontakt')}
             className="group/cta relative ml-1 hidden shrink-0 items-center gap-2 overflow-hidden rounded-full bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-4 py-2.5 font-display text-[11px] uppercase tracking-[0.1em] text-white shadow-[0_0_22px_var(--blue-glow)] transition-shadow hover:shadow-[0_0_34px_var(--blue-glow)] sm:flex"
           >
             <span className="relative z-10">{t('cta')}</span>
@@ -202,7 +226,7 @@ export function Navbar() {
                 <motion.a
                   key={item.id}
                   href={`#${item.id}`}
-                  onClick={() => setOpen(false)}
+                  onClick={handleNavClick(item.id)}
                   initial={{ opacity: 0, y: 26 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.14 + index * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -221,7 +245,7 @@ export function Navbar() {
             >
               <a
                 href="#kontakt"
-                onClick={() => setOpen(false)}
+                onClick={handleNavClick('kontakt')}
                 className="flex w-full items-center justify-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-6 py-4 font-display text-[12px] uppercase tracking-[0.12em] text-white shadow-glow"
               >
                 {t('cta')}

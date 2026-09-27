@@ -21,9 +21,7 @@ export type ServiceMeta = {
   featureIcons: IconName[];
   /** index v contact.needs, který se předvybere ve formuláři */
   needIndex: number;
-  /** pozice a měřítko vyříznutého maskota v panelu (v % plochy scény) */
-  mascot: { width: number; bottom: number; left?: number; right?: number };
-  /** pozice miniaturního "oživlého" UI mockupu vůči scéně */
+  /** pozice a měřítko dominantního UI mockupu vůči scéně (v % plochy) */
   widget: { width: number; top?: number; bottom?: number; left?: number; right?: number; rotate?: number };
 };
 
@@ -34,8 +32,7 @@ export const serviceMeta: Record<ServiceSlug, ServiceMeta> = {
     mockup: 'web',
     featureIcons: ['Monitor', 'Zap', 'Users'],
     needIndex: 0,
-    mascot: { width: 62, bottom: -4, right: 2 },
-    widget: { width: 46, bottom: 2, left: 0, rotate: -2 },
+    widget: { width: 92, bottom: 2, left: 2, rotate: -1.5 },
   },
   seo: {
     num: '02',
@@ -43,8 +40,7 @@ export const serviceMeta: Record<ServiceSlug, ServiceMeta> = {
     mockup: 'seo',
     featureIcons: ['TrendingUp', 'Search', 'Target'],
     needIndex: 2,
-    mascot: { width: 54, bottom: -6, right: 0 },
-    widget: { width: 48, top: 2, left: 0, rotate: 1.5 },
+    widget: { width: 88, top: 4, left: 4, rotate: 1 },
   },
   'e-shopy': {
     num: '03',
@@ -52,8 +48,7 @@ export const serviceMeta: Record<ServiceSlug, ServiceMeta> = {
     mockup: 'shop',
     featureIcons: ['ShoppingCart', 'Smartphone', 'ShieldCheck'],
     needIndex: 1,
-    mascot: { width: 58, bottom: -4, left: 2 },
-    widget: { width: 50, bottom: -2, right: -2, rotate: 2 },
+    widget: { width: 66, bottom: 0, right: 0, rotate: 1.5 },
   },
   design: {
     num: '04',
@@ -61,8 +56,7 @@ export const serviceMeta: Record<ServiceSlug, ServiceMeta> = {
     mockup: 'design',
     featureIcons: ['PenTool', 'Smartphone', 'Rocket'],
     needIndex: 3,
-    mascot: { width: 56, bottom: -4, right: 4 },
-    widget: { width: 48, top: 4, left: -2, rotate: -1.5 },
+    widget: { width: 68, top: 4, left: 0, rotate: -1 },
   },
   aplikace: {
     num: '05',
@@ -70,8 +64,7 @@ export const serviceMeta: Record<ServiceSlug, ServiceMeta> = {
     mockup: 'app',
     featureIcons: ['Smartphone', 'AppWindow', 'Play'],
     needIndex: 4,
-    mascot: { width: 60, bottom: -6, left: 6 },
-    widget: { width: 30, top: 6, right: 2, rotate: 3 },
+    widget: { width: 46, top: 4, right: 6, rotate: 2 },
   },
 };
 

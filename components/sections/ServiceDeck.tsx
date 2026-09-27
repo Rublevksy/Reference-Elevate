@@ -85,7 +85,7 @@ function CardBody({ index, role }: { index: number; role: Role }) {
 
   return (
     <motion.div
-      className="grid h-full grid-rows-[auto_1fr] gap-5 p-6 md:grid-cols-[1fr_1.1fr] md:grid-rows-1 md:items-center md:gap-8 md:p-10 lg:p-12"
+      className="grid h-full grid-rows-[auto_1fr] gap-5 p-6 md:grid-cols-[0.85fr_1.3fr] md:grid-rows-1 md:items-center md:gap-6 md:p-10 lg:p-12"
       initial="hidden"
       animate={role === 'current' ? 'show' : 'hidden'}
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
@@ -119,17 +119,39 @@ function CardBody({ index, role }: { index: number; role: Role }) {
           )}
         </h3>
 
-        <ul className="mt-6 grid grid-cols-3 gap-3">
+        {/* dekorativní výplň — čistě vizuální „signální" linka, žádný text */}
+        <motion.svg
+          aria-hidden
+          variants={item}
+          viewBox="0 0 260 28"
+          className="mt-6 h-6 w-full max-w-[260px] text-[rgba(120,160,255,0.55)]"
+        >
+          <motion.path
+            d="M0 20 C 30 20, 34 6, 60 6 S 92 22, 120 22 S 150 4, 180 4 S 216 18, 260 18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={role === 'current' ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+          />
+          {[60, 180].map((cx, i) => (
+            <circle key={i} cx={cx} cy={i === 0 ? 6 : 4} r="2.6" fill="var(--blue-bright)" />
+          ))}
+        </motion.svg>
+
+        <ul className="mt-5 flex flex-wrap items-start gap-x-6 gap-y-4">
           {service.featureIcons.map((icon, i) => (
-            <motion.li key={icon + i} variants={item} className="flex flex-col items-start gap-2">
+            <motion.li key={icon + i} variants={item} className="flex items-center gap-3">
               <motion.span
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.45)] bg-[rgba(10,20,50,0.6)] text-[var(--blue-bright)]"
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[rgba(61,123,255,0.45)] bg-[rgba(10,20,50,0.6)] text-[var(--blue-bright)]"
                 variants={{
                   hidden: { scale: 0.6, opacity: 0 },
                   show: { scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 420, damping: 18 } },
                 }}
               >
-                <Icon name={icon} className="h-5 w-5" />
+                <Icon name={icon} className="h-7 w-7" />
               </motion.span>
               <span className="text-xs leading-tight">
                 <span className="block font-semibold text-ink">{features[i]?.title}</span>

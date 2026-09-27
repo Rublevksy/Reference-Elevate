@@ -8,6 +8,7 @@ import { Process } from '@/components/sections/Process';
 import { Cases } from '@/components/sections/Cases';
 import { Pricing } from '@/components/sections/Pricing';
 import { Contact } from '@/components/sections/Contact';
+import { TransitionScene } from '@/components/sections/TransitionScene';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -18,11 +19,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Hero />
       <MacbookIntro />
       <ServicesTable />
+      <TransitionScene variant="cardToPanel" />
       <ServiceDeck />
+      <TransitionScene variant="panelCollapseRise" />
       <WhyAnimatedBlock />
+      <TransitionScene variant="glitchTimeline" />
       <Process />
+      <TransitionScene variant="timelineUnfurl" />
       <Cases />
+      <TransitionScene variant="devicesToCard" />
       <Pricing />
+      <TransitionScene variant="fanRing" />
       <Contact />
     </>
   );

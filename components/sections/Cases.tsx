@@ -89,7 +89,11 @@ function DeviceScreen({
   );
 }
 
-/** Notebook + telefon, telefon přesahuje přes pravý dolní roh (~20 %). */
+/**
+ * Notebook a telefon stojí odděleně vedle sebe — mezi nimi je vidět
+ * kus pozadí, žádný přesah. Telefon je mírně blíž „kameře" (větší,
+ * vlastní stín) a má nepatrně jiný náklon, ať kompozice nepůsobí ploše.
+ */
 function DeviceComposition({
   slug,
   desktopRatio,
@@ -107,6 +111,7 @@ function DeviceComposition({
   const my = useMotionValue(0);
   const rotateX = useSpring(useTransform(my, [-1, 1], [4, -4]), { stiffness: 90, damping: 16 });
   const rotateY = useSpring(useTransform(mx, [-1, 1], [-4, 4]), { stiffness: 90, damping: 16 });
+  const rotateYPhone = useSpring(useTransform(mx, [-1, 1], [-6, 6]), { stiffness: 90, damping: 16 });
 
   const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (reduced) return;
@@ -117,7 +122,7 @@ function DeviceComposition({
 
   return (
     <motion.div
-      className="relative mx-auto w-full max-w-[560px]"
+      className="relative mx-auto flex w-full max-w-[680px] items-end gap-6 sm:gap-10"
       style={{ perspective: 1400 }}
       onPointerMove={onMove}
       onPointerEnter={() => setHovered(true)}
@@ -127,18 +132,26 @@ function DeviceComposition({
         my.set(0);
       }}
     >
-      <motion.div style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}>
+      <motion.div
+        className="relative min-w-0 flex-[1.65]"
+        style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
+      >
         <MacbookFrame className="drop-shadow-[0_50px_90px_-30px_rgba(0,0,0,0.9)]">
           <DeviceScreen slug={slug} file="desktop" ratio={desktopRatio} active={active} hovered={hovered} />
         </MacbookFrame>
+      </motion.div>
 
-        <div className="absolute -bottom-[9%] -right-[6%] w-[26%] drop-shadow-[0_30px_60px_-20px_rgba(0,0,0,0.9)]">
-          <PhoneFrame className="!w-full">
-            <div className="relative aspect-[390/844] overflow-hidden">
-              <DeviceScreen slug={slug} file="mobile" ratio={mobileRatio} active={active} hovered={hovered} wipeDelay={0.1} />
-            </div>
-          </PhoneFrame>
-        </div>
+      <motion.div
+        className="relative z-10 min-w-0 flex-1"
+        style={reduced ? undefined : { rotateX, rotateY: rotateYPhone, transformStyle: 'preserve-3d' }}
+        animate={{ y: active ? '-6%' : '0%', scale: active ? 1.06 : 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <PhoneFrame className="!w-full drop-shadow-[0_40px_70px_-20px_rgba(0,0,0,0.95)]">
+          <div className="relative aspect-[390/844] overflow-hidden">
+            <DeviceScreen slug={slug} file="mobile" ratio={mobileRatio} active={active} hovered={hovered} wipeDelay={0.1} />
+          </div>
+        </PhoneFrame>
       </motion.div>
     </motion.div>
   );

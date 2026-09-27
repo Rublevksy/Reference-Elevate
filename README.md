@@ -12,6 +12,58 @@ npm run build && npm start   # produkční build
 
 ---
 
+## Co přinesla 4. iterace
+
+- **Panely služeb bez maskota** (`ServiceScene.tsx`) — postava zmizela ze scény panelu
+  úplně (průvodce dál žije jen jako jedna figura vedle celé karty v `ServiceDeck.tsx`).
+  Mockup dané služby je teď dominantní a velký, doplněný o **5 unikátních tichých
+  motivů na pozadí** (`ServiceAccent.tsx`): 01 drátěná mřížka webu, 02 stoupající graf
+  přes celou plochu, 03 velká neonová silueta košíku, 04 barevná paleta vzorníků,
+  05 mřížka generických ikon aplikací — panely se tak nečtou jako jedna šablona
+  s vyměněným textem.
+- **Feature ikony zvětšené** do jasného řádku a mezi nadpis a CTA přibyla dekorativní
+  „signální" SVG křivka s tečkami — čistě vizuální výplň prázdného místa, žádný text.
+- **Logo v navigaci zvětšeno** (18 → 25 px, +39 %), výška pilulky navigace upravena,
+  ať logo nekoliduje s okolními prvky.
+- **Opraveno klikání v navigaci** — položky menu i CTA teď jedou přes `lib/scrollTo.ts`
+  (Lenis `scrollTo`, existovalo, ale nikde se nepoužívalo), místo nativního
+  `<a href="#kotva">`, který bojoval s Lenisem a skákal nedokonale. Aktivní stav
+  položky se nastaví hned při kliknutí (pozorovatel scrollu se na dobu doletu
+  odmlčí), takže i rychlé přeskakování mezi cíli je bez cukání a bez „přestřelení".
+- **Reference: notebook a telefon oddělené** — už se nepřekrývají v rohu, stojí vedle
+  sebe s viditelnou mezerou, telefon je mírně blíž (větší, vlastní stín/náklon) a má
+  svůj vlastní scrollující screenshot (`public/cases/{slug}/mobile.jpg`) se stejným
+  wipe-přechodem jako notebook.
+- **Nové přechodové scény mezi sekcemi** (`TransitionScene.tsx`) — šest vlastních
+  pinovaných scén, každá jiný motiv, výhradně transform/opacity (bezpečné pro
+  scroll-scrubbing), na mobilu se nevykreslují (tam sekce navazují běžným tokem)
+  a při `prefers-reduced-motion` je nahrazuje tiché prolnutí:
+  1. **Stůl → Panely služeb** — aktivní karta se přiblíží, otočí a rozroste do prvního panelu.
+  2. **Panely služeb → „Weby, které žijí"** — poslední panel se sroluje do plochy a zmizí,
+     z hloubky se vynoří obrys notebooku.
+  3. **„Weby, které žijí" → Proces** — krátké zablikání/rozjetí do stran, pak se scéna
+     stáhne a zpoza vyjede časová osa procesu.
+  4. **Proces → Reference** — poslední úsečka časové osy „vystřelí" vpřed a rozvine se
+     do dělítek seznamu referencí.
+  5. **Reference → Ceník** — notebook a telefon se zmenší a uletí do stran, splynou
+     v jednu zářící kartu ceníku (otočka + zvětšení).
+  6. **Ceník → Kontakt** — tři karty se sklopí do středu, prstenec světla se rozšíří
+     a odhalí kontaktní formulář.
+- **Prošetřen (a nepotvrzen) nahlášený „zdvojený notebook/postava"** — vizuální QA
+  (statické i postupné scrollování, prosvětlené snímky) i přímé čtení
+  `MacbookIntro.tsx`/`ServicesTable.tsx` neodhalilo žádnou zkopírovanou komponentu:
+  v obou souborech je vždy jen jeden `<MacbookFrame>`/`<Mascot>` aktivní podle
+  breakpointu a reduced-motion větve. Přechod mezi MacBookem a stolem služeb byl
+  i tak ověřen krok po kroku (rámeček zmizí dřív, než začnou létat karty).
+- **Nová iPhone fotka nedorazila** — uživatel v zadání avizoval `public/assets/iphone-frame.png`,
+  ale v `public/assets/` byly jen původní `1.webp` (logo) a `2.jpg` (MacBook). Skript
+  `scripts/prepare-iphone.py` (obdoba `prepare-macbook.py`) proto zatím nevznikl —
+  kompozice referencí místo toho používá stávající CSS `<PhoneFrame>`, jen nově
+  oddělenou a zvětšenou. Jakmile fotka dorazí, stačí ji zpracovat stejným postupem
+  jako MacBook a `<PhoneFrame>` v `Cases.tsx` vyměnit za fotorealistický mockup.
+
+---
+
 ## Co přinesla 3. iterace
 
 - **Logo** — přiložený PNG mockup (slitý na šachovnici) se vyklíčoval skriptem a je teď
