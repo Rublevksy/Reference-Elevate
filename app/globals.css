@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #04060b;
+  --bg-elevated: #0a0f1c;
+  --line: rgba(80, 120, 255, 0.18);
+  --blue: #1f5bff;
+  --blue-bright: #3d7bff;
+  --blue-deep: #0b1f6b;
+  --blue-glow: rgba(31, 91, 255, 0.45);
+  --text: #f2f5ff;
+  --text-muted: #8a93a8;
+  --shell: 1240px;
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Lenis drives the scroll; native smooth scrolling would fight it. */
+  html.lenis {
+    scroll-behavior: auto;
+  }
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--blue-bright);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  section[id],
+  div[id] {
+    scroll-margin-top: 96px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+  @media (min-width: 768px) {
+    .shell { padding-inline: 40px; }
+  }
+
+  .glass {
+    background: linear-gradient(160deg, rgba(20, 28, 48, 0.72), rgba(8, 12, 22, 0.72));
+    border: 1px solid var(--line);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .text-gradient-blue {
+    background: linear-gradient(100deg, var(--blue-bright), #9db8ff 60%, var(--blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+}
+
+@layer components {
+  /* světelný paprsek obíhající rámeček CTA — jednou za ~6 s */
+  .beam {
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--beam-angle, 0deg),
+      transparent 0deg,
+      transparent 300deg,
+      rgba(255, 255, 255, 0.95) 340deg,
+      transparent 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: beam-spin 6s linear infinite;
+    pointer-events: none;
+  }
+
+  @property --beam-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes beam-spin {
+    to { --beam-angle: 360deg; }
+  }
+
+  /* jemný blur při přepnutí jazyka */
+  .lang-switching main,
+  .lang-switching header,
+  .lang-switching footer {
+    filter: blur(7px);
+    opacity: 0.55;
+    transition: filter 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* stůl karet — ambientní pohyb, jediné dvě animace v celé scéně */
+  .platform-spin { animation: platform-spin 110s linear infinite; }
+  @keyframes platform-spin {
+    from { transform: translate(450px, 380px) rotate(0deg); }
+    to { transform: translate(450px, 380px) rotate(360deg); }
+  }
+
+  .column-breathe { animation: column-breathe 5.5s ease-in-out infinite; transform-origin: bottom; }
+  @keyframes column-breathe {
+    0%, 100% { opacity: 0.45; transform: scaleY(1); }
+    50% { opacity: 0.95; transform: scaleY(1.06); }
+  }
+
+  /* rukopisné poznámky z bloku maskota */
+  .handwritten {
+    font-family: var(--font-hand), 'Segoe Script', cursive;
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  .mask-fade-y {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .preserve-3d { transform-style: preserve-3d; }
+  .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+}
+
+/* Split-text reveal primitives used by lib/animations */
+.line-mask { overflow: hidden; display: block; }
+.line-mask > span { display: inline-block; will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .beam,
+  .platform-spin,
+  .column-breathe { animation: none !important; }
+  .lang-switching main,
+  .lang-switching header,
+  .lang-switching footer { filter: none; opacity: 1; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

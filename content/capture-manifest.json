@@ -1,0 +1,50 @@
+{
+  "demo": {
+    "desktop": {
+      "frames": 566,
+      "pageHeight": 12510,
+      "pageWidth": 1440
+    },
+    "mobile": {
+      "frames": 506,
+      "pageHeight": 11732,
+      "pageWidth": 390
+    }
+  },
+  "euromotors": {
+    "desktop": {
+      "frames": 571,
+      "pageHeight": 6115,
+      "pageWidth": 1440
+    },
+    "mobile": {
+      "frames": 511,
+      "pageHeight": 10184,
+      "pageWidth": 390
+    }
+  },
+  "inhome": {
+    "desktop": {
+      "frames": 507,
+      "pageHeight": 3033,
+      "pageWidth": 1440
+    },
+    "mobile": {
+      "frames": 465,
+      "pageHeight": 4323,
+      "pageWidth": 390
+    }
+  },
+  "biodent": {
+    "desktop": {
+      "frames": 558,
+      "pageHeight": 11499,
+      "pageWidth": 1440
+    },
+    "mobile": {
+      "frames": 508,
+      "pageHeight": 18019,
+      "pageWidth": 390
+    }
+  }
+}

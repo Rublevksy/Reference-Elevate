@@ -1,0 +1,855 @@
+{
+  "nav": {
+    "services": "Služby",
+    "process": "Proces",
+    "references": "Reference",
+    "pricing": "Ceník",
+    "contact": "Kontakt",
+    "cta": "Nezávazná konzultace",
+    "openMenu": "Otevřít menu",
+    "closeMenu": "Zavřít menu",
+    "language": "Jazyk",
+    "home": "Domů",
+    "allServices": "Všechny služby"
+  },
+  "hero": {
+    "eyebrow": "Digitální studio z Prahy",
+    "title": "Digitální řešení, která posouvají",
+    "titleAccent": "vaše podnikání.",
+    "subtitle": "Tvoříme moderní weby, e-shopy a aplikace, které spojují design, výkon a výsledky.",
+    "tags": [
+      "Design",
+      "Výkon",
+      "Strategie",
+      "Výsledky"
+    ],
+    "ctaPrimary": "Nezávazná konzultace",
+    "ctaSecondary": "Naše služby",
+    "scroll": "Scroll",
+    "mascot": "Ahoj! Jsem tvůj průvodce. Pojď, ukážu ti, co umíme.",
+    "laptopAlt": "Notebook s logem ELEVATE na kamenném podstavci"
+  },
+  "problem": {
+    "eyebrow": "Známý začátek",
+    "title": "Nevíte, kde",
+    "titleAccent": "začít?",
+    "lead": "Máte skvělý nápad nebo firmu, ale online vás nikdo nenajde? Přesně tohle řešíme každý den.",
+    "cta": "Ukažte mi řešení",
+    "before": "Kavárna, blok a čtyři otazníky",
+    "after": "Plán, který dává smysl",
+    "pairs": [
+      {
+        "q": "Web?",
+        "a": "Moderní web"
+      },
+      {
+        "q": "Marketing?",
+        "a": "SEO"
+      },
+      {
+        "q": "Klienti?",
+        "a": "Konverze"
+      },
+      {
+        "q": "Branding?",
+        "a": "Design"
+      }
+    ]
+  },
+  "services": {
+    "eyebrow": "Služby",
+    "title": "Kompletní řešení pro",
+    "titleAccent": "váš růst",
+    "subtitle": "Posouvejte se s námi na další úroveň.",
+    "learnMore": "Zjistit více",
+    "pickCard": "Vyberte kartu",
+    "included": "Co je",
+    "includedAccent": "v ceně",
+    "backToServices": "Zpět na všechny služby",
+    "serviceLabel": "Služba",
+    "items": {
+      "weby": {
+        "tab": "Weby",
+        "card": "Moderní weby",
+        "headline": [
+          "Moderní ",
+          "weby,",
+          " které prodávají"
+        ],
+        "lead": "Tvoříme weby, které přináší výsledky. Design, výkon a strategie v jednom.",
+        "cta": "Nezávazná konzultace",
+        "ctaSecondary": "Detail služby",
+        "mascotLine": "Web je vaše vizitka 24/7. Uděláme ho tak, aby prodával.",
+        "features": [
+          {
+            "title": "Moderní",
+            "sub": "design"
+          },
+          {
+            "title": "Rychlé",
+            "sub": "načítání"
+          },
+          {
+            "title": "Více",
+            "sub": "zákazníků"
+          }
+        ],
+        "includes": [
+          {
+            "title": "Návrh na míru",
+            "text": "Žádné šablony. Struktura i vizuál vznikají podle vašeho byznysu a vašich zákazníků."
+          },
+          {
+            "title": "Copy a struktura",
+            "text": "Pomůžeme seřadit argumenty tak, aby návštěvník pochopil hodnotu během pár sekund."
+          },
+          {
+            "title": "Animace, které vedou oko",
+            "text": "Pohyb používáme tam, kde pomáhá — ne jako dekoraci."
+          },
+          {
+            "title": "Rychlost a technické SEO",
+            "text": "Optimalizované obrázky, čistý kód, měřitelná Core Web Vitals."
+          },
+          {
+            "title": "Správa obsahu",
+            "text": "Napojení na CMS, ať si texty a fotky měníte sami."
+          },
+          {
+            "title": "Analytika od prvního dne",
+            "text": "Víte, odkud lidé chodí a kde odcházejí."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Jak dlouho trvá nový web?",
+            "a": "Typicky 4–8 týdnů podle rozsahu. Přesný termín dostanete po úvodní konzultaci."
+          },
+          {
+            "q": "Můžu si web spravovat sám?",
+            "a": "Ano. Web napojíme na CMS a předáme krátké zaškolení i dokumentaci."
+          },
+          {
+            "q": "Co potřebujete ode mě?",
+            "a": "Základní představu o cíli webu, podklady k firmě a fotky. Zbytek vyřešíme společně."
+          }
+        ],
+        "meta": {
+          "title": "Tvorba moderních webů | ELEVATE Praha",
+          "description": "Moderní weby na míru, které prodávají. Design, rychlost, animace a technické SEO od pražského studia ELEVATE."
+        }
+      },
+      "seo": {
+        "tab": "SEO",
+        "card": "SEO",
+        "headline": [
+          "SEO, které přináší ",
+          "výsledky",
+          ""
+        ],
+        "lead": "Zlepšíme vaši viditelnost ve vyhledávání a přivedeme relevantní návštěvníky.",
+        "cta": "Růst začíná dnes",
+        "ctaSecondary": "Detail služby",
+        "mascotLine": "Co nejde najít, neexistuje. Dostaneme vás nahoru.",
+        "features": [
+          {
+            "title": "Vyšší",
+            "sub": "návštěvnost"
+          },
+          {
+            "title": "Lepší",
+            "sub": "pozice"
+          },
+          {
+            "title": "Více",
+            "sub": "zákazníků"
+          }
+        ],
+        "includes": [
+          {
+            "title": "Analýza a audit",
+            "text": "Zjistíme, co web brzdí — technicky, obsahově i v porovnání s konkurencí."
+          },
+          {
+            "title": "Klíčová slova",
+            "text": "Najdeme dotazy, které skutečně vedou k poptávce, ne jen k návštěvám."
+          },
+          {
+            "title": "Technická optimalizace",
+            "text": "Rychlost, indexace, strukturovaná data, interní prolinkování."
+          },
+          {
+            "title": "Obsah",
+            "text": "Plán témat a texty, které odpovídají na reálné otázky zákazníků."
+          },
+          {
+            "title": "Reporting",
+            "text": "Pravidelný přehled pozic, návštěvnosti a konverzí — srozumitelně."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Za jak dlouho uvidím výsledky?",
+            "a": "První posuny bývají do několika týdnů, stabilní růst je běh na měsíce. Konkrétní odhad dostanete po auditu."
+          },
+          {
+            "q": "Garantujete první místo v Google?",
+            "a": "Ne — nikdo to seriózně garantovat nemůže. Garantujeme postup, transparentní reporting a práci na měřitelných cílech."
+          },
+          {
+            "q": "Děláte SEO i pro web, který jste nedělali?",
+            "a": "Ano, začneme auditem a navrhneme, co má smysl řešit nejdřív."
+          }
+        ],
+        "meta": {
+          "title": "SEO optimalizace, která přináší výsledky | ELEVATE",
+          "description": "SEO od studia ELEVATE: audit, klíčová slova, technická optimalizace a obsah. Vyšší viditelnost a relevantní návštěvníci."
+        }
+      },
+      "e-shopy": {
+        "tab": "E-shopy",
+        "card": "E-shopy",
+        "headline": [
+          "E-shopy, které ",
+          "prodávají",
+          ""
+        ],
+        "lead": "Vytváříme výkonné e-shopy zaměřené na konverze a růst.",
+        "cta": "E-shop na míru",
+        "ctaSecondary": "Detail služby",
+        "mascotLine": "Obchod, který prodává i když spíte.",
+        "features": [
+          {
+            "title": "Vyšší",
+            "sub": "prodeje"
+          },
+          {
+            "title": "Moderní design",
+            "sub": "a moderní funkce"
+          },
+          {
+            "title": "Bezpečné a rychlé",
+            "sub": "platby"
+          }
+        ],
+        "includes": [
+          {
+            "title": "Nákupní cesta bez tření",
+            "text": "Od produktu po zaplaceno co nejmíň kroků a žádná překvapení."
+          },
+          {
+            "title": "Platby a doprava",
+            "text": "Napojení na platební brány a dopravce, které vaši zákazníci znají."
+          },
+          {
+            "title": "Katalog a varianty",
+            "text": "Filtry, varianty, skladovost i hromadný import produktů."
+          },
+          {
+            "title": "Mobil na prvním místě",
+            "text": "Většina nákupů začíná na telefonu — tam e-shop ladíme nejvíc."
+          },
+          {
+            "title": "Měření konverzí",
+            "text": "Víte, který krok košíku ztrácí lidi, a máte co zlepšovat."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Stavíte na hotové platformě, nebo na míru?",
+            "a": "Podle rozsahu. Menší e-shop dává smysl na hotové platformě, u specifických procesů stavíme na míru. Doporučíme podle vašeho zadání."
+          },
+          {
+            "q": "Umíte převést existující e-shop?",
+            "a": "Ano, včetně migrace produktů, objednávek a přesměrování kvůli SEO."
+          },
+          {
+            "q": "Postaráte se i o provoz?",
+            "a": "Ano, nabízíme údržbu, aktualizace a průběžnou optimalizaci konverzí."
+          }
+        ],
+        "meta": {
+          "title": "Tvorba e-shopů na míru | ELEVATE Praha",
+          "description": "Výkonné e-shopy zaměřené na konverze: rychlé načítání, bezpečné platby a design, který prodává i na mobilu."
+        }
+      },
+      "design": {
+        "tab": "Design",
+        "card": "Design",
+        "headline": [
+          "Moderní ",
+          "design,",
+          " který zaujme"
+        ],
+        "lead": "Tvoříme unikátní design, který buduje značku a důvěru.",
+        "cta": "Web, který pracuje za vás",
+        "ctaSecondary": "Návrh designu",
+        "mascotLine": "První dojem máte jen jeden. Postaráme se, aby zaujal.",
+        "features": [
+          {
+            "title": "Unikátní",
+            "sub": "design"
+          },
+          {
+            "title": "Perfektní",
+            "sub": "na každém zařízení"
+          },
+          {
+            "title": "Rychlé",
+            "sub": "a efektivní"
+          }
+        ],
+        "includes": [
+          {
+            "title": "Vizuální identita",
+            "text": "Barvy, typografie a pravidla, podle kterých značka drží pohromadě."
+          },
+          {
+            "title": "UI kit a komponenty",
+            "text": "Znovupoužitelné bloky, ze kterých poskládáte i budoucí stránky."
+          },
+          {
+            "title": "Prototyp",
+            "text": "Klikatelný návrh dřív, než se napíše první řádek kódu."
+          },
+          {
+            "title": "Responzivita",
+            "text": "Návrh pro desktop, tablet i mobil — ne jen zmenšenina."
+          },
+          {
+            "title": "Předání vývoji",
+            "text": "Čistý Figma soubor, ze kterého se dá stavět bez dohadů."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Dostanu zdrojové soubory?",
+            "a": "Ano, Figma projekt je po dokončení váš."
+          },
+          {
+            "q": "Uděláte i logo?",
+            "a": "Ano, případně navážeme na vaši stávající identitu a sjednotíme ji pro web."
+          },
+          {
+            "q": "Kolik kol připomínek je v ceně?",
+            "a": "Standardně dvě kola revizí, další řešíme individuálně."
+          }
+        ],
+        "meta": {
+          "title": "Webdesign a vizuální identita | ELEVATE",
+          "description": "Unikátní webdesign, který buduje značku a důvěru. Prototypy, UI kit a responzivní návrhy od studia ELEVATE."
+        }
+      },
+      "aplikace": {
+        "tab": "Aplikace",
+        "card": "Aplikace",
+        "headline": [
+          "Vyvíjíme ",
+          "aplikace,",
+          " které lidé skutečně používají"
+        ],
+        "lead": "Vytváříme moderní aplikace pro iOS a Android, které zjednodušují a zvyšují váš byznys.",
+        "cta": "Aplikace, které rostou",
+        "ctaSecondary": "Vývoj aplikace",
+        "mascotLine": "Aplikace, kterou lidé nebudou chtít smazat.",
+        "features": [
+          {
+            "title": "Vývoj aplikací",
+            "sub": "iOS & Android"
+          },
+          {
+            "title": "Optimalizace pro",
+            "sub": "App Store"
+          },
+          {
+            "title": "Optimalizace pro",
+            "sub": "Google Play"
+          },
+          {
+            "title": "Rychlé, stabilní",
+            "sub": "a uživatelsky přívětivé"
+          }
+        ],
+        "includes": [
+          {
+            "title": "Od nápadu k MVP",
+            "text": "Zúžíme rozsah na to, co má smysl vydat první — a co počká."
+          },
+          {
+            "title": "iOS i Android",
+            "text": "Jedna kódová základna, nativní chování na obou platformách."
+          },
+          {
+            "title": "Napojení na váš systém",
+            "text": "API, objednávky, rezervace, platby — aplikace není ostrov."
+          },
+          {
+            "title": "Publikace do storů",
+            "text": "Postaráme se o vydání, texty, screenshoty i aktualizace."
+          },
+          {
+            "title": "Provoz a růst",
+            "text": "Sledujeme pády, výkon a chování uživatelů a iterujeme."
+          }
+        ],
+        "faq": [
+          {
+            "q": "Kolik stojí aplikace?",
+            "a": "Vždy podle rozsahu. Po úvodní konzultaci dostanete rozpad na funkce s odhadem."
+          },
+          {
+            "q": "Potřebuju nativní, nebo stačí web?",
+            "a": "Často stačí dobře udělaná webová aplikace. Řekneme upřímně, kdy se nativní vývoj nevyplatí."
+          },
+          {
+            "q": "Zajistíte i účty v App Store a Google Play?",
+            "a": "Ano, provedeme vás registrací i publikací."
+          }
+        ],
+        "meta": {
+          "title": "Vývoj mobilních aplikací iOS a Android | ELEVATE",
+          "description": "Vyvíjíme moderní aplikace pro iOS a Android — od MVP po publikaci ve storech. Rychlé, stabilní a uživatelsky přívětivé."
+        }
+      }
+    }
+  },
+  "mockups": {
+    "illustrative": "Ilustrativní ukázka",
+    "web": {
+      "headline1": "Váš byznys.",
+      "headline2": "Na vyšší úroveň.",
+      "cta": "Nezávazná konzultace",
+      "checklist": [
+        "Design",
+        "Speed",
+        "SEO",
+        "Conversion"
+      ],
+      "label": "Website"
+    },
+    "seo": {
+      "title": "Přehled výsledků",
+      "metrics": [
+        "Návštěvnost",
+        "Klíčová slova",
+        "Konverze"
+      ],
+      "months": [
+        "LED",
+        "ÚNO",
+        "BŘE",
+        "DUB",
+        "KVĚ",
+        "ČVN"
+      ],
+      "plan": "SEO plán",
+      "steps": [
+        "Analýza",
+        "Klíčová slova",
+        "Optimalizace",
+        "Obsah",
+        "Výsledky"
+      ],
+      "serp": "Výsledky vyhledávání",
+      "query": "tvorba webu praha"
+    },
+    "shop": {
+      "nav": [
+        "Domů",
+        "Kategorie",
+        "Novinky",
+        "Kontakt"
+      ],
+      "banner1": "Premium",
+      "banner2": "kolekce",
+      "price": "2 499 Kč",
+      "addToCart": "Přidat do košíku",
+      "ordered": "Objednávka přijata",
+      "strip": [
+        {
+          "title": "Doprava zdarma",
+          "sub": "nad 2 000 Kč"
+        },
+        {
+          "title": "Vrácení do 30 dnů",
+          "sub": "bez udání důvodu"
+        },
+        {
+          "title": "Bezpečná platba",
+          "sub": "100 % zabezpečeno"
+        }
+      ],
+      "recommended": "Doporučené produkty",
+      "products": [
+        "Kšiltovka",
+        "Bunda",
+        "Batoh"
+      ],
+      "productAlt": "Sportovní obuv"
+    },
+    "design": {
+      "nav": "Home · Služby · O nás · Kontakt",
+      "headline1": "Stavíme",
+      "headline2": "budoucnost",
+      "sub": "Moderní řešení pro moderní svět",
+      "cta": "Naše projekty",
+      "devices": [
+        "Desktop",
+        "Tablet",
+        "Mobil"
+      ]
+    },
+    "app": {
+      "back": "Your App",
+      "title": "Přehled",
+      "revenue": "Celkový příjem",
+      "users": "Users",
+      "revenueShort": "Revenue",
+      "performance": "Performance"
+    }
+  },
+  "whyAnimated": {
+    "eyebrow": "Proč animace",
+    "title": "Weby, které",
+    "titleAccent": "žijí.",
+    "lead": "Statický web lidé přelétnou. Animovaný web si zapamatují. Každý náš web má pohyb, který vede oko, vypráví příběh a vede k akci.",
+    "static": "Statický",
+    "animated": "Animovaný",
+    "toggleLabel": "Přepnout mezi statickou a animovanou ukázkou",
+    "hint": "Skrolujte — stránka uvnitř notebooku se hýbe s vámi.",
+    "args": [
+      {
+        "title": "Delší čas na webu",
+        "text": "Pohyb drží pozornost a vede oko přesně tam, kam potřebujete."
+      },
+      {
+        "title": "Silnější zapamatování značky",
+        "text": "To, co se hýbe a má vlastní rukopis, si člověk spojí s vaší firmou."
+      },
+      {
+        "title": "Víc kliknutí na CTA",
+        "text": "Tlačítko, které reaguje, vypadá jako pozvánka — ne jako obrázek."
+      }
+    ],
+    "footnote": "A přitom rychlé — optimalizujeme každou animaci.",
+    "mascotBored": "Statický web. Nic se neděje. Nuda.",
+    "mascotHappy": "Tohle je ono! Vidíš ten rozdíl?"
+  },
+  "process": {
+    "eyebrow": "Proces",
+    "title": "Jak to u nás",
+    "titleAccent": "funguje",
+    "lead": "Pět kroků od prvního hovoru k webu, který vydělává. Žádné překvapení uprostřed projektu.",
+    "steps": [
+      {
+        "title": "Konzultace",
+        "text": "Probereme vaše cíle, zdarma a nezávazně."
+      },
+      {
+        "title": "Návrh",
+        "text": "Připravíme design a strukturu webu."
+      },
+      {
+        "title": "Vývoj & animace",
+        "text": "Oživíme design do rychlého, animovaného webu."
+      },
+      {
+        "title": "Spuštění",
+        "text": "Web spustíme, nastavíme SEO a analytiku."
+      },
+      {
+        "title": "Podpora & růst",
+        "text": "Staráme se, aby web dál vydělával."
+      }
+    ]
+  },
+  "cases": {
+    "eyebrow": "Reference",
+    "title": "Weby, které jsme postavili",
+    "titleAccent": "od nuly",
+    "lead": "Tři klienti, kteří před námi web neměli. Návrh, vývoj i spuštění jsou naše.",
+    "note": "Klient neměl web — navrhli a vytvořili jsme ho od nuly.",
+    "tags": [
+      "Web od nuly",
+      "Návrh",
+      "Vývoj"
+    ],
+    "visit": "Navštívit web",
+    "scrollHint": "Skrolujte",
+    "items": {
+      "euromotors": {
+        "name": "EURO-MOTORS",
+        "kind": "Autoservis v Praze 10",
+        "text": "Opravy a údržba vozů všech značek."
+      },
+      "inhome": {
+        "name": "InHome Praha",
+        "kind": "Úklidová firma",
+        "text": "Úklidové služby po celé ČR."
+      },
+      "biodent": {
+        "name": "BioDent",
+        "kind": "Stomatologická klinika",
+        "text": "Zubní péče v Praze 2."
+      }
+    }
+  },
+  "pricing": {
+    "eyebrow": "Ceník",
+    "title": "Investice, která",
+    "titleAccent": "se vrátí",
+    "lead": "Transparentní ceny. Finální nabídku připravíme po nezávazné konzultaci.",
+    "from": "od",
+    "badge": "Nejčastější volba",
+    "cta": "Chci tenhle balíček",
+    "customCta": "Domluvit cenu na míru",
+    "customPrice": "Cena na míru",
+    "vat": "Ceny jsou uvedeny bez DPH.",
+    "plans": {
+      "start": {
+        "name": "START",
+        "tagline": "Jednoduchý web nebo landing page",
+        "features": [
+          "Jednostránkový web na míru",
+          "Responzivní design",
+          "Základní animace",
+          "Kontaktní formulář",
+          "Napojení analytiky",
+          "Spuštění a předání"
+        ],
+        "price": "45 000 Kč"
+      },
+      "business": {
+        "name": "BUSINESS",
+        "tagline": "Vícestránkový web + základ SEO",
+        "features": [
+          "Až 6 podstránek",
+          "Návrh designu na míru",
+          "Technické SEO a rychlost",
+          "Správa obsahu (CMS)",
+          "Analytika a měření konverzí",
+          "Texty a struktura",
+          "Měsíc podpory po spuštění"
+        ],
+        "price": "95 000 Kč"
+      },
+      "animated": {
+        "name": "ANIMATED",
+        "tagline": "Prémiový animovaný web",
+        "features": [
+          "Vše z balíčku BUSINESS",
+          "Scénář animací na míru",
+          "3D nebo interaktivní scéna",
+          "Mikrointerakce v celém webu",
+          "Optimalizace výkonu animací",
+          "Verze pro omezený pohyb",
+          "Tři měsíce podpory"
+        ],
+        "price": "180 000 Kč"
+      }
+    },
+    "custom": {
+      "name": "INDIVIDUÁLNĚ",
+      "tagline": "Větší projekty počítáme podle zadání",
+      "items": [
+        "E-shopy",
+        "Aplikace",
+        "Dlouhodobé SEO"
+      ]
+    }
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "title": "Časté",
+    "titleAccent": "dotazy",
+    "lead": "Nenašli jste odpověď? Napište nám — ozveme se do 24 hodin.",
+    "items": [
+      {
+        "q": "Kolik stojí web?",
+        "a": "Cena vždy vychází z rozsahu — jiná je jednostránková prezentace, jiná e-shop s napojením na sklad. Po nezávazné konzultaci dostanete pevnou nabídku s rozpadem na položky, takže víte, za co platíte."
+      },
+      {
+        "q": "Jak dlouho trvá realizace?",
+        "a": "Menší prezentační web zvládneme obvykle za 4–6 týdnů, rozsáhlejší projekty a e-shopy za 8–12 týdnů. Termín potvrdíme po odsouhlasení zadání."
+      },
+      {
+        "q": "Zpomalí animace web?",
+        "a": "Ne, pokud se dělají správně. Animujeme jen vlastnosti, které prohlížeč zvládá bez přepočítávání layoutu, scény načítáme až když jsou potřeba a na slabších zařízeních i při zapnutém „omezit pohyb“ se web sám přepne do klidné verze. Rychlost měříme na každém projektu."
+      },
+      {
+        "q": "Postaráte se i o obsah a SEO?",
+        "a": "Ano. Umíme připravit strukturu i texty, vyřešit technické SEO a nastavit měření. Pokud máte vlastního copywritera, rádi se s ním sladíme."
+      },
+      {
+        "q": "Co když už web mám?",
+        "a": "Začneme auditem — někdy stačí redesign několika sekcí, zrychlení a doladění konverzní cesty, jindy se vyplatí postavit web znovu. Vždy doporučíme levnější cestu, pokud dává smysl."
+      }
+    ]
+  },
+  "contact": {
+    "eyebrow": "Kontakt",
+    "title": "Připraveni posunout váš projekt na",
+    "titleAccent": "vyšší úroveň?",
+    "stepLabel": "Krok",
+    "steps": [
+      "Co potřebujete?",
+      "Pár detailů",
+      "Kontakt"
+    ],
+    "hints": [
+      "Klidně vyber víc věcí — nebo „Nevím, poraďte mi“.",
+      "Rozpočet pomůže hlavně tobě: ušetří kola dohadování.",
+      "Poslední krok. Ozveme se do 24 hodin."
+    ],
+    "needs": [
+      "Web",
+      "E-shop",
+      "SEO",
+      "Design",
+      "Aplikace",
+      "Nevím, poraďte mi"
+    ],
+    "budgets": [
+      "do 50 000 Kč",
+      "50–150 000 Kč",
+      "150–400 000 Kč",
+      "nad 400 000 Kč",
+      "zatím nevím"
+    ],
+    "timelines": [
+      "Co nejdřív",
+      "1–2 měsíce",
+      "Nespěchá"
+    ],
+    "budgetLabel": "Přibližný rozpočet",
+    "timelineLabel": "Kdy to potřebujete?",
+    "siteLabel": "Máte už web?",
+    "optional": "nepovinné",
+    "nameLabel": "Jméno",
+    "emailLabel": "E-mail",
+    "phoneLabel": "Telefon",
+    "messageLabel": "Zpráva",
+    "messagePlaceholder": "Pár vět o projektu…",
+    "consent": "Souhlasím se zpracováním osobních údajů za účelem vyřízení poptávky.",
+    "consentLink": "Více informací",
+    "back": "Zpět",
+    "next": "Pokračovat",
+    "submit": "Odeslat poptávku",
+    "sending": "Odesílám",
+    "successTitle": "Děkujeme! Ozveme se do 24 hodin.",
+    "successText": "Mezitím se můžete podívat na náš",
+    "successLink": "proces spolupráce",
+    "honeypot": "Nevyplňujte",
+    "errors": {
+      "needs": "Vyberte alespoň jednu službu.",
+      "name": "Napište prosím své jméno.",
+      "email": "Zkontrolujte formát e-mailu.",
+      "message": "Zpráva je příliš dlouhá.",
+      "site": "Adresa je příliš dlouhá.",
+      "consent": "Bez souhlasu bohužel nemůžeme formulář odeslat.",
+      "server": "Zkontrolujte prosím vyplněné údaje.",
+      "rate": "Příliš mnoho pokusů. Zkuste to prosím za chvíli.",
+      "send": "E-mail se nepodařilo odeslat. Napište nám prosím přímo na",
+      "generic": "Něco se pokazilo. Zkuste to prosím znovu."
+    }
+  },
+  "footer": {
+    "tagline": "Digitální studio z Prahy. Tvoříme animované weby, e-shopy a aplikace, které posouvají podnikání našich klientů.",
+    "services": "Služby",
+    "studio": "Studio",
+    "contact": "Kontakt",
+    "privacy": "Ochrana osobních údajů",
+    "up": "Nahoru",
+    "toTop": "Zpět nahoru",
+    "rights": "Všechna práva vyhrazena."
+  },
+  "mascot": {
+    "idleNudge": "Stačí vyplnit 3 kroky, zabere to minutu.",
+    "success": "Děkujeme! Ozveme se do 24 hodin.",
+    "guideLabel": "Průvodce ELEVATE — klikni pro tip",
+    "collapse": "Sbalit průvodce",
+    "expand": "Rozbalit průvodce",
+    "closeBubble": "Zavřít bublinu",
+    "random": [
+      "Jsem tu, kdyby něco.",
+      "Mimochodem — tenhle web je taky náš.",
+      "Každá animace tu má důvod. Fakt.",
+      "Chceš to samé pro svoji firmu? Skroluj dolů.",
+      "Kafe mám, nápady taky. Do toho."
+    ],
+    "cues": {
+      "hero": "Ahoj! Jsem tvůj průvodce. Pojď, ukážu ti, co umíme.",
+      "problem": "Tohle znám. Sedíš v kavárně a nevíš, kde začít.",
+      "sluzby": "Vyber si kartu — ukážu ti, co za ní je.",
+      "detaily": "Každá karta je jedna služba. Skroluj dál.",
+      "proc-animace": "Přepni ten vypínač. Uvidíš ten rozdíl sám.",
+      "proces": "Pět kroků. Projdu je s tebou.",
+      "reference": "Tohle jsou weby, které jsme postavili od nuly.",
+      "cenik": "Ceny na rovinu. Žádné hvězdičky.",
+      "faq": "Ptáš se na cenu? Klikni na první otázku.",
+      "kontakt": "Tři kroky a máme se o čem bavit."
+    }
+  },
+  "meta": {
+    "home": {
+      "title": "ELEVATE — digitální studio z Prahy | Weby, e-shopy, aplikace",
+      "description": "Tvoříme moderní weby, e-shopy a aplikace, které spojují design, výkon a výsledky. Animované weby na míru z Prahy."
+    },
+    "ogTitle": "ELEVATE — digitální řešení, která posouvají vaše podnikání",
+    "keywords": [
+      "tvorba webů Praha",
+      "animované weby",
+      "e-shop na míru",
+      "SEO Praha",
+      "webdesign",
+      "vývoj aplikací"
+    ]
+  },
+  "privacy": {
+    "eyebrow": "Právní informace",
+    "title": "Ochrana osobních údajů",
+    "lead": "Tento dokument popisuje, jak nakládáme s údaji, které nám pošlete přes formulář na tomto webu. Text je připravený jako vzor — před spuštěním ho prosím nechte zkontrolovat a doplňte identifikační údaje firmy.",
+    "updated": "Poslední aktualizace",
+    "metaDescription": "Jak ve studiu ELEVATE nakládáme s osobními údaji z poptávkového formuláře.",
+    "sections": [
+      {
+        "title": "1. Správce údajů",
+        "body": "Správcem osobních údajů je {company}, se sídlem {city}, {postal}, Česká republika. Kontaktní e-mail: {email}."
+      },
+      {
+        "title": "2. Jaké údaje zpracováváme",
+        "body": "Zpracováváme údaje, které nám sami vyplníte v poptávkovém formuláři: jméno, e-mail, případně telefon, adresu stávajícího webu a text zprávy. Dále technický údaj o IP adrese odesílatele, který slouží výhradně k ochraně formuláře před zneužitím."
+      },
+      {
+        "title": "3. Proč údaje zpracováváme",
+        "body": "Údaje používáme pouze k tomu, abychom vám mohli odpovědět na poptávku a připravit nabídku. Právním základem je jednání o smlouvě na vaši žádost a náš oprávněný zájem na ochraně formuláře před spamem."
+      },
+      {
+        "title": "4. Jak dlouho je uchováváme",
+        "body": "Poptávky uchováváme po dobu nezbytnou k vyřízení a následně nejdéle 24 měsíců, pokud se nedohodneme jinak."
+      },
+      {
+        "title": "5. Komu je předáváme",
+        "body": "E-maily doručuje služba Resend (Resend, Inc.). Web je hostovaný na platformě Vercel. Pokud je zapnutá analytika, používáme cookieless nástroj Plausible. Žádné údaje neprodáváme ani nepředáváme pro marketingové účely třetích stran."
+      },
+      {
+        "title": "6. Cookies",
+        "body": "Web ve výchozím nastavení nepoužívá marketingové ani analytické cookies. Pokud v budoucnu zapneme analytiku vyžadující souhlas, zobrazíme vám lištu se souhlasem dřív, než se cokoli uloží."
+      },
+      {
+        "title": "7. Vaše práva",
+        "body": "Máte právo na přístup ke svým údajům, jejich opravu nebo výmaz, na omezení zpracování, na přenositelnost a právo vznést námitku. Stačí napsat na náš kontaktní e-mail. Máte také právo podat stížnost u Úřadu pro ochranu osobních údajů (uoou.gov.cz)."
+      }
+    ]
+  },
+  "notFound": {
+    "title": "Tahle stránka se nám ztratila",
+    "lead": "Zkuste to z domovské stránky — odtud vede cesta všude.",
+    "cta": "Zpět domů"
+  },
+  "a11y": {
+    "skip": "Přeskočit na obsah",
+    "mainNav": "Hlavní navigace",
+    "mobileNav": "Mobilní navigace"
+  }
+}
