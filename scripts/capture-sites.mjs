@@ -21,7 +21,8 @@ const run = promisify(execFile);
 const ROOT = process.cwd();
 
 const TARGETS = {
-  demo: { url: 'https://voyarelle-travel.higgsfield.app/', out: 'public/demo', name: 'animated' },
+  // zdroj pro scripts/build-demo.py (snímky a statická verze se generují z něj)
+  demo: { url: 'https://voyarelle-travel.higgsfield.app/', out: 'reference/demo-source', name: 'animated' },
   euromotors: { url: 'https://www.euromotors.cz/', out: 'public/cases/euromotors', name: 'euromotors' },
   inhome: { url: 'https://inhomepraha.cz/', out: 'public/cases/inhome', name: 'inhome' },
   biodent: { url: 'https://biodentclinic.cz/', out: 'public/cases/biodent', name: 'biodent' },

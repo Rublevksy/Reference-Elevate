@@ -1,0 +1,14 @@
+{
+  "desktop": {
+    "frames": 155,
+    "w": 960,
+    "h": 600,
+    "staticH": 2543
+  },
+  "mobile": {
+    "frames": 139,
+    "w": 438,
+    "h": 948,
+    "staticH": 2728
+  }
+}

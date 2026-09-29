@@ -46,7 +46,11 @@ const DESKTOP = { height: '521vh', overlap: '-184.2dvh', frames: [0, 0.4, 0.78],
  * Pak se film klidně rozplyne do mobilní sekce.
  */
 const MOBILE = { height: '340vh', overlap: '-100dvh', frames: [0, 0.78], frameAt: [0, 125] };
-const SHOT_IN: [number, number] = [101, 111]; // snímky: web se rozsvítí spolu s displejem (hned po otevření víka)
+/**
+ * Snímky, kdy se na displeji rozsvítí web: až když ruka pustí víko
+ * (ve snímcích 106–109 drží prsty roh displeje a web přes ně by je „propíchl").
+ */
+const SHOT_IN: [number, number] = [112, 122];
 const PUSH: [number, number] = [0.7, 0.84];
 const SETTLE: [number, number] = [0.84, 0.95];
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));

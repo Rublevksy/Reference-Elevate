@@ -577,79 +577,124 @@
   },
   "pricing": {
     "eyebrow": "Ceník",
-    "title": "Investice, která",
-    "titleAccent": "se vrátí",
-    "lead": "Transparentní ceny, žádné skryté poplatky.",
+    "title": "Co dostanete",
+    "titleAccent": "a za kolik",
+    "lead": "U každé služby vidíte, co přesně je v ceně a co se platí zvlášť. Konečnou částku potvrdíme po krátkém nezávazném hovoru.",
     "from": "od",
-    "badge": "Nejčastější volba",
-    "cta": "Chci tenhle balíček",
-    "customCta": "Domluvit cenu na míru",
-    "customPrice": "Cena na míru",
+    "includes": "V ceně",
+    "extra": "Zvlášť",
+    "term": "Termín",
     "vat": "Ceny jsou uvedeny bez DPH.",
     "plans": {
-      "start": {
-        "name": "START",
-        "tagline": "Jednoduchý web nebo landing page",
+      "web": {
+        "name": "Weby",
+        "price": "5 000 Kč",
+        "tagline": "Web na jedné stránce pro živnostníka, řemeslníka nebo novou službu.",
         "features": [
-          "Jednostránkový web na míru",
-          "Responzivní design",
-          "Základní animace",
-          "Kontaktní formulář",
-          "Napojení analytiky",
-          "Spuštění a předání"
+          "Jedna stránka se 4–6 sekcemi: úvod, služby, o vás, reference, kontakt",
+          "Grafika v barvách vašeho loga, pohodlná na mobilu i počítači",
+          "Kontaktní formulář, který chodí rovnou do vašeho e-mailu",
+          "Telefon na jedno kliknutí, mapa a odkazy na sociální sítě",
+          "Základní SEO: titulky, popisky a náhled pro sdílení odkazu",
+          "Spuštění na vaší doméně včetně HTTPS",
+          "Jedno kolo úprav po předání"
         ],
-        "price": "45 000 Kč"
+        "extra": "Texty a fotky dodáváte vy. Doménu a hosting platíte zvlášť — pomůžeme vybrat.",
+        "term": "do 7 pracovních dní",
+        "cta": "Chci web"
       },
-      "business": {
-        "name": "BUSINESS",
-        "tagline": "Vícestránkový web + základ SEO",
+      "seo": {
+        "name": "SEO",
+        "price": "2 500 Kč",
+        "tagline": "Jednorázová kontrola a oprava základů u webu, který už máte.",
         "features": [
-          "Až 6 podstránek",
-          "Návrh designu na míru",
-          "Technické SEO a rychlost",
-          "Správa obsahu (CMS)",
-          "Analytika a měření konverzí",
-          "Texty a struktura",
-          "Měsíc podpory po spuštění"
+          "Kontrola webu: co Google vidí, rychlost a chyby na mobilu",
+          "Propojení s Google Search Console a Google Analytics",
+          "Nové titulky a popisky až pro 10 stránek",
+          "Oprava nadpisů a popisků obrázků na hlavních stránkách",
+          "Mapa webu (sitemap.xml) a nastavení robots.txt",
+          "Kontrola firemního profilu na Google Mapách",
+          "Zpráva: co jsme opravili a co má smysl dělat dál"
         ],
-        "price": "95 000 Kč"
+        "extra": "Pravidelnou měsíční péči, psaní článků a získávání odkazů řešíme zvlášť.",
+        "term": "3–5 pracovních dní",
+        "cta": "Chci SEO kontrolu"
       },
-      "animated": {
-        "name": "ANIMATED",
-        "tagline": "Prémiový animovaný web",
+      "eshop": {
+        "name": "E-shopy",
+        "price": "15 000 Kč",
+        "tagline": "Menší e-shop na hotové platformě (Shoptet, WooCommerce nebo Shopify), připravený prodávat.",
         "features": [
-          "Vše z balíčku BUSINESS",
-          "Scénář animací na míru",
-          "3D nebo interaktivní scéna",
-          "Mikrointerakce v celém webu",
-          "Optimalizace výkonu animací",
-          "Verze pro omezený pohyb",
-          "Tři měsíce podpory"
+          "Nastavení platformy a šablony podle vaší značky",
+          "Až 30 produktů s fotkami, variantami a kategoriemi",
+          "Platby kartou přes bránu (Comgate, GoPay nebo Stripe), převodem i na dobírku",
+          "Doprava: Zásilkovna, PPL nebo Česká pošta, cena se počítá v košíku",
+          "Automatické e-maily k objednávce a faktury",
+          "Vložení obchodních podmínek, reklamačního řádu a GDPR",
+          "Hodina zaškolení: přidání produktu a vyřízení objednávky"
         ],
-        "price": "180 000 Kč"
+        "extra": "Měsíční poplatek platformě a poplatky za platby platíte napřímo. Právní texty dodáváte vy.",
+        "term": "2–3 týdny",
+        "cta": "Chci e-shop"
+      },
+      "design": {
+        "name": "Logo a design",
+        "price": "2 000 Kč",
+        "tagline": "Logo pro nový podnik nebo osvěžení toho stávajícího.",
+        "features": [
+          "2 různé návrhy loga na výběr",
+          "2 kola úprav vybraného návrhu",
+          "Barevná, černobílá a světlá verze na tmavý podklad",
+          "Soubory pro web i tisk: SVG, PDF a PNG s průhledným pozadím",
+          "Čtvercová verze na profilovku a ikonu webu",
+          "Přehled barev (HEX, RGB, CMYK) a písma na jedné stránce"
+        ],
+        "extra": "Vizitky, grafiku pro sociální sítě nebo celý vizuální styl naceníme zvlášť.",
+        "term": "5–7 pracovních dní",
+        "cta": "Chci logo"
+      },
+      "app": {
+        "name": "Aplikace",
+        "price": "12 500 Kč",
+        "tagline": "Jednoduchá webová aplikace, kterou si lidé uloží do telefonu jako ikonu.",
+        "features": [
+          "Až 4 obrazovky — třeba rezervace, katalog, formulář nebo kalkulačka",
+          "Funguje na iPhonu, Androidu i v počítači",
+          "Instalace na plochu telefonu bez App Store a Google Play (PWA)",
+          "Ukládání dat do jednoduché databáze nebo Google Tabulek",
+          "Upozornění e-mailem vám i zákazníkovi",
+          "Nasazení na vaši doménu",
+          "Jedno kolo úprav a 30 dní opravy chyb po spuštění"
+        ],
+        "extra": "Aplikaci do obchodů App Store a Google Play, přihlašování nebo platby naceníme podle rozsahu.",
+        "term": "2–3 týdny",
+        "cta": "Chci aplikaci"
       }
     },
     "custom": {
-      "name": "INDIVIDUÁLNĚ",
-      "tagline": "Větší projekty počítáme podle zadání",
+      "name": "Větší projekt?",
+      "tagline": "Víc stránek, víc jazyků nebo napojení na vaše systémy — cenu spočítáme podle zadání.",
       "items": [
-        "E-shopy",
-        "Aplikace",
-        "Dlouhodobé SEO"
+        "Vícestránkové weby",
+        "Vícejazyčné verze",
+        "Napojení na sklad a účetnictví",
+        "Pravidelná SEO péče"
       ]
     },
+    "customPrice": "Podle zadání",
+    "customCta": "Domluvit cenu",
     "faq": [
       {
         "q": "Kolik to trvá?",
-        "a": "4–8 týdnů podle rozsahu."
+        "a": "Web obvykle do týdne, e-shop a aplikace 2–3 týdny od dodání podkladů."
       },
       {
         "q": "Zpomalí animace web?",
-        "a": "Ne — měříme rychlost u všeho."
+        "a": "Ne — rychlost měříme u všeho, co spouštíme."
       },
       {
         "q": "Co když už web mám?",
-        "a": "Auditujeme a navrhneme další krok."
+        "a": "Začněte SEO kontrolou — ukáže, co opravit jako první."
       }
     ]
   },

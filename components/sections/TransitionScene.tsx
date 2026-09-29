@@ -12,6 +12,9 @@ import { SYMBOL_POINTS, SYMBOL_VIEWBOX, ease, easeIn, easeOut, lerp, neonFlicker
 import { useScrollFrame } from '@/lib/useScrollFrame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { CardBody } from './ServiceDeck';
+import { DEMO_FIRST_FRAME } from './DemoScreen';
+import { PRICE_CARD_BG, PRICE_CARD_CLASS, PriceCardFace } from './Pricing';
+import { plans, type Plan } from '@/content/pricing';
 import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
 
 export type TransitionVariant =
@@ -521,7 +524,7 @@ function PanelToLaptop({ renderRef }: SceneProps) {
           <CardBody index={services.length - 1} role="current" />
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={shot} src="/demo/desktop.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-top opacity-0" />
+        <img ref={shot} src={DEMO_FIRST_FRAME} alt="" className="absolute inset-0 h-full w-full object-cover object-top opacity-0" />
         <div ref={sweep} className="pointer-events-none absolute -inset-y-1/4 left-0 w-40" style={{ background: 'linear-gradient(90deg, transparent, rgba(170,200,255,0.18), transparent)' }} />
       </div>
     </>
@@ -544,42 +547,29 @@ function LaptopToTimeline({ renderRef }: SceneProps) {
   const glows = useRef<(HTMLSpanElement | null)[]>([]);
   const title = useRef<HTMLDivElement>(null);
   const line = useRef<HTMLDivElement>(null);
-  const shot = useRef<{ key: string; url: string }>({ key: '', url: '/demo/desktop.jpg' });
+  const shot = useRef<{ key: string; url: string }>({ key: '', url: DEMO_FIRST_FRAME });
 
   /**
    * Snímek přesně toho, co je teď na obrazovce notebooku v sekci „Weby, které
-   * žijí" (video dojeté na konec, nebo statický screenshot v jeho posunu) —
-   * vrstvy se musí rozložit z téhož obrazu, jinak by obsah „naskočil znovu".
+   * žijí" (canvas ukázky v aktuální poloze a verzi) — vrstvy se musí rozložit
+   * z téhož obrazu, jinak by obsah „naskočil znovu".
    */
   const capture = (screenEl: HTMLElement | null, w: number, h: number) => {
-    if (!screenEl || w < 2 || h < 2) return shot.current.url;
-    const video = screenEl.querySelector('video');
-    const img = screenEl.querySelector('img');
-    const imgVisible = img ? Number(getComputedStyle(img).opacity) > 0.5 : false;
-    const key = `${Math.round(w)}x${Math.round(h)}:${imgVisible ? 'img' : 'vid'}:${video ? video.currentTime.toFixed(2) : ''}:${img?.style.transform ?? ''}`;
+    const source = screenEl?.querySelector('canvas');
+    if (!source || source.width < 2 || w < 2 || h < 2) return shot.current.url;
+    // ukázka kreslí do <canvas> — verze kresby v data-v, ať se nesnímá zbytečně
+    const key = `${Math.round(w)}x${Math.round(h)}:${source.dataset.v ?? ''}`;
     if (key === shot.current.key) return shot.current.url;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(w);
     canvas.height = Math.round(h);
     const ctx = canvas.getContext('2d');
     if (!ctx) return shot.current.url;
-    ctx.fillStyle = '#04060b';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     try {
-      if (!imgVisible && video && video.readyState >= 2 && video.videoWidth) {
-        // object-fit: cover, object-position: top
-        const s = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-        ctx.drawImage(video, (canvas.width - video.videoWidth * s) / 2, 0, video.videoWidth * s, video.videoHeight * s);
-      } else if (img && img.complete && img.naturalWidth) {
-        const m = img.style.transform.match(/translate3d\(0px?, (-?[\d.]+)px/);
-        const dy = m ? Number(m[1]) : 0;
-        const ih = (canvas.width / img.naturalWidth) * img.naturalHeight;
-        ctx.filter = imgVisible ? 'grayscale(1)' : 'none';
-        ctx.drawImage(img, 0, dy * (canvas.width / (screenEl.clientWidth || canvas.width)), canvas.width, ih);
-      } else return shot.current.url;
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
       shot.current = { key, url: canvas.toDataURL('image/jpeg', 0.85) };
     } catch {
-      /* canvas mimo náš původ — necháme výchozí screenshot */
+      /* necháme výchozí snímek */
     }
     return shot.current.url;
   };
@@ -650,7 +640,7 @@ function LaptopToTimeline({ renderRef }: SceneProps) {
           key={i}
           ref={(node) => { slabs.current[i] = node; }}
           className={`${CENTER} border-y border-[rgba(80,120,255,0.35)]`}
-          style={{ backgroundImage: 'url(/demo/desktop.jpg)', backgroundRepeat: 'no-repeat', boxShadow: '0 0 30px rgba(31,91,255,0.25)' }}
+          style={{ backgroundImage: `url(${DEMO_FIRST_FRAME})`, backgroundRepeat: 'no-repeat', boxShadow: '0 0 30px rgba(31,91,255,0.25)' }}
         />
       ))}
       {processSteps.map((num, i) => (
@@ -800,99 +790,69 @@ function NodeBurstToCases({ renderRef }: SceneProps) {
 /*  5 — Práce → Ceník: karty vyskočí z telefonu a otočí se na ceník    */
 /* ------------------------------------------------------------------ */
 
-const PLANS = ['start', 'business', 'animated'] as const;
-
-/** Líc ceníkové karty — rozvržení 1:1 jako v Ceníku, aby se při předání texty kryly. */
-function PriceFace({ plan, featured, className = '', style }: { plan: (typeof PLANS)[number]; featured: boolean; className?: string; style?: CSSProperties }) {
-  const tPricing = useTranslations('pricing');
+/** Líc ceníkové karty — stejná komponenta jako v Ceníku, aby se při předání texty kryly. */
+function PriceFace({ plan, className = '', style }: { plan: Plan; className?: string; style?: CSSProperties }) {
   return (
-    <div
-      className={`absolute inset-0 flex flex-col overflow-hidden rounded-card border p-7 ${
-        featured ? 'border-[rgba(61,123,255,0.45)] shadow-[0_0_60px_rgba(31,91,255,0.45)]' : 'border-[rgba(80,120,255,0.2)]'
-      } ${className}`}
-      style={{
-        background: featured ? 'linear-gradient(170deg,rgba(18,30,70,0.96),rgba(6,10,22,0.98))' : 'linear-gradient(160deg, rgba(20,28,48,0.96), rgba(8,12,22,0.96))',
-        ...style,
-      }}
-    >
-      {featured ? (
-        <span className="mb-4 self-start rounded-full border border-[rgba(61,123,255,0.5)] bg-[rgba(31,91,255,0.16)] px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-[var(--blue-bright)]">
-          {tPricing('badge')}
-        </span>
-      ) : null}
-      <span className="font-display text-xl font-bold tracking-[0.12em] text-ink">{tPricing(`plans.${plan}.name`)}</span>
-      <span className="mt-1.5 text-sm text-muted">{tPricing(`plans.${plan}.tagline`)}</span>
-      <span className="mt-6 flex items-baseline gap-2">
-        <span className="text-xs uppercase tracking-widest text-muted">{tPricing('from')}</span>
-        <span className="font-display text-[clamp(1.5rem,2.6vw,2rem)] font-bold text-ink">{tPricing(`plans.${plan}.price`)}</span>
-      </span>
-      <span className="mt-7 space-y-2.5">
-        {(tPricing.raw(`plans.${plan}.features`) as string[]).map((feature) => (
-          <span key={feature} className="flex items-start gap-2.5 text-sm text-muted">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--blue-bright)]" />
-            {feature}
-          </span>
-        ))}
-      </span>
+    <div className={`absolute inset-0 ${PRICE_CARD_CLASS} ${className}`} style={{ background: PRICE_CARD_BG, ...style }}>
+      <PriceCardFace plan={plan} />
     </div>
   );
 }
 
 function PhoneToPricing({ renderRef }: SceneProps) {
-  const tCases = useTranslations('cases.items');
+  const tItems = useTranslations('services.items');
   const cardEls = useRef<(HTMLDivElement | null)[]>([]);
 
   /**
-   * Tři projekty jsou naskládané přímo v obrazovce telefonu (nahoře ten,
-   * který telefon právě ukazuje), vyskočí z ní, rozestoupí se a otočí —
-   * z rubu jsou ceníkové karty, které se roztáhnou na ty skutečné.
+   * Z obrazovky telefonu (poslední projekt) vyletí po jedné pět karet služeb —
+   * tytéž karty, které na začátku webu vylétly z notebooku. Rozestoupí se do
+   * vějíře, otočí se a z rubu jsou ceníkové karty, které dosednou na skutečné.
+   * Karty mají od začátku rozměr cílové karty a jen se škálují — text se
+   * během letu nepřelamuje.
    */
-  renderRef.current = ({ q, vw, land, src }) => {
-    const phone = src('[data-land="cases-phone"]')[0] ?? { x: vw * 0.3, y: 0, w: 120, h: 260 };
-    const W = Math.min(280, vw * 0.2);
-    const H = W * 1.3;
-    const out = easeOut(seg(q, 0.02, 0.42));
+  renderRef.current = ({ q, vw, vh, land, src }) => {
+    const phone = src('[data-land="cases-phone"]')[0] ?? { x: -vw * 0.2, y: 0, w: 120, h: 260 };
     const targets = land('[data-land="price-card"]');
-    const fit = ease(seg(q, 0.8, 0.96));
+    const fit = ease(seg(q, 0.78, 0.96));
+    const n = plans.length;
     cardEls.current.forEach((el, i) => {
-      // v balíčku je navrchu poslední projekt — ten, který telefon právě ukazuje
-      const stackOrder = cases.length - 1 - i;
-      const off = i - 1;
-      const f = ease(seg(q, 0.44 + i * 0.06, 0.62 + i * 0.06));
-      const lift = Math.sin(f * Math.PI) * 44;
-      const hero = i === 1 ? easeOut(seg(q, 0.7, 0.78)) * (1 - fit) : 0;
-      const tgt = targets[i] ?? { x: off * (W + 30), y: 0, w: W, h: H };
-      // každý projekt vyskočí z displeje telefonu zvlášť, obloukem nahoru
-      const stagger = easeOut(seg(q, 0.02 + stackOrder * 0.07, 0.3 + stackOrder * 0.07));
-      const x0 = lerp(phone.x, off * (W + 30), stagger);
-      const y0 = lerp(phone.y, 0, stagger) - lift - hero * 22 - Math.sin(Math.PI * stagger) * 40;
-      size(el, lerp(lerp(phone.w, W, out), tgt.w, fit), lerp(lerp(phone.h, H, out), tgt.h, fit));
+      if (!el) return;
+      const tgt = targets[i] ?? { x: (i - (n - 1) / 2) * 280, y: vh * 0.05, w: 264, h: 680 };
+      size(el, tgt.w, tgt.h);
+      const off = i - (n - 1) / 2;
+      // z telefonu: začíná ve velikosti jeho displeje
+      const s0 = Math.min(phone.w / tgt.w, phone.h / tgt.h) * 0.9;
+      const sFan = Math.min(0.46, (vw * 0.16) / tgt.w);
+      const pop = easeOut(seg(q, 0.02 + i * 0.07, 0.3 + i * 0.07));
+      const f = ease(seg(q, 0.42 + i * 0.05, 0.62 + i * 0.05));
+      const lift = Math.sin(f * Math.PI) * 40;
+      const fanX = off * (tgt.w * sFan + 26);
+      const fanY = -vh * 0.04 + Math.abs(off) * 14;
+      const x0 = lerp(phone.x, fanX, pop);
+      const y0 = lerp(phone.y, fanY, pop) - lift - Math.sin(Math.PI * pop) * 50;
       tf(el, {
         x: lerp(x0, tgt.x, fit),
         y: lerp(y0, tgt.y, fit),
-        r: Math.sin(Math.PI * stagger) * off * 10,
+        r: lerp(Math.sin(Math.PI * pop) * off * 9 + off * 4 * pop, 0, fit),
         ry: 180 * f,
-        s: 1 + Math.sin(f * Math.PI) * 0.06 + hero * 0.06,
-        o: 1,
+        s: lerp(lerp(s0, sFan, pop), 1, fit) * (1 + Math.sin(f * Math.PI) * 0.05),
+        o: seg(q, 0.01 + i * 0.07, 0.05 + i * 0.07),
       });
-      if (el) el.style.zIndex = String(10 - stackOrder);
+      el.style.zIndex = String(20 - Math.round(Math.abs(off)));
     });
   };
 
   return (
     <>
-      {cases.map((item, i) => (
-        <div key={item.slug} ref={(el) => { cardEls.current[i] = el; }} className={`${CENTER} preserve-3d`}>
-          <div className="backface-hidden absolute inset-0 overflow-hidden rounded-2xl border border-[rgba(80,120,255,0.35)] bg-[var(--bg)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/cases/${item.slug}/mobile-poster.jpg`} alt="" className="h-full w-full object-cover object-top" />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-12">
-              <span className="font-display text-sm font-bold uppercase text-ink">{tCases(`${item.slug}.name`)}</span>
-            </div>
+      {plans.map((plan, i) => {
+        const item = services[i];
+        return (
+          <div key={plan.id} ref={(el) => { cardEls.current[i] = el; }} className={`${CENTER} preserve-3d opacity-0`}>
+            <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+            <PriceFace plan={plan} className="backface-hidden" style={{ transform: 'rotateY(180deg)' }} />
           </div>
-          <PriceFace plan={PLANS[i]} featured={i === 1} className="backface-hidden" style={{ transform: 'rotateY(180deg)' }} />
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -920,13 +880,15 @@ function PricingToEnvelope({ renderRef }: SceneProps) {
     // skutečné karty ceníku (klony na jejich místě) se slijí do listu dopisu
     const merge = ease(seg(q, 0.02, 0.3));
     cardEls.current.forEach((el, i) => {
-      const off = i - 1;
-      const s0 = S[i] ?? { x: off * 380, y: vh * 0.1, w: 360, h: 600 };
-      size(el, lerp(s0.w, LW, merge), lerp(s0.h, LH, merge));
+      const off = i - (plans.length - 1) / 2;
+      const s0 = S[i] ?? { x: off * 280, y: vh * 0.1, w: 264, h: 680 };
+      // rozměr zůstává, karta se jen zmenšuje do listu (text se nepřelamuje)
+      size(el, s0.w, s0.h);
       tf(el, {
         x: lerp(s0.x, 0, merge),
         y: lerp(s0.y, -EH * 0.35, merge),
-        r: Math.sin(Math.PI * merge) * off * 8,
+        r: Math.sin(Math.PI * merge) * off * 7,
+        s: lerp(1, Math.min(LW / s0.w, LH / s0.h), merge),
         o: 1 - seg(q, 0.26, 0.32),
       });
     });
@@ -962,9 +924,9 @@ function PricingToEnvelope({ renderRef }: SceneProps) {
       {Array.from({ length: 5 }).map((_, k) => (
         <span key={k} ref={(el) => { trail.current[k] = el; }} className={`${CENTER} h-3 w-3 rounded-full bg-[var(--blue-bright)] opacity-0 shadow-glow`} />
       ))}
-      {PLANS.map((plan, i) => (
-        <div key={plan} ref={(el) => { cardEls.current[i] = el; }} className={CENTER}>
-          <PriceFace plan={plan} featured={i === 1} />
+      {plans.map((plan, i) => (
+        <div key={plan.id} ref={(el) => { cardEls.current[i] = el; }} className={CENTER}>
+          <PriceFace plan={plan} />
         </div>
       ))}
       <div ref={group} className={`${CENTER} opacity-0`} style={{ perspective: 900 }}>

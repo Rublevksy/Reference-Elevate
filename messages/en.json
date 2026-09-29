@@ -577,79 +577,124 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "title": "An investment that",
-    "titleAccent": "pays off",
-    "lead": "Transparent pricing, no hidden fees.",
+    "title": "What you get",
+    "titleAccent": "and for how much",
+    "lead": "For every service you can see exactly what's included and what's paid separately. We confirm the final price after a short, no-obligation call.",
     "from": "from",
-    "badge": "Most popular",
-    "cta": "I want this package",
-    "customCta": "Get a custom quote",
-    "customPrice": "Custom quote",
-    "vat": "Prices are excluding VAT.",
+    "includes": "Included",
+    "extra": "Not included",
+    "term": "Timeline",
+    "vat": "Prices exclude VAT.",
     "plans": {
-      "start": {
-        "name": "START",
-        "tagline": "A simple website or landing page",
+      "web": {
+        "name": "Websites",
+        "price": "CZK 5,000",
+        "tagline": "A one-page website for a tradesperson, freelancer or a new service.",
         "features": [
-          "Custom one-page website",
-          "Responsive design",
-          "Basic motion",
-          "Contact form",
-          "Analytics setup",
-          "Launch and handover"
+          "One page with 4–6 sections: intro, services, about, references, contact",
+          "Design in your logo colours, comfortable on phone and desktop",
+          "A contact form that lands straight in your inbox",
+          "Tap-to-call phone number, map and social links",
+          "SEO basics: titles, descriptions and a link preview for sharing",
+          "Launch on your domain, including HTTPS",
+          "One round of revisions after handover"
         ],
-        "price": "€1 800"
+        "extra": "You supply the copy and photos. Domain and hosting are paid separately — we'll help you choose.",
+        "term": "within 7 working days",
+        "cta": "I want a website"
       },
-      "business": {
-        "name": "BUSINESS",
-        "tagline": "Multi-page website + SEO foundations",
+      "seo": {
+        "name": "SEO",
+        "price": "CZK 2,500",
+        "tagline": "A one-off check and fix of the basics on a website you already have.",
         "features": [
-          "Up to 6 subpages",
-          "Custom design",
-          "Technical SEO and speed",
-          "Content management (CMS)",
-          "Analytics and conversion tracking",
-          "Copy and structure",
-          "One month of post-launch support"
+          "Site check: what Google sees, speed and mobile errors",
+          "Google Search Console and Google Analytics connected",
+          "New titles and descriptions for up to 10 pages",
+          "Headings and image alt texts fixed on the main pages",
+          "Sitemap (sitemap.xml) and robots.txt set up",
+          "Your business profile on Google Maps checked",
+          "A report: what we fixed and what's worth doing next"
         ],
-        "price": "€3 800"
+        "extra": "Ongoing monthly SEO, article writing and link building are quoted separately.",
+        "term": "3–5 working days",
+        "cta": "I want an SEO check"
       },
-      "animated": {
-        "name": "ANIMATED",
-        "tagline": "Premium animated website",
+      "eshop": {
+        "name": "E-shops",
+        "price": "CZK 15,000",
+        "tagline": "A smaller online shop on a ready-made platform (Shoptet, WooCommerce or Shopify), ready to sell.",
         "features": [
-          "Everything in BUSINESS",
-          "Custom motion scenario",
-          "3D or interactive scene",
-          "Micro-interactions across the site",
-          "Animation performance tuning",
-          "Reduced-motion version",
-          "Three months of support"
+          "Platform and theme set up to match your brand",
+          "Up to 30 products with photos, variants and categories",
+          "Card payments via a gateway (Comgate, GoPay or Stripe), bank transfer and cash on delivery",
+          "Shipping: Packeta, PPL or Czech Post, with the price calculated in the cart",
+          "Automatic order emails and invoices",
+          "Terms and conditions, returns policy and GDPR added to the shop",
+          "A one-hour walkthrough: adding a product and handling an order"
         ],
-        "price": "€7 200"
+        "extra": "The platform's monthly fee and payment fees go directly to their providers. You supply the legal texts.",
+        "term": "2–3 weeks",
+        "cta": "I want an e-shop"
+      },
+      "design": {
+        "name": "Logo & design",
+        "price": "CZK 2,000",
+        "tagline": "A logo for a new business or a refresh of your current one.",
+        "features": [
+          "2 different logo concepts to choose from",
+          "2 rounds of revisions on the chosen concept",
+          "Colour, black-and-white and light-on-dark versions",
+          "Files for web and print: SVG, PDF and transparent PNG",
+          "A square version for profile pictures and the site icon",
+          "A one-page overview of colours (HEX, RGB, CMYK) and fonts"
+        ],
+        "extra": "Business cards, social media graphics or a full visual identity are quoted separately.",
+        "term": "5–7 working days",
+        "cta": "I want a logo"
+      },
+      "app": {
+        "name": "Apps",
+        "price": "CZK 12,500",
+        "tagline": "A simple web app people can save to their phone as an icon.",
+        "features": [
+          "Up to 4 screens — e.g. booking, catalogue, form or calculator",
+          "Works on iPhone, Android and desktop",
+          "Installs to the home screen without the App Store or Google Play (PWA)",
+          "Data stored in a simple database or Google Sheets",
+          "Email notifications for you and your customer",
+          "Deployed on your domain",
+          "One round of revisions and 30 days of bug fixes after launch"
+        ],
+        "extra": "Native App Store and Google Play apps, user accounts or payments are quoted by scope.",
+        "term": "2–3 weeks",
+        "cta": "I want an app"
       }
     },
     "custom": {
-      "name": "CUSTOM",
-      "tagline": "Larger projects are quoted from the brief",
+      "name": "Bigger project?",
+      "tagline": "More pages, more languages or connections to your systems — we'll price it from your brief.",
       "items": [
-        "E-shops",
-        "Apps",
-        "Long-term SEO"
+        "Multi-page websites",
+        "Multilingual versions",
+        "Stock and accounting integrations",
+        "Ongoing SEO"
       ]
     },
+    "customPrice": "Based on your brief",
+    "customCta": "Get a quote",
     "faq": [
       {
         "q": "How long does it take?",
-        "a": "4–8 weeks, depending on scope."
+        "a": "A website usually within a week; e-shops and apps 2–3 weeks after we receive your materials."
       },
       {
         "q": "Will animation slow it down?",
-        "a": "No — we measure speed on everything."
+        "a": "No — we measure speed on everything we launch."
       },
       {
         "q": "I already have a website?",
-        "a": "We audit it and suggest next steps."
+        "a": "Start with an SEO check — it shows what to fix first."
       }
     ]
   },

@@ -1,16 +1,17 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ArrowRight, Check, Plus, Sparkles } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Check, Clock3, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Icon } from '@/components/ui/FeatureIcon';
 import { SplitHeading } from '@/components/ui/SplitHeading';
-import { Odometer } from '@/components/ui/Odometer';
-import { plans } from '@/content/pricing';
+import { plans, type Plan } from '@/content/pricing';
+import { serviceMeta } from '@/content/services';
+import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
-/** Přenese vybraný balíček do formuláře a odskrolí k němu. */
+/** Přenese vybranou službu do formuláře a odskrolí k němu. */
 function pick(needIndex: number, plan: string) {
   window.dispatchEvent(new CustomEvent('elevate:preselect', { detail: { needIndex, plan } }));
   const target = document.getElementById('kontakt');
@@ -19,14 +20,115 @@ function pick(needIndex: number, plan: string) {
   else target.scrollIntoView({ behavior: 'smooth' });
 }
 
+/** Pozadí karty — sdílené se scénou přechodu, aby se při předání kryly. */
+export const PRICE_CARD_BG = 'linear-gradient(165deg, rgba(20,30,58,0.96), rgba(8,12,24,0.97) 62%)';
+
+/**
+ * Obsah ceníkové karty. Stejná komponenta kreslí skutečnou kartu v Ceníku
+ * i klon v přechodové scéně (tam bez interakce) — texty se při předání kryjí.
+ */
+export function PriceCardFace({ plan, interactive = false }: { plan: Plan; interactive?: boolean }) {
+  const t = useTranslations('pricing');
+  const meta = serviceMeta[plan.slug];
+  const key = `plans.${plan.id}`;
+  const features = t.raw(`${key}.features`) as string[];
+  const ctaClass =
+    'group/cta mt-6 flex w-full items-center justify-center gap-2 rounded-btn border border-[rgba(80,120,255,0.45)] px-4 py-3 font-display text-[11px] uppercase tracking-[0.12em] text-ink transition-[border-color,box-shadow,background-color] duration-300';
+
+  return (
+    <>
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.45)] bg-[rgba(31,91,255,0.12)] text-[var(--blue-bright)]">
+          <Icon name={meta.icon} className="h-[18px] w-[18px]" />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-display text-[10px] tracking-[0.22em] text-[#9fc0ff]">{meta.num}</span>
+          <span className="block font-display text-[15px] font-bold uppercase leading-tight tracking-[0.06em] text-ink">{t(`${key}.name`)}</span>
+        </span>
+      </div>
+
+      <p className="mt-5 flex items-baseline gap-1.5">
+        <span className="text-xs uppercase tracking-widest text-muted">{t('from')}</span>
+        <span className="font-display text-[clamp(1.45rem,1.9vw,1.75rem)] font-bold leading-none text-ink">{t(`${key}.price`)}</span>
+      </p>
+      <p className="mt-3 text-[13px] leading-snug text-muted">{t(`${key}.tagline`)}</p>
+
+      <span aria-hidden className="mt-5 block h-px w-full bg-[linear-gradient(90deg,rgba(80,120,255,0.45),rgba(80,120,255,0.08))]" />
+
+      <p className="mt-4 font-display text-[10px] uppercase tracking-[0.2em] text-[#9fc0ff]">{t('includes')}</p>
+      <ul className="mt-3 space-y-2">
+        {features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2 text-[12.5px] leading-[1.45] text-[rgba(226,232,248,0.86)]">
+            <span className="mt-[3px] grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full bg-[rgba(31,91,255,0.22)] text-[var(--blue-bright)]">
+              <Check className="h-2.5 w-2.5" aria-hidden />
+            </span>
+            {feature}
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-5 text-[12px] leading-snug text-muted">
+        <span className="mr-1 font-display text-[10px] uppercase tracking-[0.16em] text-[rgba(160,178,214,0.9)]">{t('extra')}:</span>
+        {t(`${key}.extra`)}
+      </p>
+
+      <div className="mt-auto">
+        <p className="mt-5 flex items-center gap-2 text-[12px] text-muted">
+          <Clock3 className="h-3.5 w-3.5 text-[var(--blue-bright)]" aria-hidden />
+          <span>
+            {t('term')}: <span className="text-ink">{t(`${key}.term`)}</span>
+          </span>
+        </p>
+        {interactive ? (
+          <button
+            type="button"
+            onClick={() => pick(plan.needIndex, t(`${key}.name`))}
+            className={`${ctaClass} hover:border-[rgba(120,160,255,0.85)] hover:bg-[rgba(31,91,255,0.14)] hover:shadow-[0_0_28px_rgba(31,91,255,0.45)]`}
+          >
+            {t(`${key}.cta`)}
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" aria-hidden />
+          </button>
+        ) : (
+          <span className={ctaClass}>
+            {t(`${key}.cta`)}
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </span>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Obal karty — stejný rozměr a vzhled pro skutečnou kartu i klon ve scéně přechodu. */
+export const PRICE_CARD_CLASS = 'relative flex flex-col overflow-hidden rounded-card border border-[rgba(80,120,255,0.22)] p-6';
+
 export function Pricing() {
   const t = useTranslations('pricing');
   const reduced = useReducedMotion();
-  const [alive, setAlive] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const custom = t.raw('custom') as { name: string; tagline: string; items: string[] };
   const faqPills = t.raw('faq') as { q: string; a: string }[];
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // mobil: karty jdou pod sebou a vyjíždějí zespodu (na desktopu je přiveze
+  // přechodová scéna — vlastní vstup by je ukázal podruhé)
+  useScrollFrame(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const mobile = window.innerWidth < 768 && !reduced;
+    grid.querySelectorAll<HTMLElement>('[data-land="price-card"]').forEach((card) => {
+      if (!mobile) {
+        card.style.opacity = '';
+        card.style.transform = '';
+        return;
+      }
+      const v = viewProgress(card, 1.02, 0.72);
+      const e = 1 - Math.pow(1 - v, 3);
+      card.style.opacity = (0.15 + 0.85 * e).toFixed(3);
+      card.style.transform = e >= 0.999 ? '' : `translate3d(0, ${((1 - e) * 42).toFixed(1)}px, 0) scale(${(0.97 + 0.03 * e).toFixed(4)})`;
+    });
+  });
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -56,158 +158,65 @@ export function Pricing() {
             className="mt-4 font-display text-[clamp(1.8rem,4.2vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />
-          <p className="mt-5 text-muted">{t('lead')}</p>
+          <p className="mx-auto mt-5 max-w-xl text-muted">{t('lead')}</p>
         </div>
+      </div>
 
-        <div className="mt-14 grid gap-5 lg:grid-cols-3">
-          {plans.map((plan, index) => {
-            const features = t.raw(`plans.${plan.id}.features`) as string[];
-            const isAnimated = plan.id === 'animated';
+      {/* pět služeb — na širokém okně vedle sebe, užší 3 + 2, na mobilu pod sebou */}
+      <div ref={gridRef} className="mx-auto mt-14 flex max-w-[1480px] flex-wrap justify-center gap-4 px-5 md:px-6">
+        {plans.map((plan) => (
+          <article
+            key={plan.id}
+            data-land="price-card"
+            className={`${PRICE_CARD_CLASS} group w-full transition-[border-color,box-shadow] duration-300 hover:border-[rgba(90,140,255,0.55)] hover:shadow-[0_0_46px_-12px_rgba(31,91,255,0.55)] md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
+            style={{ background: PRICE_CARD_BG }}
+          >
+            {/* neonová linka nahoře, při hoveru se rozsvítí */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-6 top-0 h-px opacity-50 transition-opacity duration-300 group-hover:opacity-100"
+              style={{ background: 'linear-gradient(90deg, transparent, rgba(97,150,255,0.95), transparent)' }}
+            />
+            <PriceCardFace plan={plan} interactive />
+          </article>
+        ))}
+      </div>
 
-            return (
-              <motion.article
-                key={plan.id}
-                data-land="price-card"
-                // karty sem „přiveze" přechodová scéna — vlastní vstup by je ukázal podruhé
-                initial={false}
-                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-                viewport={{ once: true, margin: '-12%' }}
-                transition={{
-                  duration: reduced ? 0 : 0.95,
-                  delay: reduced ? 0 : index * 0.16,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                onMouseEnter={() => isAnimated && setAlive(true)}
-                onMouseLeave={() => isAnimated && setAlive(false)}
-                className={`group relative flex flex-col overflow-hidden rounded-card p-7 ${
-                  plan.featured
-                    ? 'border border-[rgba(61,123,255,0.45)] bg-[linear-gradient(170deg,rgba(18,30,70,0.85),rgba(6,10,22,0.92))] lg:-mt-5 lg:pb-9'
-                    : 'glass'
-                }`}
-              >
-                {/* paprsek po rámečku u vybraného balíčku */}
-                {plan.featured && !reduced ? <span aria-hidden className="beam" /> : null}
-
-                {/* jemný šum + vnitřní modré světlo */}
-                {plan.featured ? (
-                  <>
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-45"
-                      style={{ background: 'radial-gradient(70% 50% at 50% 0%, rgba(31,91,255,0.35), transparent 70%)' }}
-                    />
-                    <span aria-hidden className="grain pointer-events-none absolute inset-0 opacity-30" />
-                  </>
-                ) : null}
-
-                <div className="relative">
-                  {plan.featured ? (
-                    <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[rgba(61,123,255,0.5)] bg-[rgba(31,91,255,0.16)] px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-[var(--blue-bright)]">
-                      <Sparkles className="h-3 w-3" aria-hidden />
-                      {t('badge')}
-                    </span>
-                  ) : null}
-
-                  <h3 className="font-display text-xl font-bold tracking-[0.12em] text-ink">
-                    {t(`plans.${plan.id}.name`)}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-muted">{t(`plans.${plan.id}.tagline`)}</p>
-
-                  <p className="mt-6 flex items-baseline gap-2">
-                    <span className="text-xs uppercase tracking-widest text-muted">{t('from')}</span>
-                    <motion.span
-                      className="font-display text-[clamp(1.5rem,2.6vw,2rem)] font-bold text-ink"
-                      animate={isAnimated && alive && !reduced ? { y: [0, -3, 0] } : { y: 0 }}
-                      transition={{ duration: 1.2, repeat: isAnimated && alive ? Infinity : 0 }}
-                    >
-                      <Odometer value={t(`plans.${plan.id}.price`)} />
-                    </motion.span>
-                  </p>
-
-                  <ul className="mt-7 space-y-2.5">
-                    {features.map((feature, i) => (
-                      <motion.li
-                        key={feature}
-                        className="flex items-start gap-2.5 text-sm text-muted"
-                        initial={false}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{
-                          duration: 0.4,
-                          delay: reduced ? 0 : 0.35 + index * 0.16 + i * 0.09,
-                        }}
-                      >
-                        <motion.span
-                          className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[rgba(31,91,255,0.2)] text-[var(--blue-bright)]"
-                          animate={
-                            isAnimated && alive && !reduced
-                              ? { scale: [1, 1.25, 1], rotate: [0, 8, 0] }
-                              : { scale: 1, rotate: 0 }
-                          }
-                          transition={{ duration: 0.9, delay: i * 0.08, repeat: isAnimated && alive ? Infinity : 0 }}
-                        >
-                          <Check className="h-2.5 w-2.5" aria-hidden />
-                        </motion.span>
-                        {feature}
-                      </motion.li>
-                    ))}
-                  </ul>
-
-                  <button
-                    type="button"
-                    onClick={() => pick(plan.needIndex, t(`plans.${plan.id}.name`))}
-                    className={`group/cta mt-8 flex w-full items-center justify-center gap-2 rounded-btn px-5 py-3.5 font-display text-[11px] uppercase tracking-[0.12em] transition-shadow ${
-                      plan.featured
-                        ? 'bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] text-white shadow-[0_0_26px_var(--blue-glow)] hover:shadow-[0_0_44px_var(--blue-glow)]'
-                        : 'border border-[var(--line)] text-ink hover:border-[rgba(80,120,255,0.5)] hover:shadow-glow'
-                    }`}
-                  >
-                    {t('cta')}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-1" aria-hidden />
-                  </button>
-                </div>
-              </motion.article>
-            );
-          })}
-        </div>
-
-        {/* individuální kalkulace */}
+      <div className="shell">
+        {/* větší zakázky */}
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-10%' }}
-          transition={{ duration: reduced ? 0 : 0.9, delay: reduced ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="glass mt-5 flex flex-wrap items-center justify-between gap-6 rounded-card p-7"
+          transition={{ duration: reduced ? 0 : 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="glass mt-6 flex flex-wrap items-center justify-between gap-6 rounded-card p-7"
         >
           <div>
-            <h3 className="font-display text-lg font-bold tracking-[0.12em] text-ink">{custom.name}</h3>
-            <p className="mt-1.5 text-sm text-muted">{custom.tagline}</p>
+            <h3 className="font-display text-lg font-bold tracking-[0.06em] text-ink">{custom.name}</h3>
+            <p className="mt-1.5 max-w-xl text-sm text-muted">{custom.tagline}</p>
             <ul className="mt-4 flex flex-wrap gap-2">
               {custom.items.map((cat) => (
-                <li
-                  key={cat}
-                  className="rounded-full border border-[var(--line)] px-3.5 py-1.5 text-xs text-muted"
-                >
+                <li key={cat} className="rounded-full border border-[var(--line)] px-3.5 py-1.5 text-xs text-muted">
                   {cat}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="flex items-center gap-5">
-            <span className="font-display text-lg font-bold text-[var(--blue-bright)]">{t('customPrice')}</span>
+          <div className="flex w-full flex-wrap items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-5">
+            <span className="whitespace-nowrap font-display text-base font-bold text-[var(--blue-bright)] sm:text-lg">{t('customPrice')}</span>
             <button
               type="button"
               onClick={() => pick(5, custom.name)}
-              className="group/cta inline-flex items-center gap-2 rounded-btn border border-[rgba(61,123,255,0.5)] px-5 py-3.5 font-display text-[11px] uppercase tracking-[0.12em] text-ink transition-shadow hover:shadow-glow"
+              className="group/cta inline-flex items-center gap-2 whitespace-nowrap rounded-btn border border-[rgba(61,123,255,0.5)] px-5 py-3.5 font-display text-[11px] uppercase tracking-[0.12em] text-ink transition-shadow duration-300 hover:shadow-glow"
             >
               {t('customCta')}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-1" aria-hidden />
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" aria-hidden />
             </button>
           </div>
         </motion.div>
 
-        {/* tři krátké „otázka-pilulky" — hlavní námitky rovnou u ceny, bez samostatné FAQ sekce */}
+        {/* tři krátké „otázka-pilulky" — hlavní námitky rovnou u ceny */}
         <div className="mt-10 flex flex-wrap items-start justify-center gap-2.5">
           {faqPills.map((item, i) => {
             const isOpen = openFaq === i;
@@ -217,7 +226,7 @@ export function Pricing() {
                 type="button"
                 onClick={() => setOpenFaq(isOpen ? null : i)}
                 aria-expanded={isOpen}
-                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors ${
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors duration-300 ${
                   isOpen
                     ? 'border-[rgba(61,123,255,0.6)] bg-[rgba(31,91,255,0.14)] text-ink'
                     : 'border-[var(--line)] text-muted hover:border-[rgba(80,120,255,0.4)] hover:text-ink'
