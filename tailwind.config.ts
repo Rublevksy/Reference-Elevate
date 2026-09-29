@@ -57,6 +57,18 @@ const config: Config = {
           '0%,100%': { opacity: '1' },
           '50%': { opacity: '0' },
         },
+        /* neon „bzučí" — klidné dýchání s občasným krátkým zakolísáním */
+        neonHum: {
+          '0%,100%': { opacity: '0.8' },
+          '40%': { opacity: '1' },
+          '46%': { opacity: '0.62' },
+          '48%': { opacity: '0.95' },
+          '70%': { opacity: '0.85' },
+        },
+        scrollDrip: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(300%)' },
+        },
       },
       animation: {
         float: 'float 6s ease-in-out infinite',
@@ -64,6 +76,8 @@ const config: Config = {
         drift: 'drift 18s ease-in-out infinite alternate',
         'spin-slow': 'spinSlow 40s linear infinite',
         caret: 'caret 1s step-end infinite',
+        'neon-hum': 'neonHum 4.2s ease-in-out infinite',
+        'scroll-drip': 'scrollDrip 1.6s cubic-bezier(0.6,0,0.4,1) infinite',
       },
     },
   },

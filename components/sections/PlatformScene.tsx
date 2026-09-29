@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 /**
  * Sdílená ambientní grafika stolu služeb — kruhová platforma, paprsky a
@@ -31,7 +31,7 @@ const RADIAL_LINES = Array.from({ length: 48 }).map((_, i) => {
 
 const COLUMNS = [90, 190, 300, 420, 540, 660, 770];
 
-export function PlatformScene({
+export const PlatformScene = memo(function PlatformScene({
   active = true,
   flash = false,
   compact = false,
@@ -125,4 +125,4 @@ export function PlatformScene({
       </motion.g>
     </svg>
   );
-}
+});

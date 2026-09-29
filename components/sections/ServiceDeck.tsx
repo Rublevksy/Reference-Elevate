@@ -11,6 +11,7 @@ import { services } from '@/content/services';
 import { NORDA_BOXES, NORDA_VISUALS, NordaStage, STAGE_W } from '@/components/norda/NordaVisuals';
 import { clamp01, ease, easeIn, easeOut, lerp, seg } from '@/lib/fx';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
 
 const COUNT = services.length;
 
@@ -20,8 +21,8 @@ const COUNT = services.length;
  * proměna opravdu vidět. Poslední služba má jen čtecí okno (pak ji
  * převezme přechodová scéna).
  */
-const DWELL_VH = 36;
-const MORPH_VH = 102;
+const DWELL_VH = 47;
+const MORPH_VH = 133;
 const TOTAL_VH = COUNT * DWELL_VH + (COUNT - 1) * MORPH_VH;
 /** progress 0…1 → (služba, morf 0…1 do další, progress v rámci služby 0…1) */
 function deckState(p: number) {
@@ -397,19 +398,23 @@ export function ServiceDeck() {
     <section
       id="detaily"
       ref={section}
-      // výška pinu jen na desktopu — mobil má panely jako sticky stoh v běžném toku
+      // výška pinu jen na desktopu — mobil má panely pod sebou v běžném toku
       className={reduced ? 'relative' : 'relative md:h-[var(--pin-h)]'}
       style={reduced ? undefined : ({ '--pin-h': `${TOTAL_VH + 100}vh` } as React.CSSProperties)}
       aria-label="Detaily služeb"
     >
-      {/* ---- MOBIL / reduced-motion: sticky stack ---- */}
-      <div className={reduced ? 'shell space-y-6 py-16' : 'shell space-y-6 py-16 md:hidden'}>
-        {services.map((service, i) => (
-          <div key={service.slug} className="glass overflow-hidden rounded-card" style={{ position: 'sticky', top: `${88 + i * 10}px`, zIndex: i + 1 }}>
-            <CardBody index={i} />
-          </div>
-        ))}
-      </div>
+      {/* ---- reduced-motion: panely pod sebou; MOBIL: vlastní svislá scéna ---- */}
+      {reduced ? (
+        <div className="shell space-y-6 py-16">
+          {services.map((service, i) => (
+            <div key={service.slug} className="glass overflow-hidden rounded-card">
+              <CardBody index={i} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <MobileDeck />
+      )}
 
       {/* ---- DESKTOP: jeden panel, služby se v něm mění morfy ---- */}
       {!reduced ? (
@@ -488,5 +493,73 @@ export function ServiceDeck() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * Mobil: pět panelů NORDA pod sebou — žádný sticky stoh (panely delší než
+ * okno se dřív překrývaly). Vizuál při vjezdu do okna vyjede z náklonu a
+ * odkryje se, přes displej přejede neonový odlesk, text naskočí po skupinách.
+ * Vše je funkce polohy v okně, takže to funguje oběma směry.
+ */
+function MobileDeck() {
+  const root = useRef<HTMLDivElement>(null);
+
+  useScrollFrame(() => {
+    const el = root.current;
+    if (!el || !el.offsetHeight) return;
+    el.querySelectorAll<HTMLElement>('[data-mpanel]').forEach((panel) => {
+      const vis = panel.querySelector<HTMLElement>('[data-mvis]');
+      if (vis) {
+        const v = viewProgress(vis, 1.02, 0.42);
+        const e = easeOut(v);
+        vis.style.opacity = seg(v, 0, 0.3).toFixed(3);
+        vis.style.transform = `perspective(900px) rotateX(${((1 - e) * 16).toFixed(2)}deg) scale(${(0.9 + 0.1 * e).toFixed(4)})`;
+        const inset = 1 - e;
+        vis.style.clipPath = e >= 0.999 ? '' : `inset(${(inset * 12).toFixed(2)}% ${(inset * 7).toFixed(2)}% 0% ${(inset * 7).toFixed(2)}% round 22px)`;
+        const glare = panel.querySelector<HTMLElement>('[data-mglare]');
+        if (glare) {
+          const g = seg(v, 0.5, 1);
+          glare.style.opacity = g > 0 && g < 1 ? Math.sin(Math.PI * g).toFixed(3) : '0';
+          glare.style.transform = `translateX(${(-60 + 260 * g).toFixed(1)}%) skewX(-18deg)`;
+        }
+      }
+      panel.querySelectorAll<HTMLElement>('[data-t]').forEach((node) => {
+        const t = easeOut(viewProgress(node, 0.98, 0.78));
+        node.style.opacity = t.toFixed(3);
+        node.style.transform = t >= 0.999 ? '' : `translate3d(0, ${((1 - t) * 22).toFixed(1)}px, 0)`;
+      });
+    });
+  });
+
+  return (
+    <div ref={root} className="pb-4 pt-6 md:hidden">
+      {services.map((service, i) => {
+        const Visual = NORDA_VISUALS[service.slug];
+        return (
+          <article key={service.slug} id={`panel-${service.slug}`} data-nav-offset={-10} data-mpanel className="shell relative pb-16">
+            <div
+              data-mvis
+              className="relative overflow-hidden rounded-[22px] border border-[rgba(80,120,255,0.28)] bg-[rgba(8,12,26,0.92)] shadow-[0_30px_70px_-30px_rgba(31,91,255,0.55)]"
+              style={{ opacity: 0 }}
+            >
+              <NordaStage>
+                <Visual />
+              </NordaStage>
+              <span
+                data-mglare
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(160,200,255,0.22), transparent)' }}
+              />
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(61,123,255,0.9), transparent)' }} />
+            </div>
+            <div className="mt-7">
+              <ServiceText index={i} />
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }

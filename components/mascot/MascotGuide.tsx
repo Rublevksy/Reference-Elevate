@@ -44,6 +44,24 @@ export function MascotGuide() {
     return () => observer.disconnect();
   }, []);
 
+  // během hero filmu (stůl služeb leží pod ním) průvodce nevstupuje do záběru
+  const [heroDone, setHeroDone] = useState(false);
+  useEffect(() => {
+    const hero = document.getElementById('hero');
+    if (!hero) {
+      setHeroDone(true);
+      return;
+    }
+    const check = () => setHeroDone(window.scrollY >= hero.offsetTop + hero.offsetHeight - window.innerHeight - 2);
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, []);
+
   const { scrollY } = useScroll();
   const velocity = useSpring(useVelocity(scrollY), { stiffness: 120, damping: 22 });
   const lean = useTransform(velocity, [-3000, 0, 3000], [-6, 0, 6], { clamp: true });
@@ -60,7 +78,7 @@ export function MascotGuide() {
   };
 
   const shot: MascotShot | undefined = cue?.shot;
-  const visible = Boolean(cue && !cue.hidden && shot) && !closed;
+  const visible = Boolean(cue && !cue.hidden && shot) && !closed && heroDone;
   const pose: Pose = wave ? 'wave' : (cue?.pose ?? 'idle');
   const waist = shot?.framing === 'waist';
   const figureH = waist ? WAIST_H : FULL_H;

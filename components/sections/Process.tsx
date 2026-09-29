@@ -9,6 +9,7 @@ import { processSteps } from '@/content/process';
 import { SYMBOL_POINTS, SYMBOL_VIEWBOX, ease, easeOut, hash, lerp, neonFlicker, seg } from '@/lib/fx';
 import type { Pose } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useScrollFrame } from '@/lib/useScrollFrame';
 
 /**
  * Každý krok se skládá vlastním efektem podle toho, co znamená:
@@ -343,11 +344,12 @@ export function Process() {
     <section
       id="proces"
       ref={ref}
-      className="relative"
-      style={{ height: reduced ? 'auto' : `${steps.length * 60 + 100}vh` }}
+      className={reduced ? 'relative' : 'relative md:h-[var(--pin-h)]'}
+      style={reduced ? undefined : ({ '--pin-h': `${steps.length * 78 + 100}vh` } as React.CSSProperties)}
       aria-labelledby="proces-title"
     >
-      <div className={reduced ? 'py-24' : 'sticky top-0 flex h-dvh flex-col overflow-hidden'}>
+      {!reduced ? <MobileProcess steps={steps} /> : null}
+      <div className={reduced ? 'py-24' : 'sticky top-0 hidden h-dvh flex-col overflow-hidden md:flex'}>
         <div className="shell pt-24 md:pt-28">
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
@@ -435,5 +437,109 @@ export function Process() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Mobil: stejný příběh svisle — neonová kolejnice vlevo, kometa jede dolů
+ * s prstem (drží se ve 62 % výšky okna), rozsvěcí uzly a karty kroků se
+ * vpravo skládají svými efekty (chat, blueprint, kód, start, růst).
+ */
+function MobileProcess({ steps }: { steps: { title: string; text: string }[] }) {
+  const t = useTranslations('process');
+  const listRef = useRef<HTMLOListElement>(null);
+  const fillRef = useRef<HTMLSpanElement>(null);
+  const headRef = useRef<HTMLSpanElement>(null);
+
+  useScrollFrame(() => {
+    const list = listRef.current;
+    if (!list || !list.offsetHeight) return;
+    const vh = window.innerHeight;
+    const H = list.offsetHeight;
+    const headY = vh * 0.62 - list.getBoundingClientRect().top;
+    const fill = Math.max(0, Math.min(H, headY));
+    if (fillRef.current) fillRef.current.style.transform = `scaleY(${(fill / H).toFixed(4)})`;
+    if (headRef.current) {
+      headRef.current.style.transform = `translate3d(0, ${fill.toFixed(1)}px, 0)`;
+      headRef.current.style.opacity = headY > 0 && headY < H ? '1' : '0';
+    }
+    qa(list, '[data-mstep]').forEach((li, i) => {
+      const node = q(li, '[data-node]');
+      const nodeY = li.offsetTop + (node ? node.offsetTop + node.offsetHeight / 2 : 0);
+      const d = headY - nodeY;
+      const tStep = seg(d, -vh * 0.32, 24);
+      const card = q(li, '[data-card]');
+      if (card) {
+        const c = easeOut(seg(tStep, 0, 0.25));
+        card.style.opacity = c.toFixed(3);
+        card.style.transform = `translate3d(${((1 - c) * 18).toFixed(1)}px, 0, 0) scale(${(0.94 + 0.06 * c).toFixed(3)})`;
+      }
+      applyStep(KINDS[i % KINDS.length], li, tStep);
+      if (node) {
+        const lit = neonFlicker(seg(d, -10, 60));
+        node.style.borderColor = `rgba(${BLUE},${(0.22 + 0.78 * lit).toFixed(3)})`;
+        node.style.color = lit > 0.3 ? 'var(--blue-bright)' : 'var(--text-muted)';
+        node.style.background = `rgba(31,91,255,${(0.2 * lit).toFixed(3)})`;
+        node.style.boxShadow = `0 0 ${(24 * lit).toFixed(1)}px rgba(31,91,255,${(0.8 * lit).toFixed(3)})`;
+        const r = seg(d, 0, 150);
+        show(q(li, '[data-ring]'), r > 0 && r < 1 ? 0.8 * (1 - r) : 0, `scale(${(1 + 1.9 * easeOut(r)).toFixed(3)})`);
+      }
+      const ghost = q(li, '[data-ghost]');
+      if (ghost) ghost.style.transform = `translate3d(0, ${(-d * 0.12).toFixed(1)}px, 0)`;
+    });
+  });
+
+  return (
+    <div className="pb-10 pt-16 md:hidden">
+      <div className="shell">
+        <p className="eyebrow">{t('eyebrow')}</p>
+        <SplitHeading
+          as="h2"
+          className="mt-3 font-display text-[clamp(1.8rem,8vw,2.4rem)] font-bold uppercase leading-[1.08]"
+          parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
+        />
+        <p className="mt-3 text-muted">{t('lead')}</p>
+      </div>
+
+      <ol ref={listRef} className="shell relative mt-10">
+        {/* kolejnice + náplň + kometa */}
+        {/* osa kolejnice = střed uzlů (odsazení .shell 20 px + polovina uzlu 24 px) */}
+        <span aria-hidden className="pointer-events-none absolute bottom-0 left-[43.5px] top-0 w-px bg-[var(--line)]" />
+        <span
+          ref={fillRef}
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-[43.5px] top-0 w-px origin-top bg-gradient-to-b from-[var(--blue)] to-[var(--blue-bright)] shadow-glow"
+          style={{ transform: 'scaleY(0)' }}
+        />
+        <span ref={headRef} aria-hidden className="pointer-events-none absolute left-[44px] top-0 z-10 opacity-0">
+          <span className="absolute bottom-0 left-1/2 h-20 w-[3px] -translate-x-1/2 rounded-full" style={{ background: `linear-gradient(180deg, transparent, rgba(${BLUE},0.9))` }} />
+          <span className="absolute left-1/2 top-0 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#dbe8ff] shadow-[0_0_16px_5px_rgba(61,123,255,0.9)]" />
+        </span>
+
+        {steps.map((item, index) => (
+          <li key={item.title} data-mstep className="relative grid grid-cols-[48px_1fr] gap-4 pb-12 last:pb-2">
+            <span
+              data-node
+              className="relative z-10 grid h-12 w-12 place-items-center rounded-full border border-[var(--line)] bg-[var(--bg)] font-display text-xs text-muted"
+            >
+              <span data-ring aria-hidden className="absolute inset-0 rounded-full border border-[var(--blue-bright)] opacity-0" />
+              {processSteps[index]}
+            </span>
+            <div className="relative min-w-0 pt-1">
+              <span
+                data-ghost
+                aria-hidden
+                className="pointer-events-none absolute -top-6 right-0 font-display text-[5.5rem] font-bold leading-none text-transparent [-webkit-text-stroke:1px_rgba(80,120,255,0.28)]"
+              >
+                {processSteps[index]}
+              </span>
+              <div data-card className="glass relative origin-left rounded-2xl border border-[rgba(80,120,255,0.18)] p-5" style={{ opacity: 0 }}>
+                <StepBody kind={KINDS[index % KINDS.length]} title={item.title} text={item.text} />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

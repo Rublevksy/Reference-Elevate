@@ -8,7 +8,8 @@ import { services } from '@/content/services';
 import { processSteps } from '@/content/process';
 import { cases } from '@/content/cases';
 import { macbookScreen } from '@/lib/devices';
-import { ease, easeIn, easeOut, lerp, seg } from '@/lib/fx';
+import { SYMBOL_POINTS, SYMBOL_VIEWBOX, ease, easeIn, easeOut, lerp, neonFlicker, seg } from '@/lib/fx';
+import { useScrollFrame } from '@/lib/useScrollFrame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { CardBody } from './ServiceDeck';
 import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
@@ -118,12 +119,12 @@ const CARD_H = 240;
  * běžném kolečku/touchpadu.
  */
 const HEIGHT: Record<TransitionVariant, string> = {
-  cardToPanel: '352vh',
-  panelCollapseRise: '256vh',
-  glitchTimeline: '316vh',
-  timelineUnfurl: '340vh',
-  devicesToCard: '352vh',
-  fanRing: '352vh',
+  cardToPanel: '428vh',
+  panelCollapseRise: '303vh',
+  glitchTimeline: '381vh',
+  timelineUnfurl: '412vh',
+  devicesToCard: '428vh',
+  fanRing: '428vh',
 };
 
 /** Do tohoto bodu scéna jede s předchozí sekcí (klony na místě originálů), pak se „odlepí". */
@@ -196,8 +197,8 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     if (!own) return;
     const prev = own.previousElementSibling as HTMLElement | null;
     const next = own.nextElementSibling as HTMLElement | null;
-    // mobil: přechod je display:none — sousedy nechat na pokoji
-    if (own.offsetHeight === 0) {
+    // mobil: místo scény je jen neonová „nit" (MobileSeam) — sousedy nechat na pokoji
+    if (window.innerWidth < 768) {
       prev?.style.removeProperty('--seam-out');
       next?.style.removeProperty('--seam-in');
       return;
@@ -285,10 +286,11 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
       ref={section}
       aria-hidden
       data-transition
-      className="pointer-events-none relative z-10 hidden md:block"
-      style={{ height: HEIGHT[variant], marginTop: '-100dvh', marginBottom: '-100dvh' }}
+      className="pointer-events-none relative z-10 md:-my-[100dvh] md:h-[var(--th)]"
+      style={{ '--th': HEIGHT[variant] } as CSSProperties}
     >
-      <div ref={stage} className="sticky top-0 h-dvh overflow-hidden opacity-0" style={{ perspective: 1400 }}>
+      <MobileSeam />
+      <div ref={stage} className="sticky top-0 hidden h-dvh overflow-hidden opacity-0 md:block" style={{ perspective: 1400 }}>
         <div ref={carrier} className="absolute inset-0">
           {variant === 'cardToPanel' ? <DealToPanel renderRef={renderRef} /> : null}
           {variant === 'panelCollapseRise' ? <PanelToLaptop renderRef={renderRef} /> : null}
@@ -987,5 +989,56 @@ function PricingToEnvelope({ renderRef }: SceneProps) {
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * Mobilní šev mezi sekcemi — místo filmových scén (ty jsou na šířku) jedna
+ * svislá neonová nit: s prstem se kreslí dolů, po ní sjede světelná jiskra
+ * a uprostřed se s bliknutím neonu rozsvítí šipka ELEVATE. Stejný motiv
+ * mezi všemi sekcemi, takže mobilní stránka drží jako jeden celek.
+ */
+function MobileSeam() {
+  const ref = useRef<HTMLDivElement>(null);
+  const fill = useRef<HTMLSpanElement>(null);
+  const spark = useRef<HTMLSpanElement>(null);
+  const arrow = useRef<SVGSVGElement>(null);
+  const reduced = useReducedMotion();
+
+  useScrollFrame(() => {
+    const el = ref.current;
+    if (!el || !el.offsetHeight) return;
+    const vh = window.innerHeight;
+    const r = el.getBoundingClientRect();
+    // 0 = nit vjíždí do okna zespodu, 1 = odjela nad jeho třetinu
+    const t = reduced ? 1 : Math.min(1, Math.max(0, (vh * 0.9 - r.top) / (r.height + vh * 0.5)));
+    const draw = ease(seg(t, 0, 0.6));
+    if (fill.current) fill.current.style.transform = `scaleY(${draw.toFixed(4)})`;
+    if (spark.current) {
+      spark.current.style.transform = `translate3d(0, ${(draw * r.height).toFixed(1)}px, 0)`;
+      spark.current.style.opacity = t > 0.01 && t < 0.62 ? '1' : '0';
+    }
+    if (arrow.current) {
+      const lit = neonFlicker(seg(t, 0.28, 0.5));
+      const up = easeOut(seg(t, 0.28, 0.7));
+      arrow.current.style.opacity = (0.25 + 0.75 * lit).toFixed(3);
+      arrow.current.style.transform = `translate3d(-50%, ${(-50 - 22 * up).toFixed(1)}%, 0) scale(${(0.85 + 0.15 * up).toFixed(3)})`;
+      arrow.current.style.filter = lit > 0.2 ? `drop-shadow(0 0 ${(10 * lit).toFixed(1)}px rgba(61,123,255,0.95))` : '';
+    }
+  });
+
+  return (
+    <div ref={ref} aria-hidden className="relative h-[24svh] md:hidden">
+      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,var(--line)_20%,var(--line)_80%,transparent)]" />
+      <span
+        ref={fill}
+        className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 origin-top bg-[linear-gradient(180deg,transparent,var(--blue-bright)_25%,var(--blue)_85%,transparent)] shadow-glow"
+        style={{ transform: 'scaleY(0)' }}
+      />
+      <span ref={spark} className="absolute left-1/2 top-0 -ml-[5px] -mt-[5px] h-2.5 w-2.5 rounded-full bg-[#dbe8ff] opacity-0 shadow-[0_0_14px_4px_rgba(61,123,255,0.9)]" />
+      <svg ref={arrow} viewBox={SYMBOL_VIEWBOX} className="absolute left-1/2 top-1/2 h-11 w-9 opacity-25" style={{ transform: 'translate3d(-50%, -50%, 0)' }}>
+        <polygon points={SYMBOL_POINTS} fill="rgba(8,14,32,0.9)" stroke="#8fb2ff" strokeWidth={9} strokeLinejoin="round" />
+      </svg>
+    </div>
   );
 }

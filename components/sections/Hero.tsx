@@ -5,8 +5,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeroBook, HeroLink } from '@/components/ui/HeroCta';
 import { markHeroRevealed } from '@/lib/heroReveal';
-import { SITE_SHOT, homography, lerpQuad, publishHeroFrame, screenQuad, type Quad } from '@/lib/heroScreen';
+import { SITE_SHOT, anchorBox, coverZoom, homography, lerpQuad, publishHeroFrame, quadCenter, screenQuad, type Quad } from '@/lib/heroScreen';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useScrollFrame } from '@/lib/useScrollFrame';
 
 /** Cyrilice má v průměru delší slova — nadpis dostane o trochu menší clamp. */
 const HEADING_SIZE: Record<string, string> = {
@@ -25,34 +26,29 @@ const mobileSrc = (i: number) => `/hero/frames-mobile/${String(i).padStart(3, '0
 const SCATTER_FROM = 0.004;
 const SCATTER_TO = 0.09;
 /**
- * Časová osa hera (progress pinu) na desktopu — 424vh, aby každá fáze měla
- * při běžném kolečku/touchpadu dost scrollu:
- *   0 … 0.4    maskot, otevření víka (web se rozsvítí na displeji), ukázání
- *   0.4 … 0.8  kamera pomalu najíždí do displeje; 0.46–0.66 z něj vylétají
- *              karty služeb a rozestoupí se kolem notebooku (ServicesTable)
- *   0.8 … 0.9  screenshot se srovná se skutečnou sekcí, modrá záře ustoupí
- *   0.84 … 0.99 karty dosednou na stůl; 0.88 … 1 film se rozplyne
- * Stůl služeb leží posledních 165vh pod filmem a je připnutý, takže se
- * s ním screenshot kryje přesně.
+ * Časová osa hera (progress pinu) na desktopu — 521vh (pin 421vh), aby každá
+ * fáze měla při běžném kolečku/touchpadu dost scrollu:
+ *   0 … 0.4     maskot, otevření víka (web se rozsvítí na displeji), ukázání
+ *   0.4 … 0.78  kamera najíždí do displeje; 0.44–0.64 z něj vylétají karty
+ *               služeb a rozestoupí se kolem notebooku (ServicesTable)
+ *   0.7 … 0.84  PUSH — kamera „projde sklem": displej se dozoomuje, až celý
+ *               kadr kryje web a rámeček notebooku odjede za okraje okna
+ *   0.84 … 0.95 SETTLE — screenshot se rozplyne do skutečné sekce, která
+ *               ze stejného záběru (měřítka) plynule „odjede" na své místo
+ *   0.86 … 0.98 karty dosednou na stůl
+ * Stůl služeb leží posledních 184vh pod filmem a je připnutý od p 0.8.
  */
-const DESKTOP = { height: '424vh', overlap: '-165dvh', frames: [0, 0.4, 0.8], frameAt: [0, 250, 360] };
+const DESKTOP = { height: '521vh', overlap: '-184.2dvh', frames: [0, 0.4, 0.78], frameAt: [0, 250, 360] };
 /**
  * Mobil: film končí dřív (snímek 125 ≈ desktop 250), dokud je notebook celý
  * a web na displeji čitelný — najetí až do desktopového screenshotu by na
  * úzkém displeji ořezalo stránku a pak ji vyměnilo za jiné (mobilní) rozvržení.
  * Pak se film klidně rozplyne do mobilní sekce.
  */
-const MOBILE = { height: '280vh', overlap: '-100dvh', frames: [0, 0.78], frameAt: [0, 125] };
+const MOBILE = { height: '340vh', overlap: '-100dvh', frames: [0, 0.78], frameAt: [0, 125] };
 const SHOT_IN: [number, number] = [101, 111]; // snímky: web se rozsvítí spolu s displejem (hned po otevření víka)
-const ALIGN: [number, number] = [0.79, 0.84]; // progress: screenshot → přesná poloha sekce
-/**
- * Pak zhasne samotné video (plátno). Film nemá vlastní pozadí, takže kolem
- * srovnaného screenshotu je vidět přímo skutečná stránka pod ním — žádná
- * modrá záře ani okraj kadru, šev není kde vzniknout.
- */
-const CANVAS_OUT: [number, number] = [0.84, 0.88];
-/** přesah kolem screenshotu zmizí až po zhasnutí videa (pod ním je už jen stránka) */
-const EXTEND_OUT: [number, number] = [0.88, 0.93];
+const PUSH: [number, number] = [0.7, 0.84];
+const SETTLE: [number, number] = [0.84, 0.95];
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const seg = (v: number, [a, b]: [number, number]) => clamp01((v - a) / (b - a));
 const smooth = (t: number) => t * t * (3 - 2 * t);
@@ -170,7 +166,7 @@ export function Hero() {
   const filmRef = useRef<HTMLDivElement>(null);
   const shotRef = useRef<HTMLDivElement>(null);
   const tintRef = useRef<HTMLDivElement>(null);
-  const extendRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const flyNodesRef = useRef<HTMLElement[]>([]);
 
@@ -197,7 +193,8 @@ export function Hero() {
 
   // Načtení snímků: nultý hned a prioritně, zbytek postupně na pozadí.
   useEffect(() => {
-    if (reduced) return;
+    // mobil má vlastní hero bez filmu (MobileHero) — snímky se nestahují
+    if (reduced || window.matchMedia('(max-width: 767px)').matches) return;
     imagesRef.current = new Array(totalFrames);
     loadedRef.current = new Array(totalFrames).fill(false);
     setReady(false);
@@ -236,13 +233,13 @@ export function Hero() {
     return () => {
       cancelled = true;
     };
-  }, [reduced, totalFrames, srcFor]);
+  }, [reduced, totalFrames, srcFor, isMobile]);
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] });
   // film doběhne do posledního (plně modrého) snímku ještě před rozplynutím
   const timeline = isMobile ? MOBILE : DESKTOP;
   const frameIndexMV = useTransform(scrollYProgress, timeline.frames, timeline.frameAt);
-  const fadeFrom = isMobile ? 0.82 : 0.9;
+  const fadeFrom = isMobile ? 0.82 : 0.95;
 
   const targetFrameRef = useRef(0);
   const currentFrameRef = useRef(0);
@@ -302,11 +299,20 @@ export function Hero() {
   /**
    * Screenshot webu na displeji notebooku — přesně ve stejném snímku, jaký
    * je na plátně (rohy displeje změřené ze snímků, viz lib/heroScreenTrack).
-   * Ke konci se čtyřúhelník plynule srovná na skutečnou polohu sekce
-   * stolu služeb, takže rozplynutí filmu je neviditelné.
+   *
+   * Konec filmu (desktop) je jeden pohyb kamery bez střihu:
+   *  PUSH   — kamera dál najíždí za poslední snímek videa (plátno i screenshot
+   *           stejnou afinní transformací), až displej kryje celé okno i na
+   *           ultrawide; rámeček notebooku a jeho modrá záře odjedou za okraj.
+   *           Teprve pak plátno zhasne — pod screenshotem, tedy neviditelně.
+   *  SETTLE — screenshot se zmenšuje na polohu skutečné sekce a rozplývá se;
+   *           skutečná sekce stojí pod ním ve STEJNÉM měřítku a poloze
+   *           (transform kotvy) a spolu s ním dojede na své místo. Žádná
+   *           podkladová vrstva, žádná hrana, kde by mohla prosvitnout modrá.
    */
   const placeShot = (frame: number, fw: number, fh: number) => {
     const shot = shotRef.current;
+    const canvas = canvasRef.current;
     if (!shot) return;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -314,40 +320,83 @@ export function Hero() {
     const desktopFrame = isMobile ? frame * 2 : frame;
     let quad = screenQuad(frame, isMobile, fw, fh, vw, vh);
     const lit = seg(desktopFrame, SHOT_IN);
+    const anchor = isMobile ? null : document.querySelector<HTMLElement>('#sluzby [data-shot-anchor]');
     if (!quad || lit <= 0) {
       shot.style.visibility = 'hidden';
-      if (canvasRef.current) canvasRef.current.style.opacity = '';
+      if (canvas) {
+        canvas.style.opacity = '';
+        canvas.style.transform = '';
+      }
+      if (anchor) anchor.style.transform = '';
+      if (dimRef.current) dimRef.current.style.opacity = '0';
       publishHeroFrame({ p, map: null, shot: 0 });
       return;
     }
-    const align = isMobile ? 0 : smooth(seg(p, ALIGN));
-    if (align > 0) {
-      // připnutý obsah stolu služeb (sticky) — s ním se screenshot kryje
-      const top = document.querySelector('#sluzby [data-shot-anchor]')?.getBoundingClientRect().top ?? 0;
-      const left = (vw - SITE_SHOT.w) / 2;
+
+    const push = isMobile ? 0 : smooth(seg(p, PUSH));
+    const settleRaw = isMobile ? 0 : seg(p, SETTLE);
+    const settle = smooth(settleRaw);
+
+    // PUSH: x' = c2 + Z·(x − c), c = střed displeje, c2 → střed okna
+    if (push > 0) {
+      const c = quadCenter(quad);
+      const c2 = { x: c.x + (vw / 2 - c.x) * push, y: c.y + (vh / 2 - c.y) * push };
+      const need = Math.max(1, coverZoom(quad, c, c2, vw, vh) * 1.02);
+      const Z = 1 + (need - 1) * push;
+      quad = quad.map((pt) => ({ x: c2.x + Z * (pt.x - c.x), y: c2.y + Z * (pt.y - c.y) })) as Quad;
+      if (canvas) canvas.style.transform = `translate3d(${(c2.x - Z * c.x).toFixed(2)}px, ${(c2.y - Z * c.y).toFixed(2)}px, 0) scale(${Z.toFixed(5)})`;
+    } else if (canvas) canvas.style.transform = '';
+    // plátno zhasne až pod plně krycím screenshotem
+    if (canvas) canvas.style.opacity = push >= 0.999 ? '0' : '1';
+
+    // SETTLE: screenshot → poloha skutečné sekce (1440 × 900 uprostřed, nahoře kotvy)
+    const aligned = anchor ? anchorBox(anchor, vw) : null;
+    if (aligned && settle > 0) {
       const target: Quad = [
-        { x: left, y: top },
-        { x: left + SITE_SHOT.w, y: top },
-        { x: left + SITE_SHOT.w, y: top + SITE_SHOT.h },
-        { x: left, y: top + SITE_SHOT.h },
+        { x: aligned.left, y: aligned.top },
+        { x: aligned.left + SITE_SHOT.w, y: aligned.top },
+        { x: aligned.left + SITE_SHOT.w, y: aligned.top + SITE_SHOT.h },
+        { x: aligned.left, y: aligned.top + SITE_SHOT.h },
       ];
-      quad = lerpQuad(quad, target, align);
+      quad = lerpQuad(quad, target, settle);
     }
+    // skutečná sekce pod screenshotem: STEJNÁ projekce jako screenshot (včetně
+    // perspektivy), takže se při prolnutí obsah kryje a nic se nezdvojí
+    if (anchor && aligned) {
+      if (p >= PUSH[0] && settleRaw < 1) {
+        const local = homography(
+          SITE_SHOT.w,
+          SITE_SHOT.h,
+          quad.map((pt) => ({ x: pt.x, y: pt.y - aligned.top })) as Quad,
+        );
+        anchor.style.transformOrigin = '0 0';
+        anchor.style.transform = `${local.css} translate3d(${(-aligned.left).toFixed(2)}px, 0, 0)`;
+      } else anchor.style.transform = '';
+    }
+
     const h = homography(SITE_SHOT.w, SITE_SHOT.h, quad);
     shot.style.visibility = 'visible';
     shot.style.transform = h.css;
-    shot.style.opacity = smooth(lit).toFixed(3);
-    // po stranách (širší okno než screenshot) se okraje jemně rozplynou do pozadí
-    const canvasOut = isMobile ? 0 : smooth(seg(p, CANVAS_OUT));
-    // okraje screenshotu se rozplývají jen na širším okně než screenshot, a až
-    // když pod nimi místo videa prosvítá skutečná stránka
-    const edgePct = vw > SITE_SHOT.w + 2 ? align * 6 : 0;
+    // kde se rozvržení okna liší od screenshotu (malé notebooky), je prolnutí
+    // kratší a odcházející záběr se lehce rozostří — nepůsobí jako dvojí obraz
+    const mismatch = vw < 1220 || vh < 820;
+    const out = seg(settleRaw, [0, mismatch ? 0.28 : 0.5]);
+    shot.style.opacity = (smooth(lit) * (1 - smooth(out))).toFixed(3);
+    shot.style.filter = mismatch && out > 0.01 && out < 1 ? `blur(${(6 * out).toFixed(2)}px)` : '';
+    // ztmavení patří k plátnu — s ním i zhasne (jinak by kalilo skutečnou sekci)
+    if (dimRef.current) dimRef.current.style.opacity = isMobile || push >= 0.999 ? '0' : (0.92 * smooth(seg(desktopFrame, [312, 352]))).toFixed(3);
+    // při zmenšování na užší obdélník než okno se okraje screenshotu rozplynou do stránky
+    const edge = settle * 7;
     const shotImg = shot.querySelector('img');
-    if (shotImg) shotImg.style.maskImage = edgePct > 0.05 ? `linear-gradient(90deg, transparent, #000 ${edgePct.toFixed(2)}%, #000 ${(100 - edgePct).toFixed(2)}%, transparent)` : '';
+    if (shotImg) {
+      const mask =
+        edge > 0.05
+          ? `linear-gradient(90deg, transparent, #000 ${edge.toFixed(2)}%, #000 ${(100 - edge).toFixed(2)}%, transparent), linear-gradient(180deg, #000 ${(100 - edge).toFixed(2)}%, transparent)`
+          : '';
+      shotImg.style.maskImage = mask;
+      shotImg.style.maskComposite = mask ? 'intersect' : '';
+    }
     if (tintRef.current) tintRef.current.style.opacity = (0.55 * (1 - seg(desktopFrame, [290, 350]))).toFixed(3);
-    if (canvasRef.current) canvasRef.current.style.opacity = (1 - canvasOut).toFixed(3);
-    // přesah naskočí hned na začátku srovnávání (polovičatý by nechal prosvítat modrou)
-    if (extendRef.current) extendRef.current.style.opacity = isMobile ? '0' : (Math.min(1, align * 4) * (1 - smooth(seg(p, EXTEND_OUT)))).toFixed(3);
     publishHeroFrame({ p, map: h.map, shot: lit });
   };
 
@@ -493,10 +542,12 @@ export function Hero() {
   }
 
   return (
+    <>
+    <MobileHero headingParts={headingParts} headingClass={headingClass} />
     <section
       id="hero"
       ref={sectionRef}
-      className="pointer-events-none relative z-10"
+      className="pointer-events-none relative z-10 hidden md:block"
       style={{ height: timeline.height, marginBottom: timeline.overlap }}
       aria-label={t('eyebrow')}
     >
@@ -504,20 +555,16 @@ export function Hero() {
         {/* film bez vlastního pozadí: na konci zhasne plátno a pod srovnaným
             screenshotem je rovnou skutečná stránka */}
         <div ref={filmRef} className="absolute inset-0 overflow-hidden" aria-hidden>
-          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+          <canvas ref={canvasRef} className="absolute inset-0 h-full w-full origin-top-left" />
+          {/* jak kamera vjíždí do displeje, místnost kolem (i modrá záře
+              rámečku) potemní — zůstane jen web na obrazovce */}
+          <div ref={dimRef} className="absolute inset-0 bg-[#04060b] opacity-0" />
           {/* skutečný web na displeji notebooku (perspektivně, podle snímku) */}
           <div
             ref={shotRef}
             className="invisible absolute left-0 top-0 origin-top-left"
             style={{ width: SITE_SHOT.w, height: SITE_SHOT.h, opacity: 0 }}
           >
-            {/* „přesah" stránky kolem screenshotu — na širších oknech, než je
-                screenshot (1440 × 900), zakryje modrý kadr videa kolem */}
-            <div
-              ref={extendRef}
-              className="absolute -inset-[150%] opacity-0"
-              style={{ background: 'radial-gradient(40% 40% at 50% 50%, #070b18, var(--bg) 70%)' }}
-            />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/hero/site-shot-${locale}.webp`} alt="" className="relative h-full w-full" />
             {/* světlo displeje: web zpočátku „prosvítá" modrou září scény */}
@@ -603,6 +650,115 @@ export function Hero() {
             <span className="font-display text-[10px] uppercase tracking-[0.3em] text-muted">{t('scrollHint')}</span>
           </Fly>
         </div>
+      </div>
+    </section>
+    </>
+  );
+}
+
+/**
+ * Mobilní hero — vlastní svislá kompozice bez filmu (video pro mobil přijde
+ * později). Fotka scény s neonovou šipkou, titulek a výzva dole u palce.
+ * Scroll: kamera se pomalu přiblíží k šipce, neon zesílí, text odjede
+ * nahoru a scéna se rozplyne do tmy, ze které vyjede stůl služeb.
+ */
+function MobileHero({ headingParts, headingClass }: { headingParts: { text: string; accent?: boolean }[]; headingClass: string }) {
+  const t = useTranslations('hero');
+  const reduced = useReducedMotion();
+  const root = useRef<HTMLElement>(null);
+  const bg = useRef<HTMLDivElement>(null);
+  const glow = useRef<HTMLDivElement>(null);
+  const text = useRef<HTMLDivElement>(null);
+  const hint = useRef<HTMLDivElement>(null);
+  const shade = useRef<HTMLDivElement>(null);
+
+  useScrollFrame(() => {
+    const el = root.current;
+    if (!el || !el.offsetHeight || reduced) return;
+    const vh = window.innerHeight;
+    const p = clamp01(-el.getBoundingClientRect().top / Math.max(1, el.offsetHeight - vh));
+    const z = smooth(p);
+    if (bg.current) bg.current.style.transform = `translate3d(0, ${(-4 * z).toFixed(2)}%, 0) scale(${(1 + 0.3 * z).toFixed(4)})`;
+    if (glow.current) glow.current.style.opacity = (0.45 + 0.55 * seg(p, [0, 0.7])).toFixed(3);
+    const out = seg(p, [0.08, 0.62]);
+    if (text.current) {
+      text.current.style.transform = `translate3d(0, ${(-90 * smooth(out)).toFixed(1)}px, 0)`;
+      text.current.style.opacity = (1 - smooth(out)).toFixed(3);
+      text.current.style.pointerEvents = out > 0.5 ? 'none' : '';
+    }
+    if (hint.current) hint.current.style.opacity = (1 - seg(p, [0, 0.12])).toFixed(3);
+    // scéna jen potemní (ne do černa) — stůl služeb pod ní už vyjíždí
+    if (shade.current) shade.current.style.opacity = (0.65 * smooth(seg(p, [0.5, 1]))).toFixed(3);
+  });
+
+  let wordIndex = 0;
+  return (
+    <section id="hero-m" ref={root} className="relative md:hidden" style={{ height: reduced ? '100svh' : '145svh' }} aria-label={t('eyebrow')}>
+      <div className="sticky top-0 h-[100svh] overflow-hidden">
+        <div ref={bg} className="absolute inset-0 origin-[62%_24%] will-change-transform" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hero/mobile-still.webp" alt="" fetchPriority="high" className="h-full w-full object-cover object-[72%_0%]" />
+        </div>
+        {/* „bzučení" neonu — světlo šipky dýchá a se scrollem zesílí */}
+        <div ref={glow} aria-hidden className="pointer-events-none absolute inset-0 mix-blend-screen" style={{ opacity: 0.45 }}>
+          <span className="absolute inset-0 animate-neon-hum" style={{ background: 'radial-gradient(40% 24% at 62% 22%, rgba(61,123,255,0.55), transparent 70%)' }} />
+        </div>
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(4,6,11,0.55)_0%,rgba(4,6,11,0)_22%,rgba(4,6,11,0.15)_42%,rgba(4,6,11,0.88)_68%,#04060b_100%)]" />
+
+        <div ref={text} className="absolute inset-x-0 bottom-0 px-5 pb-[max(36px,7svh)]">
+          <p className="eyebrow flex items-center gap-3">
+            <span className="inline-block h-px w-8 bg-[var(--text-muted)]" />
+            {t('eyebrow')}
+          </p>
+          <h1 className={`${headingClass} !text-[clamp(1.9rem,9vw,2.6rem)]`}>
+            {headingParts.flatMap((part, partIndex) =>
+              part.text
+                .split(' ')
+                .filter(Boolean)
+                .map((word) => {
+                  const i = wordIndex++;
+                  return (
+                    <motion.span
+                      key={`${partIndex}-${i}`}
+                      className={`inline-block whitespace-nowrap ${part.accent ? 'text-[var(--blue-bright)]' : ''}`}
+                      initial={reduced ? false : { opacity: 0, y: '45%' }}
+                      animate={{ opacity: 1, y: '0%' }}
+                      transition={{ delay: 0.25 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      {word}&nbsp;
+                    </motion.span>
+                  );
+                }),
+            )}
+          </h1>
+          <motion.span
+            aria-hidden
+            className="mt-4 block h-[3px] w-24 origin-left rounded-full bg-[#9fc0ff]"
+            style={{ boxShadow: '0 0 12px 2px rgba(61,123,255,0.9), 0 0 28px 6px rgba(31,91,255,0.5)' }}
+            initial={reduced ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.9, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          />
+          <motion.div
+            initial={reduced ? false : { opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.7 }}
+          >
+            <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-muted">{t('subtitle')}</p>
+            <div className="mt-6 flex flex-col items-start gap-4">
+              <HeroBook href="#kontakt" label={t('ctaBook')} note={t('ctaBookNote')} />
+              <HeroLink href="#reference" label={t('ctaWork')} />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* pozvánka ke skrolování — tah prstem */}
+        <div ref={hint} aria-hidden className="pointer-events-none absolute right-5 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2">
+          <span className="relative block h-12 w-px overflow-hidden bg-[rgba(160,185,255,0.25)]">
+            <span className="animate-scroll-drip absolute left-0 top-0 h-4 w-px bg-[var(--blue-bright)] shadow-glow" />
+          </span>
+        </div>
+        <div ref={shade} aria-hidden className="pointer-events-none absolute inset-0 bg-[#04060b] opacity-0" />
       </div>
     </section>
   );

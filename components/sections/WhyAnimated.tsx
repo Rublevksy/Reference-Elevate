@@ -104,10 +104,10 @@ export function WhyAnimated() {
       id="proc-animace"
       ref={section}
       // pin (scrubbing videa v notebooku) jen na desktopu; mobil má telefon v běžném toku
-      className={reduced ? 'relative' : 'relative md:h-[220vh]'}
+      className={reduced ? 'relative' : 'relative md:h-[256vh]'}
       aria-labelledby="proc-animace-title"
     >
-      <div className={reduced ? '' : 'md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:justify-center'}>
+      <div className={reduced ? '' : 'md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:justify-center md:pb-4 md:pt-[88px]'}>
         <div className="shell py-16 md:py-0">
           <div className="mx-auto max-w-xl text-center">
             <SplitHeading
@@ -144,7 +144,7 @@ export function WhyAnimated() {
           </div>
 
           {/* ---- notebook (desktop) ---- */}
-          <div data-land="why-laptop" className="relative mx-auto mt-8 hidden w-full max-w-[720px] md:block">
+          <div data-land="why-laptop" className="relative mx-auto mt-8 hidden w-full max-w-[min(720px,calc((100dvh-400px)*1.5))] md:block">
             {/* bez vlastní vstupní animace — notebook sem „přiveze" přechodová scéna;
                 druhé objevení při dojetí do záběru působilo jako dvojitý skok */}
             <motion.div

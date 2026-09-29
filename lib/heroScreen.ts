@@ -100,3 +100,69 @@ export function homography(w: number, h: number, q: Quad) {
 
 export const lerpQuad = (a: Quad, b: Quad, t: number): Quad =>
   a.map((p, i) => ({ x: p.x + (b[i].x - p.x) * t, y: p.y + (b[i].y - p.y) * t })) as Quad;
+
+export const quadCenter = (q: Quad): Pt => ({ x: (q[0].x + q[1].x + q[2].x + q[3].x) / 4, y: (q[0].y + q[1].y + q[2].y + q[3].y) / 4 });
+
+export function quadBox(q: Quad) {
+  const xs = q.map((p) => p.x);
+  const ys = q.map((p) => p.y);
+  const l = Math.min(...xs);
+  const r = Math.max(...xs);
+  const t = Math.min(...ys);
+  const b = Math.max(...ys);
+  return { l, t, w: r - l, h: b - t, cx: (l + r) / 2, cy: (t + b) / 2 };
+}
+
+const cross = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
+
+/** Vzdálenost od bodu `c` (uvnitř konvexního čtyřúhelníku) k jeho hraně ve směru `dir` (jednotkový). */
+function rayToEdge(c: Pt, dx: number, dy: number, q: Quad) {
+  let best = Infinity;
+  for (let i = 0; i < 4; i++) {
+    const a = q[i];
+    const b = q[(i + 1) % 4];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const den = cross(dx, dy, ex, ey);
+    if (Math.abs(den) < 1e-9) continue;
+    const wx = a.x - c.x;
+    const wy = a.y - c.y;
+    const t = cross(wx, wy, ex, ey) / den;
+    const u = cross(wx, wy, dx, dy) / den;
+    if (t > 0 && u >= -1e-6 && u <= 1 + 1e-6) best = Math.min(best, t);
+  }
+  return best;
+}
+
+/**
+ * Nejmenší zoom Z kolem středu `c` (posunutého do `c2`), při kterém čtyřúhelník
+ * displeje celý zakryje okno vw × vh: x' = c2 + Z·(x − c).
+ */
+export function coverZoom(q: Quad, c: Pt, c2: Pt, vw: number, vh: number) {
+  let need = 1;
+  for (const v of [
+    { x: 0, y: 0 },
+    { x: vw, y: 0 },
+    { x: vw, y: vh },
+    { x: 0, y: vh },
+  ]) {
+    const dx = v.x - c2.x;
+    const dy = v.y - c2.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) continue;
+    const t = rayToEdge(c, dx / len, dy / len, q);
+    if (Number.isFinite(t) && t > 0) need = Math.max(need, len / t);
+  }
+  return need;
+}
+
+/**
+ * Poloha kotvy stolu služeb bez vlastního transformu (ten mění hero při
+ * dojezdu) — kotva je sticky nahoře své sekce. Screenshot 1440 × 900 leží
+ * vodorovně uprostřed okna, svisle od horní hrany kotvy.
+ */
+export function anchorBox(anchor: HTMLElement, vw: number) {
+  const sec = (anchor.parentElement as HTMLElement).getBoundingClientRect();
+  const top = Math.min(Math.max(sec.top, 0), sec.bottom - anchor.offsetHeight);
+  return { left: (vw - SITE_SHOT.w) / 2, top };
+}

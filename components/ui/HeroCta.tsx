@@ -17,7 +17,7 @@ export function HeroBook({ href, label, note }: { href: string; label: string; n
       onMouseMove={magnetic.onMove}
       onMouseLeave={magnetic.onLeave}
       data-cursor="link"
-      className="group relative inline-flex items-center gap-4 rounded-full bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] py-2 pl-2 pr-6 text-white shadow-[0_0_36px_rgba(31,91,255,0.55)] transition-[box-shadow,transform] duration-300 will-change-transform hover:shadow-[0_0_56px_rgba(31,91,255,0.75)]"
+      className="group relative inline-flex items-center gap-4 rounded-full bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] py-2 pl-2 pr-6 text-white shadow-[0_0_36px_rgba(31,91,255,0.55)] transition-shadow duration-300 hover:shadow-[0_0_56px_rgba(31,91,255,0.75)]"
     >
       <span aria-hidden className="beam" />
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/15">

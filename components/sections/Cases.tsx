@@ -338,7 +338,7 @@ export function Cases() {
       ref={section}
       // výška pinu jen na desktopu — na mobilu jsou projekty pod sebou v běžném toku
       className={reduced ? 'relative' : 'relative md:h-[var(--pin-h)]'}
-      style={reduced ? undefined : ({ '--pin-h': `${COUNT * 92}vh` } as React.CSSProperties)}
+      style={reduced ? undefined : ({ '--pin-h': `${Math.round((COUNT * 92 - 100) * 1.3 + 100)}vh` } as React.CSSProperties)}
       aria-labelledby="reference-title"
     >
       <div className={reduced ? 'py-16' : 'py-16 md:sticky md:top-0 md:h-dvh md:overflow-hidden md:py-0'}>
@@ -349,7 +349,7 @@ export function Cases() {
           transition={{ duration: 0.8 }}
         />
 
-        <div className={reduced ? 'shell' : 'shell flex h-full flex-col justify-center'}>
+        <div className={reduced ? 'shell' : 'shell md:flex md:h-full md:flex-col md:justify-center md:pb-10 md:pt-[max(104px,13vh)]'}>
           <SplitHeading
             as="h2"
             id="reference-title"

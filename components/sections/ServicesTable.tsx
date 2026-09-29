@@ -7,8 +7,10 @@ import { Icon } from '@/components/ui/FeatureIcon';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { services } from '@/content/services';
 import { createPortal } from 'react-dom';
-import { SITE_SHOT, subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
+import { subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
 import { ease, seg } from '@/lib/fx';
+import { scrollToId } from '@/lib/scrollTo';
+import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
 import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { PlatformScene } from './PlatformScene';
@@ -19,23 +21,27 @@ const CARD_H = 240;
 const SPRING = { type: 'spring' as const, stiffness: 220, damping: 28, mass: 0.9 };
 /**
  * Let karet v progressu HERA (viz časová osa v Hero.tsx):
- *  OUT  — karty vylétnou přímo ze screenshotu webu na displeji notebooku,
- *         obloukem se rozestoupí kolem něj (s otočkou) a „visí" před kamerou;
- *  LAND — když se web na displeji srovná se skutečnou sekcí, dosednou do vějíře.
+ *  OUT   — karty vylétnou přímo z webu na displeji notebooku a každá svým
+ *          směrem (vlevo, nahoru vlevo, dolů, nahoru vpravo, vpravo) se
+ *          rozestoupí KOLEM notebooku, s otočkou; pak „visí" před kamerou;
+ *  DRIFT — jak kamera projíždí displejem, karty se před ní jemně rozestupují;
+ *  LAND  — když se web srovná se skutečnou sekcí, dosednou do vějíře.
  * Létají klony ve vlastní fixní vrstvě NAD filmem (připnutá sekce je sticky,
  * tedy vlastní stacking context — skutečné karty by byly pod filmem).
  */
-const OUT: [number, number] = [0.46, 0.66];
-/** Střed displeje ve screenshotu a kam která karta vyletí (souřadnice screenshotu 1440 × 900). */
-const SHOT_CENTER = { x: 720, y: 450 };
-const BURST = [
-  { x: 215, y: 430, r: -14, spin: -30, bend: { x: 0, y: -90 } }, // doleva
-  { x: 470, y: 715, r: -8, spin: 24, bend: { x: -60, y: 20 } }, // dolů vlevo
-  { x: 720, y: 170, r: 4, spin: -18, bend: { x: 70, y: 0 } }, // nahoru
-  { x: 970, y: 715, r: 8, spin: -24, bend: { x: 60, y: 20 } }, // dolů vpravo
-  { x: 1225, y: 430, r: 14, spin: 30, bend: { x: 0, y: -90 } }, // doprava
+const OUT: [number, number] = [0.44, 0.64];
+const DRIFT: [number, number] = [0.64, 0.86];
+/** bod webu na displeji, odkud karty vylétají (souřadnice screenshotu 1440 × 900 — střed stolu) */
+const SHOT_SOURCE = { x: 720, y: 640 };
+/** kam která karta vyletí — v poměru k oknu, kolem notebooku; bend = prohnutí oblouku */
+const HOVER = [
+  { x: 0.11, y: 0.5, r: -12, spin: -30, bend: { x: 0, y: -0.14 } }, // doleva
+  { x: 0.25, y: 0.2, r: -7, spin: 24, bend: { x: -0.06, y: 0.02 } }, // nahoru vlevo
+  { x: 0.5, y: 0.86, r: 3, spin: -18, bend: { x: 0.1, y: 0 } }, // dolů
+  { x: 0.75, y: 0.2, r: 7, spin: -24, bend: { x: 0.06, y: 0.02 } }, // nahoru vpravo
+  { x: 0.89, y: 0.5, r: 12, spin: 30, bend: { x: 0, y: -0.14 } }, // doprava
 ];
-const LAND: [number, number] = [0.8, 0.97];
+const LAND: [number, number] = [0.86, 0.98];
 /** posun startu mezi sousedními kartami; délka letu jedné karty tak, aby poslední doletěla přesně na konci úseku */
 const FLIGHT_STAGGER = 0.08;
 const FLIGHT_SPAN = 1 - FLIGHT_STAGGER * (COUNT - 1);
@@ -43,11 +49,6 @@ const FLIGHT_SPAN = 1 - FLIGHT_STAGGER * (COUNT - 1);
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-/** lehký přelet cíle a návrat — „dosednutí" karty na stůl */
-const easeOutBack = (t: number) => {
-  const c = 1.25;
-  return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
-};
 
 /**
  * Rozložení vějíře je čistě 2D (translate + rotate + scale).
@@ -140,43 +141,42 @@ export function ServicesTable() {
       return v > 0.999 ? 1 : v;
     };
     const map = mapRef.current;
-    const ar = anchor.getBoundingClientRect();
+    // měřítko kotvy (hero ji při dojezdu kamery krátce zvětšuje) — karty dosedají do něj
+    const aScale = anchor.offsetWidth ? anchor.getBoundingClientRect().width / anchor.offsetWidth : 1;
+    const hoverScale = Math.min(1.05, Math.max(0.62, Math.min(vw / 1440, vh / 900) * 0.84));
+    const drift = ease(seg(heroP, DRIFT[0], DRIFT[1]));
     let landed = true;
 
     flightRefs.current.forEach((wrap, index) => {
       const clone = cloneRefs.current[index];
-      const button = wrap?.firstElementChild as HTMLElement | null;
-      if (!wrap || !button) return;
+      const button = wrap?.querySelector<HTMLElement>('[data-src-card]') ?? null;
+      const hit = wrap?.querySelector<HTMLElement>('button') ?? null;
+      if (!wrap || !button || !hit) return;
       const t1 = phase(OUT, index);
       const t2 = phase(LAND, index);
       const done = t2 >= 1;
       // skutečná karta převezme klon přesně v místě dosednutí
       wrap.style.opacity = done ? '1' : '0';
-      button.style.pointerEvents = done ? '' : 'none';
+      hit.style.pointerEvents = done ? '' : 'none';
       if (done) {
         if (clone) clone.style.visibility = 'hidden';
         return;
       }
       landed = false;
       if (!clone) return;
-      if (!map || t1 <= 0) {
+      if (t1 <= 0) {
         clone.style.visibility = 'hidden';
         return;
       }
 
-      // cíl: skutečná karta ve vějíři (poloha, natočení, měřítko)
-      const rect = button.getBoundingClientRect();
-      const tr = getComputedStyle(button).transform;
-      const mx = tr && tr !== 'none' ? new DOMMatrixReadOnly(tr) : new DOMMatrixReadOnly();
-      const target = { r: (Math.atan2(mx.b, mx.a) * 180) / Math.PI, sx: Math.hypot(mx.a, mx.b), sy: Math.hypot(mx.c, mx.d) };
-      const faceUp = button.dataset.active === 'true';
-
-      // Celý let běží v souřadnicích screenshotu webu na displeji (1440 × 900)
-      // a do viewportu se promítá stejnou homografií jako displej — karty tak
-      // nikdy neopustí obrazovku notebooku a rostou s ní, jak kamera najíždí.
-      const home = { x: rect.left + rect.width / 2 - ar.left - (vw - SITE_SHOT.w) / 2, y: rect.top + rect.height / 2 - ar.top };
-      const burst = BURST[index % BURST.length];
-      const bob = Math.sin(heroP * 110 + index * 1.3) * 10 * t1 * (1 - t2);
+      const hover = HOVER[index % HOVER.length];
+      // start: místo stolu na webu v displeji (sleduje notebook ve filmu)
+      const src: Pt = map ? map(SHOT_SOURCE.x, SHOT_SOURCE.y) : { x: vw / 2, y: vh / 2 };
+      const srcScale = map ? Math.max(0.05, Math.hypot(map(SHOT_SOURCE.x + 1, SHOT_SOURCE.y).x - src.x, map(SHOT_SOURCE.x + 1, SHOT_SOURCE.y).y - src.y)) : 0.3;
+      // visící poloha kolem notebooku; s průjezdem kamery se karty rozestoupí ke krajům
+      const spread = 1 + 0.16 * drift;
+      const bob = Math.sin(heroP * 140 + index * 1.3) * 9 * t1 * (1 - t2);
+      const hov: Pt = { x: vw * (0.5 + (hover.x - 0.5) * spread), y: vh * (0.5 + (hover.y - 0.5) * spread) + bob };
 
       let P: Pt;
       let S: number;
@@ -186,40 +186,38 @@ export function ServicesTable() {
       let ry: number;
       let glow: number;
       if (t2 <= 0) {
-        // výbuch ze středu displeje — každá karta svým směrem
+        // výlet z displeje — každá karta svým směrem, obloukem
         const e = easeOut(t1);
-        const ctrl = { x: lerp(SHOT_CENTER.x, burst.x, 0.5) + burst.bend.x, y: lerp(SHOT_CENTER.y, burst.y, 0.5) + burst.bend.y };
-        P = quadBezier(SHOT_CENTER, ctrl, { x: burst.x, y: burst.y + bob }, e);
+        const ctrl = { x: lerp(src.x, hov.x, 0.5) + hover.bend.x * vw, y: lerp(src.y, hov.y, 0.5) + hover.bend.y * vh };
+        P = quadBezier(src, ctrl, hov, e);
         const pop = Math.sin(Math.PI * t1);
-        S = lerp(0.3, 1, e) * (1 + 0.12 * pop);
-        rot = burst.r * e + burst.spin * pop;
+        S = lerp(srcScale * 0.9, hoverScale, e) * (1 + 0.1 * pop) * (1 + 0.08 * drift);
+        rot = hover.r * e + hover.spin * pop;
         ry = 360 * e;
         glow = 0.35 + 0.65 * pop;
       } else {
-        // návrat do vějíře na stole
+        // cíl: skutečná karta ve vějíři (poloha, natočení, měřítko)
+        const rect = button.getBoundingClientRect();
+        const tr = getComputedStyle(button).transform;
+        const mx = tr && tr !== 'none' ? new DOMMatrixReadOnly(tr) : new DOMMatrixReadOnly();
+        const target = { r: (Math.atan2(mx.b, mx.a) * 180) / Math.PI, sx: Math.hypot(mx.a, mx.b), sy: Math.hypot(mx.c, mx.d) };
+        const home = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        const faceUp = button.dataset.active === 'true';
         const e = easeOut(t2);
-        const from = { x: burst.x, y: burst.y + bob };
-        const ctrl = { x: lerp(from.x, home.x, 0.6), y: Math.min(from.y, home.y) - 40 };
-        P = quadBezier(from, ctrl, home, e);
-        S = 1;
+        const ctrl = { x: lerp(hov.x, home.x, 0.6), y: Math.min(hov.y, home.y) - 60 };
+        P = quadBezier(hov, ctrl, home, e);
+        S = lerp(hoverScale * 1.08, aScale, e);
         sxT = lerp(1, target.sx, e);
         syT = lerp(1, target.sy, e);
-        rot = lerp(burst.r, target.r, e);
+        rot = lerp(hover.r, target.r, e);
         ry = faceUp ? 180 * ease(seg(t2, 0.3, 1)) : 0;
         glow = 0.35 * (1 - e);
       }
-      // hlídání okrajů displeje: karta (150 × 240 · S) celá uvnitř screenshotu
-      const hw = (CARD_W / 2) * S * 1.1;
-      const hh = (CARD_H / 2) * S * 1.1;
-      P = { x: Math.min(SITE_SHOT.w - hw, Math.max(hw, P.x)), y: Math.min(SITE_SHOT.h - hh, Math.max(hh, P.y)) };
 
-      const pos = map(P.x, P.y);
-      const ex = map(P.x + 1, P.y);
-      const ls = Math.max(0.02, Math.hypot(ex.x - pos.x, ex.y - pos.y));
       clone.style.visibility = '';
-      clone.style.transform = `translate3d(${(pos.x - CARD_W / 2).toFixed(1)}px, ${(pos.y - CARD_H / 2).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${(ls * S * sxT).toFixed(4)}, ${(ls * S * syT).toFixed(4)})`;
+      clone.style.transform = `translate3d(${(P.x - CARD_W / 2).toFixed(1)}px, ${(P.y - CARD_H / 2).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${(S * sxT).toFixed(4)}, ${(S * syT).toFixed(4)})`;
       clone.style.opacity = clamp01(t1 / 0.05).toFixed(3);
-      clone.style.filter = glow > 0.02 ? `drop-shadow(0 0 ${(20 * glow * ls).toFixed(1)}px rgba(61,123,255,${(0.8 * glow).toFixed(2)}))` : '';
+      clone.style.filter = glow > 0.02 ? `drop-shadow(0 0 ${(20 * glow * S).toFixed(1)}px rgba(61,123,255,${(0.8 * glow).toFixed(2)}))` : '';
       const flipper = clone.firstElementChild as HTMLElement | null;
       if (flipper) flipper.style.transform = `rotateY(${ry.toFixed(1)}deg)`;
     });
@@ -258,6 +256,25 @@ export function ServicesTable() {
     };
   }, [applyFlight, active, mounted]);
 
+  // Mobil: karta vyjede zespodu rubem nahoru a jak projíždí oknem, otočí se
+  // lícem (sloupce se zpožděním — „rozdávání" po dvojicích). Oběma směry.
+  const mobileGrid = useRef<HTMLDivElement>(null);
+  useScrollFrame(() => {
+    const grid = mobileGrid.current;
+    if (!grid || !grid.offsetHeight || reduced) return;
+    grid.querySelectorAll<HTMLElement>('[data-mcard]').forEach((card, index) => {
+      const col = index % 2;
+      const v = viewProgress(card, 1.02, 0.5);
+      const rise = easeOut(seg(v, 0, 0.45));
+      const flip = ease(seg(v, 0.25 + col * 0.1, 0.85 + col * 0.1));
+      card.style.opacity = rise.toFixed(3);
+      card.style.transform = `translate3d(0, ${((1 - rise) * 60).toFixed(1)}px, 0) rotateX(${((1 - rise) * 24).toFixed(2)}deg) rotateZ(${((1 - flip) * (col ? 4 : -4)).toFixed(2)}deg)`;
+      const flipper = card.firstElementChild as HTMLElement | null;
+      if (flipper) flipper.style.transform = `rotateY(${(180 * flip).toFixed(1)}deg)`;
+      card.style.filter = flip > 0.05 && flip < 0.95 ? `drop-shadow(0 0 ${(18 * Math.sin(Math.PI * flip)).toFixed(1)}px rgba(61,123,255,0.8))` : '';
+    });
+  });
+
   // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce
   useEffect(() => {
     const node = stage.current;
@@ -273,8 +290,8 @@ export function ServicesTable() {
   return (
     <section
       id="sluzby"
-      data-nav-offset={reduced ? undefined : 70}
-      className={`relative overflow-x-clip py-24 ${reduced ? 'md:py-28' : 'md:h-[202vh] md:py-0'}`}
+      data-nav-offset={reduced ? undefined : 90}
+      className={`relative overflow-x-clip pb-6 pt-10 md:py-24 ${reduced ? 'md:py-28' : 'md:h-[233vh] md:py-0'}`}
       aria-labelledby="sluzby-title"
     >
       <div data-shot-anchor className={reduced ? '' : 'md:sticky md:top-0 md:h-dvh md:overflow-hidden md:pt-28'}>
@@ -296,7 +313,7 @@ export function ServicesTable() {
 
       {/* kulaté taby */}
       <motion.div
-        className="shell mt-10"
+        className="shell mt-10 hidden md:block"
         initial={reduced ? undefined : { opacity: 0, y: 12 }}
         animate={showHeading ? { opacity: 1, y: 0 } : undefined}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -348,19 +365,17 @@ export function ServicesTable() {
                 ref={(el) => {
                   flightRefs.current[index] = el;
                 }}
-                className="pointer-events-none absolute left-1/2 top-0 -ml-[75px] h-[240px] w-[150px]"
+                className="group pointer-events-none absolute left-1/2 top-0 -ml-[75px] h-[240px] w-[150px]"
                 style={{
                   zIndex: isActive ? 40 : 10 + (COUNT - Math.abs(index - active)),
                   opacity: reduced ? 1 : 0,
                 }}
               >
-              <motion.button
-                type="button"
+              {/* vizuál karty — pohybuje se, ale na myš nereaguje */}
+              <motion.div
                 data-src-card
                 data-active={isActive ? 'true' : 'false'}
-                onClick={() => choose(index)}
-                onMouseEnter={() => choose(index)}
-                className="pointer-events-auto absolute inset-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
+                className="pointer-events-none absolute inset-0 rounded-2xl group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-[var(--blue-bright)]"
                 style={{ perspective: 900 }}
                 initial={layout(index, active)}
                 animate={layout(index, active)}
@@ -377,7 +392,20 @@ export function ServicesTable() {
                     <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
                   </span>
                 </motion.div>
-              </motion.button>
+              </motion.div>
+              {/* Stojící zásahová plocha: sloupec vějíře, který se s hoverem
+                  nehýbe — karta pod kurzorem neuteče, sousedé se nepřepínají
+                  tam a zpět (dřív hover zvedl kartu a kurzor „spadl" na vedlejší). */}
+              <button
+                type="button"
+                aria-pressed={isActive}
+                aria-label={tItems(`${item.slug}.card`)}
+                onClick={() => choose(index)}
+                onMouseEnter={() => choose(index)}
+                onFocus={() => choose(index)}
+                className="pointer-events-auto absolute bottom-0 outline-none"
+                style={{ left: (index - (COUNT - 1) / 2) * 158 - 4, width: 158, top: isActive ? -128 : 0 }}
+              />
               </div>
             );
           })}
@@ -386,43 +414,28 @@ export function ServicesTable() {
 
       </div>
 
-      {/* ===== KARUSEL (mobil) — nativní scroll-snap, žádné JS přetahování ===== */}
-      <div className="mt-8 md:hidden">
-        <ul
-          className="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[calc(50vw-75px)] pb-6"
-          onScroll={(event) => {
-            const el = event.currentTarget;
-            const index = Math.round(el.scrollLeft / 166);
-            choose(Math.max(0, Math.min(COUNT - 1, index)));
-          }}
-        >
-          {services.map((item, index) => (
-            <motion.li
-              key={item.slug}
-              className="shrink-0 snap-center"
-              initial={reduced ? undefined : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-10%' }}
-              transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <button
-                type="button"
-                onClick={() => choose(index)}
-                className={`flex h-[230px] w-[150px] flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-[opacity,transform,border-color] duration-300 ${
-                  active === index
-                    ? 'scale-100 border-[rgba(61,123,255,0.6)] bg-[rgba(18,30,70,0.95)] opacity-100'
-                    : 'scale-95 border-[var(--line)] bg-[rgba(10,15,28,0.95)] opacity-80'
-                }`}
-              >
-                <span className="font-display text-[11px] tracking-[0.2em] text-[#c3d5ff]">{item.num}</span>
-                <Icon name={item.icon} className="h-7 w-7 text-ink" />
-                <span className="font-display text-sm font-bold uppercase leading-tight text-ink">
-                  {tItems(`${item.slug}.card`)}
-                </span>
-              </button>
-            </motion.li>
-          ))}
-        </ul>
+      {/* ===== MOBIL: karty pod sebou (2 sloupce), při scrollu se otáčejí lícem ===== */}
+      <div ref={mobileGrid} className="shell mt-9 grid grid-cols-2 gap-3.5 md:hidden" style={{ perspective: 1100 }}>
+        {services.map((item, index) => (
+          <button
+            key={item.slug}
+            type="button"
+            data-mcard
+            onClick={() => scrollToId(`panel-${item.slug}`)}
+            aria-label={tItems(`${item.slug}.card`)}
+            className={`relative aspect-[150/240] rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)] ${
+              index === COUNT - 1 && COUNT % 2 === 1 ? 'col-span-2 mx-auto w-[calc(50%-7px)]' : 'w-full'
+            }`}
+            style={reduced ? undefined : { opacity: 0 }}
+          >
+            <span data-mflip className="preserve-3d absolute inset-0" style={{ transform: reduced ? 'rotateY(180deg)' : undefined }}>
+              <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+              <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 34px rgba(31,91,255,0.4)' }}>
+                <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+              </span>
+            </span>
+          </button>
+        ))}
       </div>
       {/* letící klony karet — fixní vrstva nad hero filmem */}
       {mounted && !reduced
