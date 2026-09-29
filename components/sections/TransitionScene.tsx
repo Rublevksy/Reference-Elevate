@@ -1,12 +1,12 @@
 'use client';
 
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, type CSSProperties, type MutableRefObject } from 'react';
 import { MacbookFrame } from '@/components/mockups/MacbookFrame';
 import { services } from '@/content/services';
 import { processSteps } from '@/content/process';
-import { cases } from '@/content/cases';
+import { useProjects } from '@/components/ContentProvider';
 import { macbookScreen } from '@/lib/devices';
 import { SYMBOL_POINTS, SYMBOL_VIEWBOX, ease, easeIn, easeOut, lerp, neonFlicker, seg } from '@/lib/fx';
 import { useScrollFrame } from '@/lib/useScrollFrame';
@@ -666,6 +666,10 @@ function LaptopToTimeline({ renderRef }: SceneProps) {
 
 function NodeBurstToCases({ renderRef }: SceneProps) {
   const tCases = useTranslations('cases.items');
+  const locale = useLocale();
+  // z portálu vyjedou nejvýš tři projekty (první z nich zajede do notebooku)
+  const cases = useProjects().slice(0, 3);
+  const label = (slug: string, name: string) => (locale !== 'cs' && tCases.has(`${slug}.name`) ? tCases(`${slug}.name`) : name);
   const tProcess = useTranslations('process');
   const lastStep = (tProcess.raw('steps') as { title: string; text: string }[])[4];
   const node = useRef<HTMLDivElement>(null);
@@ -704,7 +708,7 @@ function NodeBurstToCases({ renderRef }: SceneProps) {
     const H = W * 0.64;
     const dock = ease(seg(q, 0.74, 0.94));
     cardEls.current.forEach((el, i) => {
-      const off = i - 1;
+      const off = i - (cases.length - 1) / 2;
       // projekty vyjíždějí z portálu z hloubky (malé → plná velikost, náklon)
       const out = easeOut(seg(q, 0.32 + i * 0.07, 0.56 + i * 0.07));
       const row = ease(seg(q, 0.58, 0.72));
@@ -770,15 +774,15 @@ function NodeBurstToCases({ renderRef }: SceneProps) {
       </div>
       {cases.map((item, i) => (
         <div
-          key={item.slug}
+          key={item.id}
           ref={(el) => { cardEls.current[i] = el; }}
           className={`${CENTER} overflow-hidden border border-[rgba(80,120,255,0.35)] bg-[var(--bg)] opacity-0 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]`}
           style={{ zIndex: 3 - i }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/cases/${item.slug}/desktop.jpg`} alt="" className="absolute inset-x-0 top-0 w-full max-w-none" />
+          <img src={item.desktopImage} alt="" className="absolute inset-x-0 top-0 w-full max-w-none" />
           <div ref={(el) => { labels.current[i] = el; }} className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-10">
-            <span className="font-display text-sm font-bold uppercase text-ink">{tCases(`${item.slug}.name`)}</span>
+            <span className="font-display text-sm font-bold uppercase text-ink">{label(item.slug, item.name)}</span>
           </div>
         </div>
       ))}

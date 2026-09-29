@@ -10,6 +10,7 @@ import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { glideTo, scrollToId } from '@/lib/scrollTo';
 import { site } from '@/content/site';
+import { useContactEmail } from '@/components/ContentProvider';
 
 const ITEMS = [
   // Služby vedou rovnou na rozvinuté panely služeb (NORDA), ne na stůl karet
@@ -42,6 +43,7 @@ function RollLabel({ label, active }: { label: string; active: boolean }) {
 }
 
 export function Navbar() {
+  const contactEmail = useContactEmail();
   const t = useTranslations('nav');
   const tA11y = useTranslations('a11y');
   const reduced = useReducedMotion();
@@ -264,7 +266,7 @@ export function Navbar() {
               <div className="mt-8 flex items-center justify-between">
                 <LocaleSwitcher compact />
                 <div className="text-right text-xs text-muted">
-                  <a href={`mailto:${site.email}`} className="block hover:text-ink">{site.email}</a>
+                  <a href={`mailto:${contactEmail}`} className="block hover:text-ink">{contactEmail}</a>
                   {site.phone ? <a href={`tel:${site.phoneHref}`} className="block hover:text-ink">{site.phone}</a> : null}
                 </div>
               </div>

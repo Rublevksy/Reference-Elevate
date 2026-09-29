@@ -10,8 +10,10 @@ import { serviceSlugs } from '@/content/services';
 import { site } from '@/content/site';
 import { poseSprite } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useContactEmail } from '@/components/ContentProvider';
 
 export function Footer() {
+  const contactEmail = useContactEmail();
   const t = useTranslations('footer');
   const tServices = useTranslations('services.items');
   const tNav = useTranslations('nav');
@@ -61,7 +63,7 @@ export function Footer() {
         <div>
           <h2 className="eyebrow mb-4">{t('contact')}</h2>
           <ul className="space-y-2.5 text-sm text-muted">
-            <li><a href={`mailto:${site.email}`} className="transition-colors hover:text-ink">{site.email}</a></li>
+            <li><a href={`mailto:${contactEmail}`} className="transition-colors hover:text-ink">{contactEmail}</a></li>
             {site.phone ? <li><a href={`tel:${site.phoneHref}`} className="transition-colors hover:text-ink">{site.phone}</a></li> : null}
             <li>{site.city}</li>
           </ul>

@@ -10,15 +10,14 @@ import {
   useTransform,
 } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { MacbookFrame } from '@/components/mockups/MacbookFrame';
 import { PhoneFrame } from '@/components/mockups/Frame';
-import { cases } from '@/content/cases';
+import { useProjects } from '@/components/ContentProvider';
+import type { Project } from '@/lib/content/projects';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-
-const COUNT = cases.length;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -91,16 +90,14 @@ function writeGlare(el: HTMLDivElement | null, g: number) {
 }
 
 function DeviceScreen({
-  slug,
-  file,
+  src,
   ratio,
   active,
   hovered,
   glare,
   wipeDelay = 0,
 }: {
-  slug: string;
-  file: 'desktop' | 'mobile';
+  src: string;
   ratio: number;
   active: boolean;
   hovered: boolean;
@@ -110,15 +107,15 @@ function DeviceScreen({
   const { containerRef, imgRef } = useAutoScroll(active, ratio, hovered);
   const glareRef = useRef<HTMLDivElement>(null);
   // předchozí projekt zůstane pod stíráním nového — obrazovka nikdy nezčerná
-  const prevSlug = useRef(slug);
+  const prevSrc = useRef(src);
   const [under, setUnder] = useState<string | null>(null);
   useEffect(() => {
-    if (prevSlug.current === slug) return;
-    setUnder(prevSlug.current);
-    prevSlug.current = slug;
+    if (prevSrc.current === src) return;
+    setUnder(prevSrc.current);
+    prevSrc.current = src;
     const id = window.setTimeout(() => setUnder(null), 900);
     return () => window.clearTimeout(id);
-  }, [slug]);
+  }, [src]);
 
   useMotionValueEvent(glare, 'change', (g) => writeGlare(glareRef.current, g));
   useEffect(() => writeGlare(glareRef.current, glare.get()), [glare]);
@@ -127,10 +124,10 @@ function DeviceScreen({
     <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-[#04060b]">
       {under ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/cases/${under}/${file}.jpg`} alt="" aria-hidden className="absolute inset-x-0 top-0 w-full max-w-none" />
+        <img src={under} alt="" aria-hidden className="absolute inset-x-0 top-0 w-full max-w-none" />
       ) : null}
       <motion.div
-        key={slug}
+        key={src}
         className="absolute inset-0"
         initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
         animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
@@ -139,7 +136,7 @@ function DeviceScreen({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           ref={imgRef}
-          src={`/cases/${slug}/${file}.jpg`}
+          src={src}
           alt=""
           aria-hidden
           loading="eager"
@@ -178,18 +175,14 @@ function DeviceScreen({
  * a pod zařízeními dýchá odraz světla obrazovky v barvě projektu.
  */
 function DeviceComposition({
-  slug,
+  project,
   accent,
-  desktopRatio,
-  mobileRatio,
   active,
   progress,
   segments = 1,
 }: {
-  slug: string;
+  project: Project;
   accent: string;
-  desktopRatio: number;
-  mobileRatio: number;
   active: boolean;
   /** progress scrollu, který řídí odlesk a hloubku; bez něj vlastní průchod viewportem */
   progress?: MotionValue<number>;
@@ -278,7 +271,7 @@ function DeviceComposition({
       <div ref={laptopDepth} data-land="cases-laptop" className="relative min-w-0 flex-[4.2]">
         <motion.div style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}>
           <MacbookFrame className="drop-shadow-[0_50px_90px_-30px_rgba(0,0,0,0.9)]">
-            <DeviceScreen slug={slug} file="desktop" ratio={desktopRatio} active={running} hovered={hovered} glare={glareLaptop} />
+            <DeviceScreen src={project.desktopImage} ratio={project.desktopRatio} active={running} hovered={hovered} glare={glareLaptop} />
           </MacbookFrame>
         </motion.div>
       </div>
@@ -287,7 +280,7 @@ function DeviceComposition({
         <motion.div style={reduced ? undefined : { rotateX, rotateY: rotateYPhone, transformStyle: 'preserve-3d' }}>
           <PhoneFrame className="!w-full drop-shadow-[0_30px_50px_-18px_rgba(0,0,0,0.95)]">
             <div data-land="cases-phone" className="relative aspect-[390/844] overflow-hidden">
-              <DeviceScreen slug={slug} file="mobile" ratio={mobileRatio} active={running} hovered={hovered} glare={glarePhone} wipeDelay={0.1} />
+              <DeviceScreen src={project.mobileImage} ratio={project.mobileRatio} active={running} hovered={hovered} glare={glarePhone} wipeDelay={0.1} />
             </div>
           </PhoneFrame>
         </motion.div>
@@ -296,9 +289,28 @@ function DeviceComposition({
   );
 }
 
+/**
+ * Texty projektu: čeština z databáze (administrace), ostatní jazyky
+ * z překladů, pokud je projekt má — jinak rovněž z databáze.
+ */
+function caseText(locale: string, tItems: ReturnType<typeof useTranslations>, tagsFallback: string[]) {
+  return (item: Project) => {
+    const translated = locale !== 'cs' && tItems.has(`${item.slug}.name`);
+    return {
+      name: translated ? tItems(`${item.slug}.name`) : item.name,
+      kind: translated ? tItems(`${item.slug}.kind`) : item.kind,
+      tags: locale === 'cs' && item.tags.length ? item.tags : tagsFallback,
+    };
+  };
+}
+
 export function Cases() {
   const t = useTranslations('cases');
   const tItems = useTranslations('cases.items');
+  const locale = useLocale();
+  const cases = useProjects();
+  const COUNT = Math.max(1, cases.length);
+  const text = caseText(locale, tItems, t.raw('tags') as string[]);
   const reduced = useReducedMotion();
   const section = useRef<HTMLElement>(null);
   const [index, setIndex] = useState(0);
@@ -308,14 +320,14 @@ export function Cases() {
   // screenshoty všech projektů předem stáhnout a dekódovat — při přepnutí projektu
   // pak obrazovka nezčerná na dobu dekódování velkého obrázku
   useEffect(() => {
-    const imgs = cases.flatMap((item) => ['desktop', 'mobile'].map((f) => {
+    const imgs = cases.flatMap((item) => [item.desktopImage, item.mobileImage].map((src) => {
       const img = new window.Image();
-      img.src = `/cases/${item.slug}/${f}.jpg`;
+      img.src = src;
       img.decode?.().catch(() => undefined);
       return img;
     }));
     return () => imgs.forEach((img) => (img.src = ''));
-  }, []);
+  }, [cases]);
 
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
     const raw = Math.floor(Math.max(0, Math.min(0.9999, p)) * COUNT);
@@ -329,7 +341,6 @@ export function Cases() {
     window.__lenis ? window.__lenis.scrollTo(top, { duration: 1.1 }) : window.scrollTo({ top, behavior: 'smooth' });
   };
 
-  const tags = t.raw('tags') as string[];
   const accent = cases[index].accent;
 
   return (
@@ -365,7 +376,7 @@ export function Cases() {
                   {cases.map((item, i) => {
                     const active = i === index;
                     return (
-                      <li key={item.slug}>
+                      <li key={item.id}>
                         <button
                           type="button"
                           onClick={() => goTo(i)}
@@ -379,7 +390,7 @@ export function Cases() {
                             }}
                             transition={{ duration: 0.4 }}
                           >
-                            {String(i + 1).padStart(2, '0')} {tItems(`${item.slug}.name`)}
+                            {String(i + 1).padStart(2, '0')} {text(item).name}
                           </motion.span>
                         </button>
 
@@ -391,9 +402,9 @@ export function Cases() {
                             transition={{ duration: 0.4 }}
                             className="overflow-hidden"
                           >
-                            <p className="mt-1.5 text-sm text-muted">{tItems(`${item.slug}.kind`)}</p>
+                            <p className="mt-1.5 text-sm text-muted">{text(item).kind}</p>
                             <ul className="mt-3 flex flex-wrap gap-2">
-                              {tags.map((tag) => (
+                              {text(item).tags.map((tag) => (
                                 <li key={tag} className="rounded-full border border-[var(--line)] px-3 py-1 text-[10px] uppercase tracking-widest text-muted">
                                   {tag}
                                 </li>
@@ -420,12 +431,10 @@ export function Cases() {
               </div>
 
               <DeviceComposition
-                slug={cases[index].slug}
+                project={cases[index]}
                 accent={accent}
                 progress={scrollYProgress}
                 segments={COUNT}
-                desktopRatio={cases[index].desktopHeight / 1440}
-                mobileRatio={cases[index].mobileHeight / 390}
                 active
               />
             </div>
@@ -434,7 +443,7 @@ export function Cases() {
           {/* ---- MOBIL / reduced-motion: tři bloky pod sebou ---- */}
           <div className={reduced ? 'mt-10 space-y-16' : 'mt-10 space-y-16 md:hidden'}>
             {cases.map((item, i) => (
-              <MobileCase key={item.slug} item={item} i={i} tags={tags} visitLabel={t('visit')} tItems={tItems} />
+              <MobileCase key={item.id} item={item} i={i} text={text} visitLabel={t('visit')} />
             ))}
           </div>
         </div>
@@ -446,16 +455,15 @@ export function Cases() {
 function MobileCase({
   item,
   i,
-  tags,
+  text,
   visitLabel,
-  tItems,
 }: {
-  item: (typeof cases)[number];
+  item: Project;
   i: number;
-  tags: string[];
+  text: ReturnType<typeof caseText>;
   visitLabel: string;
-  tItems: ReturnType<typeof useTranslations>;
 }) {
+  const tags = text(item).tags;
   const [inView, setInView] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -476,16 +484,14 @@ function MobileCase({
       transition={{ duration: 0.7 }}
     >
       <p className="font-display text-lg font-bold uppercase leading-none">
-        {String(i + 1).padStart(2, '0')} {tItems(`${item.slug}.name`)}
+        {String(i + 1).padStart(2, '0')} {text(item).name}
       </p>
-      <p className="mt-1.5 text-sm text-muted">{tItems(`${item.slug}.kind`)}</p>
+      <p className="mt-1.5 text-sm text-muted">{text(item).kind}</p>
 
       <div className="mt-6">
         <DeviceComposition
-          slug={item.slug}
+          project={item}
           accent={item.accent}
-          desktopRatio={item.desktopHeight / 1440}
-          mobileRatio={item.mobileHeight / 390}
           active={inView}
         />
       </div>

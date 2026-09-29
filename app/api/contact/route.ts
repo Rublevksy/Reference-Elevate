@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { contactSchema } from '@/lib/contactSchema';
-import { site } from '@/content/site';
+import { getSettings } from '@/lib/content/server';
 
 export const runtime = 'nodejs';
 
@@ -66,7 +66,8 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.RESEND_API_KEY;
   // prázdná hodnota v .env = výchozí (?? by nechalo prázdný řetězec a Resend by selhal)
-  const to = process.env.CONTACT_EMAIL || site.email;
+  // adresát: nastavení z administrace, pak proměnná prostředí
+  const to = (await getSettings()).contactEmail || process.env.CONTACT_EMAIL || '';
   const from = process.env.CONTACT_FROM_EMAIL || 'ELEVATE <onboarding@resend.dev>';
 
   const rows: [string, string][] = [

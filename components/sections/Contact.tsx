@@ -14,6 +14,7 @@ import { Mascot } from '@/components/mascot/Mascot';
 import { SpeechBubble } from '@/components/mascot/SpeechBubble';
 import { makeContactSchema, type ContactInput } from '@/lib/contactSchema';
 import { site } from '@/content/site';
+import { useContactEmail } from '@/components/ContentProvider';
 
 const STEP_FIELDS: (keyof ContactInput)[][] = [
   ['needs'],
@@ -34,6 +35,7 @@ const field =
   'w-full rounded-xl border border-[var(--line)] bg-white/[0.03] px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-[rgba(61,123,255,0.6)]';
 
 export function Contact({ preselectIndex }: { preselectIndex?: number }) {
+  const contactEmail = useContactEmail();
   const t = useTranslations('contact');
   const tMascot = useTranslations('mascot');
   const [step, setStep] = useState(0);
@@ -127,7 +129,7 @@ export function Contact({ preselectIndex }: { preselectIndex?: number }) {
       if (!response.ok || !data.ok) {
         const code = data.code ?? 'generic';
         const key = ['rate', 'server', 'send'].includes(code) ? code : 'generic';
-        throw new Error(key === 'send' ? `${t('errors.send')} ${data.to ?? site.email}` : t(`errors.${key}`));
+        throw new Error(key === 'send' ? `${t('errors.send')} ${data.to ?? contactEmail}` : t(`errors.${key}`));
       }
       setStatus('done');
     } catch (error) {
@@ -356,11 +358,11 @@ export function Contact({ preselectIndex }: { preselectIndex?: number }) {
 
             <ul className="space-y-4 text-sm">
               <li>
-                <a href={`mailto:${site.email}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
+                <a href={`mailto:${contactEmail}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
                   <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
                     <Mail className="h-4 w-4" aria-hidden />
                   </span>
-                  {site.email}
+                  {contactEmail}
                 </a>
               </li>
               {site.phone ? (

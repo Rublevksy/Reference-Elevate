@@ -14,6 +14,8 @@ import { Footer } from '@/components/sections/Footer';
 import { MascotGuide } from '@/components/mascot/MascotGuide';
 import { SmoothScroll } from '@/lib/SmoothScroll';
 import { Analytics } from '@/components/ui/Analytics';
+import { ContentProvider } from '@/components/ContentProvider';
+import { getProjects, getSettings } from '@/lib/content/server';
 
 /**
  * Cyrilici tahá jen ru/uk — pro cs/en by to byla čtvrt megabajtu navíc.
@@ -105,12 +107,13 @@ export default async function LocaleLayout({
 
   const t = await getTranslations({ locale, namespace: 'a11y' });
 
+  const [projects, settings] = await Promise.all([getProjects(), getSettings()]);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
     name: site.name,
     url: `${site.url}/${locale}`,
-    email: site.email,
+    email: settings.contactEmail,
     ...(site.phone ? { telephone: site.phone } : {}),
     areaServed: 'CZ',
     priceRange: '$$',
@@ -138,6 +141,7 @@ export default async function LocaleLayout({
           {t('skip')}
         </a>
         <NextIntlClientProvider>
+          <ContentProvider value={{ projects, contactEmail: settings.contactEmail }}>
           <Preloader />
           <Backdrop />
           <Cursor />
@@ -147,6 +151,7 @@ export default async function LocaleLayout({
             <Footer />
             <MascotGuide />
           </SmoothScroll>
+          </ContentProvider>
         </NextIntlClientProvider>
         <Analytics />
       </body>
