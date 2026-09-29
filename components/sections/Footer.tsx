@@ -62,7 +62,7 @@ export function Footer() {
           <h2 className="eyebrow mb-4">{t('contact')}</h2>
           <ul className="space-y-2.5 text-sm text-muted">
             <li><a href={`mailto:${site.email}`} className="transition-colors hover:text-ink">{site.email}</a></li>
-            <li><a href={`tel:${site.phoneHref}`} className="transition-colors hover:text-ink">{site.phone}</a></li>
+            {site.phone ? <li><a href={`tel:${site.phoneHref}`} className="transition-colors hover:text-ink">{site.phone}</a></li> : null}
             <li>{site.city}</li>
           </ul>
           <ul className="mt-5 flex flex-wrap gap-2">

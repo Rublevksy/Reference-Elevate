@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Icon } from '@/components/ui/FeatureIcon';
 import type { IconName } from '@/content/icons';
 import { SYMBOL_POINTS, SYMBOL_VIEWBOX } from '@/lib/fx';
@@ -18,7 +19,7 @@ function Watermark({ className = '' }: { className?: string }) {
   );
 }
 
-export function ServiceCardBack({ item, label, className = '' }: { item: Item; label: string; className?: string }) {
+export const ServiceCardBack = memo(function ServiceCardBack({ item, label, className = '' }: { item: Item; label: string; className?: string }) {
   return (
     <span
       className={`absolute inset-0 overflow-hidden rounded-2xl border border-[rgba(80,120,255,0.28)] ${className}`}
@@ -47,9 +48,9 @@ export function ServiceCardBack({ item, label, className = '' }: { item: Item; l
       </span>
     </span>
   );
-}
+});
 
-export function ServiceCardFront({ item, title, className = '' }: { item: Item; title: string; className?: string }) {
+export const ServiceCardFront = memo(function ServiceCardFront({ item, title, className = '' }: { item: Item; title: string; className?: string }) {
   return (
     <span className={`absolute inset-0 overflow-hidden rounded-2xl p-px ${className}`} style={{ background: 'linear-gradient(160deg,#8fb2ff,#1f5bff 45%,#00c2ff)' }}>
       <span
@@ -68,4 +69,4 @@ export function ServiceCardFront({ item, title, className = '' }: { item: Item; 
       </span>
     </span>
   );
-}
+});

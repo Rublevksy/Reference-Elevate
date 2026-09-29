@@ -35,7 +35,8 @@ export function Cursor() {
       const interactive = (event.target as HTMLElement)?.closest(
         'a, button, [data-cursor="link"], input, textarea, select, [role="button"]',
       );
-      ring.current?.classList.toggle('is-active', Boolean(interactive));
+      const on = Boolean(interactive);
+      if (ring.current && ring.current.classList.contains('is-active') !== on) ring.current.classList.toggle('is-active', on);
     };
 
     const loop = () => {
@@ -68,22 +69,24 @@ export function Cursor() {
         ref={dot}
         className="absolute -left-[3px] -top-[3px] h-1.5 w-1.5 rounded-full bg-[var(--blue-bright)]"
       />
-      <div
-        ref={ring}
-        className="cursor-ring absolute -left-4 -top-4 h-8 w-8 rounded-full border border-[rgba(61,123,255,0.7)] transition-[width,height,opacity,background-color] duration-200"
-      />
+      {/* poloha na vnějším prvku, zvětšení na vnitřním — jen transform/opacity
+          (dřív se animovala šířka/výška/okraje = přepočet layoutu přesně
+          v okamžiku, kdy začínal hover efekt karty nebo tlačítka) */}
+      <div ref={ring} className="cursor-ring absolute -left-4 -top-4 h-8 w-8">
+        <span className="cursor-ring-shape absolute inset-0 rounded-full border border-[rgba(61,123,255,0.7)] transition-transform duration-200 ease-out" />
+        <span className="cursor-ring-glow absolute inset-0 rounded-full bg-[rgba(31,91,255,0.12)] opacity-0 shadow-[0_0_24px_var(--blue-glow)] transition-[opacity,transform] duration-200 ease-out" />
+      </div>
       <style jsx global>{`
         @media (pointer: fine) and (min-width: 1024px) {
           body { cursor: none; }
           a, button, input, textarea, select { cursor: none; }
         }
-        .cursor-ring.is-active {
-          width: 3rem;
-          height: 3rem;
-          margin-left: -0.5rem;
-          margin-top: -0.5rem;
-          background: rgba(31, 91, 255, 0.12);
-          box-shadow: 0 0 24px var(--blue-glow);
+        .cursor-ring.is-active .cursor-ring-shape {
+          transform: scale(1.5);
+        }
+        .cursor-ring.is-active .cursor-ring-glow {
+          opacity: 1;
+          transform: scale(1.5);
         }
       `}</style>
     </div>

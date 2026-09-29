@@ -11,9 +11,10 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.elevate-studio.cz',
   locale: 'cs_CZ',
   city: 'Praha',
-  email: 'info@elevate-studio.cz', // PLACEHOLDER
-  phone: '+420 777 123 456', // PLACEHOLDER
-  phoneHref: '+420777123456', // PLACEHOLDER
+  email: 'elevateitcz@gmail.com',
+  /** telefon zatím nezveřejňujeme — prázdná hodnota ho skryje všude na webu */
+  phone: '' as string,
+  phoneHref: '' as string,
   address: {
     street: 'Praha', // PLACEHOLDER
     city: 'Praha',

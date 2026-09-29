@@ -419,37 +419,55 @@ export function Hero() {
     let lastP = -1;
     let lastW = 0;
 
-    const draw = () => {
+    let lastFrac = -1;
+    let lastT = performance.now();
+    const loaded = (i: number) => i >= 0 && i < totalFrames && loadedRef.current[i];
+    const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       if (!inView) return;
+      const dt = Math.min(0.1, (now - lastT) / 1000);
+      lastT = now;
       const gap = targetFrameRef.current - currentFrameRef.current;
-      // daleký skok (navigace) = rovnou cílový snímek, jinak jemný lerp
-      currentFrameRef.current = Math.abs(gap) > 24 ? targetFrameRef.current : currentFrameRef.current + gap * 0.18;
-      const idx = Math.max(0, Math.min(totalFrames - 1, Math.round(currentFrameRef.current)));
+      // skok přes navigaci = rovnou cíl; jinak dotahování nezávislé na fps
+      // (dřív se nad 24 snímků skočilo rovnou — při rychlém tahu kolečkem viditelný cuk)
+      currentFrameRef.current = Math.abs(gap) > 90 ? targetFrameRef.current : currentFrameRef.current + gap * (1 - Math.exp(-dt * 11));
+      const f = Math.max(0, Math.min(totalFrames - 1, currentFrameRef.current));
 
-      let drawIdx = idx;
-      if (!loadedRef.current[drawIdx]) {
-        let lo = drawIdx;
-        let hi = drawIdx;
+      // Mezi dvěma sousedními snímky filmu se prolíná podle zlomku — dřív se
+      // kreslilo jen při změně celého snímku (24 fps záznam), takže při pomalém
+      // skrolu obraz stál a pak poskočil.
+      let i0 = Math.floor(f);
+      let frac = f - i0;
+      if (!loaded(i0)) {
+        let lo = i0;
+        let hi = i0;
+        i0 = -1;
         while (lo > 0 || hi < totalFrames - 1) {
-          if (lo > 0 && loadedRef.current[--lo]) {
-            drawIdx = lo;
-            break;
-          }
-          if (hi < totalFrames - 1 && loadedRef.current[++hi]) {
-            drawIdx = hi;
-            break;
-          }
+          if (lo > 0 && loaded(--lo)) { i0 = lo; break; }
+          if (hi < totalFrames - 1 && loaded(++hi)) { i0 = hi; break; }
         }
+        frac = 0;
+        if (i0 < 0) return;
       }
+      const i1 = loaded(i0 + 1) ? i0 + 1 : -1;
+      if (i1 < 0) frac = 0;
 
-      const img = imagesRef.current[drawIdx];
+      const img = imagesRef.current[i0];
       if (img?.complete && img.naturalWidth > 0) {
         const p = scrollYProgress.get();
         const sizeChanged = canvas.width !== lastW;
-        if (drawIdx !== lastIdx || sizeChanged) drawCover(ctx, img, canvas.width, canvas.height);
-        if (drawIdx !== lastIdx || sizeChanged || p !== lastP) placeShotRef.current(drawIdx, img.naturalWidth, img.naturalHeight);
-        lastIdx = drawIdx;
+        const fracChanged = Math.abs(frac - lastFrac) > 0.004;
+        if (i0 !== lastIdx || sizeChanged || fracChanged) {
+          drawCover(ctx, img, canvas.width, canvas.height);
+          if (frac > 0.004 && i1 >= 0) {
+            ctx.globalAlpha = frac;
+            drawCover(ctx, imagesRef.current[i1], canvas.width, canvas.height);
+            ctx.globalAlpha = 1;
+          }
+        }
+        if (i0 !== lastIdx || sizeChanged || fracChanged || p !== lastP) placeShotRef.current(i0 + frac, img.naturalWidth, img.naturalHeight);
+        lastIdx = i0;
+        lastFrac = frac;
         lastP = p;
         lastW = canvas.width;
       }

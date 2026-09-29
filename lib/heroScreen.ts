@@ -45,8 +45,13 @@ export function subscribeHeroFrame(listener: (s: HeroFrameState) => void) {
  */
 export function screenQuad(frame: number, mobile: boolean, fw: number, fh: number, vw: number, vh: number): Quad | null {
   const desktopFrame = mobile ? frame * 2 : frame;
-  const row = SCREEN_TRACK[Math.round(desktopFrame) - SCREEN_TRACK_FROM];
-  if (!row) return null;
+  // zlomkový snímek (film se mezi snímky prolíná) → rohy interpolovat
+  const k = desktopFrame - SCREEN_TRACK_FROM;
+  const r0 = SCREEN_TRACK[Math.floor(k)];
+  if (!r0) return null;
+  const r1 = SCREEN_TRACK[Math.floor(k) + 1] ?? r0;
+  const fr = k - Math.floor(k);
+  const row = r0.map((v, j) => v + (r1[j] - v) * fr);
   const s = Math.max(vw / fw, vh / fh);
   const ox = (vw - fw * s) / 2;
   const oy = (vh - fh * s) / 2;

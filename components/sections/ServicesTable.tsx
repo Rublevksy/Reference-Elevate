@@ -254,7 +254,7 @@ export function ServicesTable() {
       window.removeEventListener('scroll', run);
       window.removeEventListener('resize', run);
     };
-  }, [applyFlight, active, mounted]);
+  }, [applyFlight, mounted]);
 
   // Mobil: karta vyjede zespodu rubem nahoru a jak projíždí oknem, otočí se
   // lícem (sloupce se zpožděním — „rozdávání" po dvojicích). Oběma směry.
@@ -371,11 +371,24 @@ export function ServicesTable() {
                   opacity: reduced ? 1 : 0,
                 }}
               >
+              {/* Stojící zásahová plocha: sloupec vějíře, který se s hoverem
+                  nehýbe — karta pod kurzorem neuteče, sousedé se nepřepínají
+                  tam a zpět (dřív hover zvedl kartu a kurzor „spadl" na vedlejší). */}
+              <button
+                type="button"
+                aria-pressed={isActive}
+                aria-label={tItems(`${item.slug}.card`)}
+                onClick={() => choose(index)}
+                onMouseEnter={() => choose(index)}
+                onFocus={() => choose(index)}
+                className="peer pointer-events-auto absolute bottom-0 outline-none"
+                style={{ left: (index - (COUNT - 1) / 2) * 158 - 4, width: 158, top: isActive ? -128 : 0 }}
+              />
               {/* vizuál karty — pohybuje se, ale na myš nereaguje */}
               <motion.div
                 data-src-card
                 data-active={isActive ? 'true' : 'false'}
-                className="pointer-events-none absolute inset-0 rounded-2xl group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-[var(--blue-bright)]"
+                className="pointer-events-none absolute inset-0 rounded-2xl will-change-transform peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--blue-bright)]"
                 style={{ perspective: 900 }}
                 initial={layout(index, active)}
                 animate={layout(index, active)}
@@ -393,19 +406,6 @@ export function ServicesTable() {
                   </span>
                 </motion.div>
               </motion.div>
-              {/* Stojící zásahová plocha: sloupec vějíře, který se s hoverem
-                  nehýbe — karta pod kurzorem neuteče, sousedé se nepřepínají
-                  tam a zpět (dřív hover zvedl kartu a kurzor „spadl" na vedlejší). */}
-              <button
-                type="button"
-                aria-pressed={isActive}
-                aria-label={tItems(`${item.slug}.card`)}
-                onClick={() => choose(index)}
-                onMouseEnter={() => choose(index)}
-                onFocus={() => choose(index)}
-                className="pointer-events-auto absolute bottom-0 outline-none"
-                style={{ left: (index - (COUNT - 1) / 2) * 158 - 4, width: 158, top: isActive ? -128 : 0 }}
-              />
               </div>
             );
           })}

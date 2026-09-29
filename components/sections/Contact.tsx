@@ -363,14 +363,16 @@ export function Contact({ preselectIndex }: { preselectIndex?: number }) {
                   {site.email}
                 </a>
               </li>
-              <li>
-                <a href={`tel:${site.phoneHref}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
-                    <Phone className="h-4 w-4" aria-hidden />
-                  </span>
-                  {site.phone}
-                </a>
-              </li>
+              {site.phone ? (
+                <li>
+                  <a href={`tel:${site.phoneHref}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
+                      <Phone className="h-4 w-4" aria-hidden />
+                    </span>
+                    {site.phone}
+                  </a>
+                </li>
+              ) : null}
               <li className="flex items-center gap-3 text-muted">
                 <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
                   <MapPin className="h-4 w-4" aria-hidden />

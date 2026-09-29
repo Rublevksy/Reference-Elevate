@@ -111,7 +111,7 @@ export default async function LocaleLayout({
     name: site.name,
     url: `${site.url}/${locale}`,
     email: site.email,
-    telephone: site.phone,
+    ...(site.phone ? { telephone: site.phone } : {}),
     areaServed: 'CZ',
     priceRange: '$$',
     address: {

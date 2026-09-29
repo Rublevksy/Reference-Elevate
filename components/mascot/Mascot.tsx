@@ -43,18 +43,22 @@ export function Mascot({
   useEffect(() => {
     if (!followCursor || reduced) return;
     let raf = 0;
-    let dx = 0;
-    let dy = 0;
+    let mx = 0;
+    let my = 0;
+    // poloha se měří až ve snímku, ne v události myši — getBoundingClientRect
+    // v pointermove vynucoval přepočet layoutu při každém pohybu (sekal hover efekty)
     const apply = () => {
       raf = 0;
-      if (tiltRef.current) tiltRef.current.style.transform = `perspective(800px) rotateY(${(dx * 6).toFixed(2)}deg) rotateX(${(-dy * 3).toFixed(2)}deg)`;
+      const node = wrapper.current;
+      if (!node || !tiltRef.current) return;
+      const rect = node.getBoundingClientRect();
+      const dx = Math.max(-1, Math.min(1, (mx - (rect.left + rect.width / 2)) / window.innerWidth));
+      const dy = Math.max(-1, Math.min(1, (my - (rect.top + rect.height / 2)) / window.innerHeight));
+      tiltRef.current.style.transform = `perspective(800px) rotateY(${(dx * 6).toFixed(2)}deg) rotateX(${(-dy * 3).toFixed(2)}deg)`;
     };
     const onMove = (event: PointerEvent) => {
-      const node = wrapper.current;
-      if (!node) return;
-      const rect = node.getBoundingClientRect();
-      dx = Math.max(-1, Math.min(1, (event.clientX - (rect.left + rect.width / 2)) / window.innerWidth));
-      dy = Math.max(-1, Math.min(1, (event.clientY - (rect.top + rect.height / 2)) / window.innerHeight));
+      mx = event.clientX;
+      my = event.clientY;
       if (!raf) raf = requestAnimationFrame(apply);
     };
     window.addEventListener('pointermove', onMove, { passive: true });

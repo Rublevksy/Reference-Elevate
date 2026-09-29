@@ -265,7 +265,7 @@ export function Navbar() {
                 <LocaleSwitcher compact />
                 <div className="text-right text-xs text-muted">
                   <a href={`mailto:${site.email}`} className="block hover:text-ink">{site.email}</a>
-                  <a href={`tel:${site.phoneHref}`} className="block hover:text-ink">{site.phone}</a>
+                  {site.phone ? <a href={`tel:${site.phoneHref}`} className="block hover:text-ink">{site.phone}</a> : null}
                 </div>
               </div>
             </motion.div>

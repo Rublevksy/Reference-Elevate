@@ -21,7 +21,60 @@ function pick(needIndex: number, plan: string) {
 }
 
 /** Pozadí karty — sdílené se scénou přechodu, aby se při předání kryly. */
-export const PRICE_CARD_BG = 'linear-gradient(165deg, rgba(20,30,58,0.96), rgba(8,12,24,0.97) 62%)';
+export const PRICE_CARD_BG =
+  'radial-gradient(120% 70% at 100% 0%, rgba(40,72,170,0.28), transparent 55%), linear-gradient(168deg, #101a3a 0%, #0a1024 48%, #070b18 100%)';
+
+/** Obal karty — stejný rozměr a vzhled pro skutečnou kartu i klon ve scéně přechodu. */
+export const PRICE_CARD_CLASS =
+  'relative isolate flex flex-col overflow-hidden rounded-card border border-[rgba(110,150,255,0.24)] p-6 shadow-[0_30px_60px_-34px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(190,210,255,0.08)]';
+
+/** Jemná „gilošová" rytina (jako na bankovce) — pevné vlny, vykreslené jednou. */
+const GUILLOCHE = Array.from({ length: 11 }, (_, k) => {
+  let d = '';
+  for (let x = 0; x <= 400; x += 8) {
+    const y = 14 + k * 11 + 7 * Math.sin(x / 34 + k * 0.55) + 3 * Math.sin(x / 13 - k);
+    d += `${x === 0 ? 'M' : 'L'}${x} ${y.toFixed(1)} `;
+  }
+  return d;
+});
+
+/** Cena rozdělená na číslo a měnu (měna menší) — „5 000 Kč" i „CZK 5,000". */
+function splitPrice(price: string) {
+  const m = price.match(/^(\D*?)\s*([\d][\d\s,. ]*\d|\d)\s*(\D*)$/);
+  if (!m) return { before: '', value: price, after: '' };
+  return { before: m[1].trim(), value: m[2], after: m[3].trim() };
+}
+
+/**
+ * Ozdoby karty ceníku — odlišují ji od karet služeb (neonová trubice, obrysové
+ * číslo): tečkovaný neon nahoře, gilošová rytina v rohu, jemné zrno, ořezové
+ * značky v rozích. Vše statické, bez animovaných stínů.
+ */
+export function PriceCardDecor() {
+  return (
+    <>
+      <span aria-hidden className="grain pointer-events-none absolute inset-0 -z-10 opacity-60" />
+      <svg aria-hidden viewBox="0 0 400 140" preserveAspectRatio="none" className="pointer-events-none absolute -right-8 top-0 -z-10 h-40 w-[130%]" style={{ maskImage: 'linear-gradient(200deg, #000 10%, transparent 70%)', WebkitMaskImage: 'linear-gradient(200deg, #000 10%, transparent 70%)' }}>
+        {GUILLOCHE.map((d, k) => (
+          <path key={k} d={d} fill="none" stroke="rgba(140,175,255,0.13)" strokeWidth={0.8} />
+        ))}
+      </svg>
+      {/* tečkovaný neon místo souvislé linky */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-7 top-0 h-[3px]"
+        style={{
+          background: 'radial-gradient(circle, #cfe0ff 0 1.1px, rgba(97,150,255,0.9) 1.4px, transparent 2px) 0 50% / 9px 3px repeat-x',
+          filter: 'drop-shadow(0 0 3px rgba(61,123,255,0.95))',
+        }}
+      />
+      {/* ořezové značky v rozích */}
+      {['left-3 top-3 border-l border-t', 'right-3 top-3 border-r border-t', 'bottom-3 left-3 border-b border-l', 'bottom-3 right-3 border-b border-r'].map((pos) => (
+        <span key={pos} aria-hidden className={`pointer-events-none absolute h-2.5 w-2.5 border-[rgba(160,190,255,0.35)] ${pos}`} />
+      ))}
+    </>
+  );
+}
 
 /**
  * Obsah ceníkové karty. Stejná komponenta kreslí skutečnou kartu v Ceníku
@@ -32,43 +85,56 @@ export function PriceCardFace({ plan, interactive = false }: { plan: Plan; inter
   const meta = serviceMeta[plan.slug];
   const key = `plans.${plan.id}`;
   const features = t.raw(`${key}.features`) as string[];
+  const price = splitPrice(t(`${key}.price`));
   const ctaClass =
-    'group/cta mt-6 flex w-full items-center justify-center gap-2 rounded-btn border border-[rgba(80,120,255,0.45)] px-4 py-3 font-display text-[11px] uppercase tracking-[0.12em] text-ink transition-[border-color,box-shadow,background-color] duration-300';
+    'group/cta mt-6 flex w-full items-center justify-center gap-2 rounded-btn border border-[rgba(110,150,255,0.45)] bg-[linear-gradient(180deg,rgba(31,91,255,0.12),rgba(31,91,255,0.02))] px-4 py-3 font-display text-[11px] uppercase tracking-[0.12em] text-ink transition-[border-color,background-color] duration-300';
 
   return (
     <>
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.45)] bg-[rgba(31,91,255,0.12)] text-[var(--blue-bright)]">
-          <Icon name={meta.icon} className="h-[18px] w-[18px]" />
+        <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-[var(--blue-bright)]">
+          <span aria-hidden className="absolute inset-0 rounded-full p-px" style={{ background: 'conic-gradient(from 210deg, rgba(160,195,255,0.9), rgba(31,91,255,0.15), rgba(0,194,255,0.7), rgba(160,195,255,0.9))', WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
+          <span aria-hidden className="absolute inset-[3px] rounded-full bg-[rgba(31,91,255,0.12)]" />
+          <Icon name={meta.icon} className="relative h-[18px] w-[18px]" />
         </span>
         <span className="min-w-0">
-          <span className="block font-display text-[10px] tracking-[0.22em] text-[#9fc0ff]">{meta.num}</span>
-          <span className="block font-display text-[15px] font-bold uppercase leading-tight tracking-[0.06em] text-ink">{t(`${key}.name`)}</span>
+          <span className="block font-mono text-[10px] tracking-[0.18em] text-[rgba(160,185,235,0.75)]">
+            № {meta.num}
+            <span className="text-[rgba(160,185,235,0.35)]"> / 05</span>
+          </span>
+          {/* nezalamovat u spojovníku („E-shopy") */}
+          <span className="mt-0.5 block font-display text-[15px] font-bold uppercase leading-tight tracking-[0.06em] text-ink">{t(`${key}.name`).replace(/-/g, '\u2011')}</span>
         </span>
       </div>
 
-      <p className="mt-5 flex items-baseline gap-1.5">
-        <span className="text-xs uppercase tracking-widest text-muted">{t('from')}</span>
-        <span className="font-display text-[clamp(1.45rem,1.9vw,1.75rem)] font-bold leading-none text-ink">{t(`${key}.price`)}</span>
+      <p className="mt-6 flex items-baseline gap-1.5">
+        <span className="text-[11px] uppercase tracking-widest text-muted">{t('from')}</span>
+        {price.before ? <span className="font-display text-sm font-bold text-[#9fc0ff]">{price.before}</span> : null}
+        <span className="bg-[linear-gradient(180deg,#ffffff_20%,#a9c4ff)] bg-clip-text font-display text-[clamp(1.6rem,2.1vw,1.95rem)] font-bold leading-none text-transparent">{price.value}</span>
+        {price.after ? <span className="font-display text-sm font-bold text-[#9fc0ff]">{price.after}</span> : null}
       </p>
-      <p className="mt-3 text-[13px] leading-snug text-muted">{t(`${key}.tagline`)}</p>
+      {/* stejná výška popisu v řadě → perforace „vstupenek" leží v jedné linii */}
+      <p className="mt-3 text-[13px] leading-snug text-muted lg:min-h-[3.3rem]">{t(`${key}.tagline`)}</p>
 
-      <span aria-hidden className="mt-5 block h-px w-full bg-[linear-gradient(90deg,rgba(80,120,255,0.45),rgba(80,120,255,0.08))]" />
+      {/* perforace jako u vstupenky — výřezy sahají až k okrajům karty */}
+      <div aria-hidden className="relative -mx-6 my-5 flex items-center">
+        <span className="-ml-2 h-4 w-4 shrink-0 rounded-full border border-[rgba(110,150,255,0.24)] bg-[var(--bg)]" />
+        <span className="mx-2 h-px flex-1" style={{ background: 'repeating-linear-gradient(90deg, rgba(140,175,255,0.4) 0 5px, transparent 5px 10px)' }} />
+        <span className="-mr-2 h-4 w-4 shrink-0 rounded-full border border-[rgba(110,150,255,0.24)] bg-[var(--bg)]" />
+      </div>
 
-      <p className="mt-4 font-display text-[10px] uppercase tracking-[0.2em] text-[#9fc0ff]">{t('includes')}</p>
+      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-[#9fc0ff]">{t('includes')}</p>
       <ul className="mt-3 space-y-2">
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-[12.5px] leading-[1.45] text-[rgba(226,232,248,0.86)]">
-            <span className="mt-[3px] grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full bg-[rgba(31,91,255,0.22)] text-[var(--blue-bright)]">
-              <Check className="h-2.5 w-2.5" aria-hidden />
-            </span>
+            <span aria-hidden className="mt-[5px] h-[7px] w-[7px] shrink-0 rotate-45 border border-[var(--blue-bright)] bg-[rgba(61,123,255,0.25)] shadow-[0_0_6px_rgba(61,123,255,0.8)]" />
             {feature}
           </li>
         ))}
       </ul>
 
-      <p className="mt-5 text-[12px] leading-snug text-muted">
-        <span className="mr-1 font-display text-[10px] uppercase tracking-[0.16em] text-[rgba(160,178,214,0.9)]">{t('extra')}:</span>
+      <p className="mt-5 rounded-xl border border-dashed border-[rgba(130,160,230,0.25)] bg-[rgba(255,255,255,0.02)] px-3 py-2.5 text-[12px] leading-snug text-muted">
+        <span className="mr-1 font-display text-[10px] uppercase tracking-[0.16em] text-[rgba(170,190,230,0.9)]">{t('extra')}:</span>
         {t(`${key}.extra`)}
       </p>
 
@@ -83,7 +149,7 @@ export function PriceCardFace({ plan, interactive = false }: { plan: Plan; inter
           <button
             type="button"
             onClick={() => pick(plan.needIndex, t(`${key}.name`))}
-            className={`${ctaClass} hover:border-[rgba(120,160,255,0.85)] hover:bg-[rgba(31,91,255,0.14)] hover:shadow-[0_0_28px_rgba(31,91,255,0.45)]`}
+            className={`${ctaClass} hover:border-[rgba(140,175,255,0.9)] hover:bg-[rgba(31,91,255,0.2)]`}
           >
             {t(`${key}.cta`)}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" aria-hidden />
@@ -98,9 +164,6 @@ export function PriceCardFace({ plan, interactive = false }: { plan: Plan; inter
     </>
   );
 }
-
-/** Obal karty — stejný rozměr a vzhled pro skutečnou kartu i klon ve scéně přechodu. */
-export const PRICE_CARD_CLASS = 'relative flex flex-col overflow-hidden rounded-card border border-[rgba(80,120,255,0.22)] p-6';
 
 export function Pricing() {
   const t = useTranslations('pricing');
@@ -168,15 +231,16 @@ export function Pricing() {
           <article
             key={plan.id}
             data-land="price-card"
-            className={`${PRICE_CARD_CLASS} group w-full transition-[border-color,box-shadow] duration-300 hover:border-[rgba(90,140,255,0.55)] hover:shadow-[0_0_46px_-12px_rgba(31,91,255,0.55)] md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
+            className={`${PRICE_CARD_CLASS} group w-full transition-transform duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
             style={{ background: PRICE_CARD_BG }}
           >
-            {/* neonová linka nahoře, při hoveru se rozsvítí */}
+            {/* záře při hoveru — hotová vrstva, mění se jen průhlednost */}
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-x-6 top-0 h-px opacity-50 transition-opacity duration-300 group-hover:opacity-100"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(97,150,255,0.95), transparent)' }}
+              className="pointer-events-none absolute inset-0 -z-10 rounded-card opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              style={{ background: 'radial-gradient(90% 55% at 50% 0%, rgba(61,123,255,0.22), transparent 70%)', boxShadow: 'inset 0 0 0 1px rgba(120,160,255,0.45)' }}
             />
+            <PriceCardDecor />
             <PriceCardFace plan={plan} interactive />
           </article>
         ))}

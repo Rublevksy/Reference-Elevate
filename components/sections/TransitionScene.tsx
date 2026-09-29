@@ -13,7 +13,7 @@ import { useScrollFrame } from '@/lib/useScrollFrame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { CardBody } from './ServiceDeck';
 import { DEMO_FIRST_FRAME } from './DemoScreen';
-import { PRICE_CARD_BG, PRICE_CARD_CLASS, PriceCardFace } from './Pricing';
+import { PRICE_CARD_BG, PRICE_CARD_CLASS, PriceCardDecor, PriceCardFace } from './Pricing';
 import { plans, type Plan } from '@/content/pricing';
 import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
 
@@ -794,6 +794,7 @@ function NodeBurstToCases({ renderRef }: SceneProps) {
 function PriceFace({ plan, className = '', style }: { plan: Plan; className?: string; style?: CSSProperties }) {
   return (
     <div className={`absolute inset-0 ${PRICE_CARD_CLASS} ${className}`} style={{ background: PRICE_CARD_BG, ...style }}>
+      <PriceCardDecor />
       <PriceCardFace plan={plan} />
     </div>
   );
