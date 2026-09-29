@@ -23,11 +23,21 @@
       "Strategy",
       "Results"
     ],
-    "ctaPrimary": "Free consultation",
-    "ctaSecondary": "Our services",
+    "ctaPrimary": "Let's elevate your web",
+    "ctaNote": "Free, no-obligation consultation",
+    "ctaSecondary": "What we do",
     "scroll": "Scroll",
     "mascot": "Hi! I'm your guide. Come on, let me show you what we do.",
-    "laptopAlt": "Laptop with the ELEVATE logo on a stone pedestal"
+    "laptopAlt": "Laptop with the ELEVATE logo on a stone pedestal",
+    "tagline": [
+      "We take",
+      "your business"
+    ],
+    "taglineAccent": "higher.",
+    "ctaBook": "Book a consultation",
+    "ctaBookNote": "free, no obligation",
+    "ctaWork": "Our work",
+    "scrollHint": "Scroll — the story begins"
   },
   "services": {
     "eyebrow": "Services",
@@ -807,5 +817,113 @@
     "skip": "Skip to content",
     "mainNav": "Main navigation",
     "mobileNav": "Mobile navigation"
+  },
+  "norda": {
+    "web": {
+      "nav": [
+        "Men",
+        "Women",
+        "Running",
+        "New"
+      ],
+      "shop": "Shop now",
+      "eyebrow": "New collection 2026",
+      "headline": [
+        "Run further",
+        "than ever."
+      ],
+      "sub": "Lightweight shoes for everyday miles.",
+      "cta": "Buy now",
+      "cta2": "Collection",
+      "price": "3 290 Kč"
+    },
+    "seo": {
+      "property": "norda.cz",
+      "chart": "Search results performance",
+      "tiles": [
+        [
+          "Total clicks",
+          "18.4K"
+        ],
+        [
+          "Total impressions",
+          "412K"
+        ],
+        [
+          "Average CTR",
+          "4.5%"
+        ],
+        [
+          "Average position",
+          "3.2"
+        ]
+      ],
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun"
+      ],
+      "head": [
+        "Top queries",
+        "Clicks",
+        "Position"
+      ],
+      "rows": [
+        [
+          "running shoes",
+          "4,210",
+          "1.4"
+        ],
+        [
+          "norda aero run",
+          "2,980",
+          "1.0"
+        ],
+        [
+          "lightweight sneakers",
+          "1,640",
+          "2.8"
+        ]
+      ]
+    },
+    "shop": {
+      "rating": "4.9 · 1,284 reviews",
+      "size": "Size",
+      "checkout": "Checkout",
+      "crumbs": [
+        "Cart",
+        "Shipping",
+        "Payment"
+      ],
+      "express": "Express checkout",
+      "or": "or pay with card",
+      "card": "4242 4242 4242 4242",
+      "exp": "MM / YY",
+      "cvc": "CVC",
+      "name": "Name on card",
+      "shipping": "Shipping",
+      "free": "Free",
+      "total": "Total",
+      "pay": "Pay 3 290 Kč"
+    },
+    "design": {
+      "logo": "Logo",
+      "grid": "Construction",
+      "colors": "Colours",
+      "type": "Typeface"
+    },
+    "app": {
+      "hello": "Hi, Thomas",
+      "week": "km this week",
+      "order": "Aero Run · arriving tomorrow",
+      "track": "Track",
+      "category": "Running & shoes",
+      "rating": "4.8 ★ · 12K ratings",
+      "appSmall": "Download on the",
+      "playSmall": "GET IT ON"
+    }
   }
 }

@@ -130,7 +130,6 @@ export default async function LocaleLayout({
   return (
     <html lang={htmlLang[locale as Locale]} className={`${display.variable} ${sans.variable} ${hand.variable}`}>
       <body className="min-h-dvh antialiased">
-        <link rel="preload" as="image" href="/assets/hero-laptop.jpg" fetchPriority="high" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <a
           href="#obsah"

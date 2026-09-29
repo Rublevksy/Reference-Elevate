@@ -23,11 +23,21 @@
       "Strategie",
       "Výsledky"
     ],
-    "ctaPrimary": "Nezávazná konzultace",
-    "ctaSecondary": "Naše služby",
+    "ctaPrimary": "Posuňme váš web výš",
+    "ctaNote": "Nezávazná konzultace zdarma",
+    "ctaSecondary": "Co umíme",
     "scroll": "Scroll",
     "mascot": "Ahoj! Jsem tvůj průvodce. Pojď, ukážu ti, co umíme.",
-    "laptopAlt": "Notebook s logem ELEVATE na kamenném podstavci"
+    "laptopAlt": "Notebook s logem ELEVATE na kamenném podstavci",
+    "tagline": [
+      "Posouváme",
+      "vaše podnikání"
+    ],
+    "taglineAccent": "výš.",
+    "ctaBook": "Domluvit konzultaci",
+    "ctaBookNote": "zdarma a nezávazně",
+    "ctaWork": "Naše práce",
+    "scrollHint": "Skrolujte — příběh začíná"
   },
   "services": {
     "eyebrow": "Služby",
@@ -807,5 +817,113 @@
     "skip": "Přeskočit na obsah",
     "mainNav": "Hlavní navigace",
     "mobileNav": "Mobilní navigace"
+  },
+  "norda": {
+    "web": {
+      "nav": [
+        "Muži",
+        "Ženy",
+        "Běh",
+        "Novinky"
+      ],
+      "shop": "Nakoupit",
+      "eyebrow": "Nová kolekce 2026",
+      "headline": [
+        "Běž dál",
+        "než kdy dřív."
+      ],
+      "sub": "Lehké boty pro každodenní kilometry.",
+      "cta": "Koupit teď",
+      "cta2": "Kolekce",
+      "price": "3 290 Kč"
+    },
+    "seo": {
+      "property": "norda.cz",
+      "chart": "Výkon ve výsledcích vyhledávání",
+      "tiles": [
+        [
+          "Celková prokliknutí",
+          "18,4 tis."
+        ],
+        [
+          "Zobrazení",
+          "412 tis."
+        ],
+        [
+          "Průměrná CTR",
+          "4,5 %"
+        ],
+        [
+          "Průměrná pozice",
+          "3,2"
+        ]
+      ],
+      "months": [
+        "Led",
+        "Úno",
+        "Bře",
+        "Dub",
+        "Kvě",
+        "Čvn"
+      ],
+      "head": [
+        "Nejčastější dotazy",
+        "Prokliknutí",
+        "Pozice"
+      ],
+      "rows": [
+        [
+          "běžecké boty",
+          "4 210",
+          "1,4"
+        ],
+        [
+          "norda aero run",
+          "2 980",
+          "1,0"
+        ],
+        [
+          "lehké tenisky",
+          "1 640",
+          "2,8"
+        ]
+      ]
+    },
+    "shop": {
+      "rating": "4,9 · 1 284 recenzí",
+      "size": "Velikost",
+      "checkout": "Pokladna",
+      "crumbs": [
+        "Košík",
+        "Doprava",
+        "Platba"
+      ],
+      "express": "Rychlá platba",
+      "or": "nebo zaplaťte kartou",
+      "card": "4242 4242 4242 4242",
+      "exp": "MM / RR",
+      "cvc": "CVC",
+      "name": "Jméno na kartě",
+      "shipping": "Doprava",
+      "free": "Zdarma",
+      "total": "Celkem",
+      "pay": "Zaplatit 3 290 Kč"
+    },
+    "design": {
+      "logo": "Logo",
+      "grid": "Konstrukce",
+      "colors": "Barvy",
+      "type": "Písmo"
+    },
+    "app": {
+      "hello": "Ahoj, Tomáši",
+      "week": "km tento týden",
+      "order": "Aero Run · doručení zítra",
+      "track": "Sledovat",
+      "category": "Běh a obuv",
+      "rating": "4,8 ★ · 12 tis. hodnocení",
+      "appSmall": "Stáhněte si v",
+      "playSmall": "NYNÍ NA"
+    }
   }
 }

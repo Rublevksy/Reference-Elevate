@@ -1,61 +1,30 @@
 'use client';
 
-import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { motion, type Variants } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { poseAspect, poseSprite, type Pose } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { useEffect, useRef, useState } from 'react';
-import { poseSprite, type Pose } from '@/content/mascot';
-import { site } from '@/content/site';
-
-const Mascot3D = dynamic(() => import('@/components/three/MascotModel').then((m) => m.MascotModel), {
-  ssr: false,
-  loading: () => null,
-});
 
 /**
- * Jedna komponenta pro 2D i 3D maskota.
- * 2D sprite je výchozí (a zároveň fallback pro slabá zařízení a reduced-motion);
- * jakmile v /public/models/mascot.glb přistane zariggovaný model a site.mascot3d
- * se přepne na true, stejné `pose` rozjede odpovídající klip.
+ * 3D maskot ELEVATE (předrenderované pózy). Póza se mění prolnutím
+ * zarovnaným na chodidla s malým poskokem; v klidu jen jemně „dýchá"
+ * (nepatrné natažení od chodidel) — žádné plovoucí posouvání obrázku.
  */
 export type MascotProps = {
   pose?: Pose;
   className?: string;
-  /** Výška sprite v px; šířka se dopočítá */
+  /** Výška maskota v px; šířka boxu se dopočítá pro nejširší pózu */
   height?: number;
-  /** Otočit doleva (maskot se dívá do stránky) */
+  /** Zrcadlově — např. aby ukazoval do stránky */
   flip?: boolean;
-  /** Náklon hlavy/těla za kurzorem */
+  /** Lehký náklon za kurzorem */
   followCursor?: boolean;
-  /** Jen hlava a ramena — pro malého průvodce v rohu */
+  /** Jen hlava a ramena */
   bust?: boolean;
   priority?: boolean;
 };
 
-const poseVariants: Variants = {
-  idle: { y: [0, -10, 0], rotate: 0, scale: 1, transition: { duration: 5.5, repeat: Infinity, ease: 'easeInOut' } },
-  walk: {
-    y: [0, -6, 0, -6, 0],
-    rotate: [0, 1.6, 0, -1.6, 0],
-    transition: { duration: 1.1, repeat: Infinity, ease: 'easeInOut' },
-  },
-  wave: {
-    y: [0, -6, 0],
-    rotate: [0, 2.5, -1.5, 2.5, 0],
-    transition: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
-  },
-  point: { y: [0, -7, 0], rotate: -1.5, scale: 1.02, transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' } },
-  think: { y: [0, -5, 0], rotate: 0, transition: { duration: 6.5, repeat: Infinity, ease: 'easeInOut' } },
-  thumbsUp: { y: [0, -12, 0], rotate: [0, -2, 0], transition: { duration: 2.6, repeat: Infinity, ease: 'easeInOut' } },
-  celebrate: {
-    y: [0, -22, 0],
-    rotate: [0, 4, -4, 0],
-    transition: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' },
-  },
-  bored: { y: [0, -3, 0], rotate: [0, 1.2, 0], transition: { duration: 7, repeat: Infinity, ease: 'easeInOut' } },
-  still: { y: 0, rotate: 0 },
-};
+const BOX_ASPECT = 0.62;
 
 export function Mascot({
   pose = 'idle',
@@ -68,86 +37,78 @@ export function Mascot({
 }: MascotProps) {
   const reduced = useReducedMotion();
   const wrapper = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [use3d, setUse3d] = useState(false);
+  const tiltRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!site.mascot3d || reduced) return;
-    // 3D jen tam, kde je WebGL a dost jader
-    const cores = navigator.hardwareConcurrency ?? 4;
-    setUse3d(cores > 4 && window.innerWidth >= 1024);
-  }, [reduced]);
-
+  // náklon za kurzorem zapisuje přímo do DOM (dřív setState při každém pohybu myši)
   useEffect(() => {
     if (!followCursor || reduced) return;
-
+    let raf = 0;
+    let dx = 0;
+    let dy = 0;
+    const apply = () => {
+      raf = 0;
+      if (tiltRef.current) tiltRef.current.style.transform = `perspective(800px) rotateY(${(dx * 6).toFixed(2)}deg) rotateX(${(-dy * 3).toFixed(2)}deg)`;
+    };
     const onMove = (event: PointerEvent) => {
       const node = wrapper.current;
       if (!node) return;
       const rect = node.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = (event.clientX - cx) / window.innerWidth;
-      const dy = (event.clientY - cy) / window.innerHeight;
-      setTilt({ x: Math.max(-1, Math.min(1, dx)), y: Math.max(-1, Math.min(1, dy)) });
+      dx = Math.max(-1, Math.min(1, (event.clientX - (rect.left + rect.width / 2)) / window.innerWidth));
+      dy = Math.max(-1, Math.min(1, (event.clientY - (rect.top + rect.height / 2)) / window.innerHeight));
+      if (!raf) raf = requestAnimationFrame(apply);
     };
-
     window.addEventListener('pointermove', onMove, { passive: true });
-    return () => window.removeEventListener('pointermove', onMove);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [followCursor, reduced]);
 
-  const src = poseSprite[pose];
-  const width = Math.round(height * 0.78);
+  const width = Math.round(height * (bust ? 1 : BOX_ASPECT));
+  const celebrate = pose === 'celebrate';
 
   return (
     <div
       ref={wrapper}
       className={`pointer-events-none relative select-none ${bust ? 'overflow-hidden' : ''} ${className}`}
-      style={{ height, width: bust ? height : width }}
+      style={{ height, width }}
     >
-      {use3d ? (
-        <Mascot3D pose={pose} />
-      ) : (
+      {/* odlesk pod chodidly */}
+      {!bust ? (
+        <div
+          aria-hidden
+          className="absolute inset-x-[10%] bottom-[-3%] h-6 rounded-[50%] blur-lg"
+          style={{ background: 'radial-gradient(ellipse, rgba(31,91,255,0.55), transparent 70%)' }}
+        />
+      ) : null}
+      <div ref={tiltRef} className="absolute inset-0" style={{ transformOrigin: 'center bottom' }}>
         <motion.div
-          className="relative h-full w-full"
-          style={{
-            transform: `perspective(800px) rotateY(${tilt.x * 7}deg) rotateX(${-tilt.y * 4}deg)`,
-            transformOrigin: 'center bottom',
-          }}
-          variants={poseVariants}
-          animate={reduced ? 'still' : pose}
+          className="absolute inset-0 origin-bottom"
+          animate={reduced ? { scaleY: 1 } : { scaleY: [1, 1.012, 1] }}
+          transition={{ duration: celebrate ? 1.6 : 4.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <div
-            className="relative h-full w-full"
-            style={
-              // Bust = přiblížení na hlavu a ramena; jediný sprite tak poslouží
-              // i malému průvodci v rohu.
-              bust
-                ? { transform: 'translateY(29%) scale(2.4)', transformOrigin: '50% 0%' }
-                : undefined
-            }
-          >
-            <Image
-              src={src}
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={pose}
+              src={poseSprite[pose]}
               alt=""
               aria-hidden
-              fill
-              priority={priority}
-              sizes={`${bust ? height : width}px`}
-              className={`object-contain object-top drop-shadow-[0_30px_50px_rgba(0,0,0,0.65)] ${
-                flip ? '-scale-x-100' : ''
-              }`}
+              draggable={false}
+              loading={priority ? 'eager' : 'lazy'}
+              className="absolute bottom-0 left-1/2 max-w-none drop-shadow-[0_24px_40px_rgba(0,0,0,0.6)]"
+              style={
+                bust
+                  ? { height: height * 2.3, width: height * 2.3 * poseAspect[pose], top: -height * 0.06, bottom: 'auto', x: '-50%', scaleX: flip ? -1 : 1 }
+                  : { height, width: height * poseAspect[pose], x: '-50%', scaleX: flip ? -1 : 1 }
+              }
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: [6, -8, 0] }}
+              exit={{ opacity: 0, transition: { duration: 0.25 } }}
+              transition={{ opacity: { duration: 0.3 }, y: { duration: 0.5, ease: 'easeOut' } }}
             />
-          </div>
-
-          {/* modrý odlesk pod maskotem */}
-          <div
-            aria-hidden
-            className="absolute inset-x-[12%] bottom-[-4%] h-8 rounded-[50%] blur-xl"
-            style={{ background: 'radial-gradient(ellipse, rgba(31,91,255,0.55), transparent 70%)' }}
-          />
+          </AnimatePresence>
         </motion.div>
-      )}
+      </div>
     </div>
   );
 }

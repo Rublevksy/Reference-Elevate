@@ -93,17 +93,17 @@ export function Footer() {
           className="group relative flex items-center gap-3 rounded-full border border-[var(--line)] px-5 py-3 text-xs uppercase tracking-[0.18em] text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
           aria-label={t('toTop')}
         >
-          <span className="pointer-events-none absolute -top-16 right-3 h-16 w-12 overflow-hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <span className="pointer-events-none absolute -top-16 right-1 h-16 w-24 overflow-hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            {/* 3D maskot vykoukne nad tlačítkem a zajásá */}
             <Image
               src={poseSprite.celebrate}
               alt=""
               aria-hidden
-              width={96}
-              height={124}
+              width={853}
+              height={1400}
               loading="lazy"
-              sizes="96px"
-              className="absolute inset-x-0 bottom-0 mx-auto max-w-none translate-y-8 object-contain object-top transition-transform duration-500 group-hover:-translate-y-2"
-              style={{ transform: 'scale(2.1)', transformOrigin: '50% 0%' }}
+              sizes="120px"
+              className="absolute bottom-0 left-1/2 h-[150px] w-auto max-w-none -translate-x-1/2 translate-y-[62%] transition-transform duration-500 group-hover:translate-y-[38%]"
             />
           </span>
           {t('up')}

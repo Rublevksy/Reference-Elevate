@@ -8,3 +8,8 @@ next-env.d.ts
 .capture-frames
 .venv-tools
 .capture-frames
+
+# lokální ověřovací build a těžké pracovní podklady
+.next-verify
+reference/hero-keyframes/
+reference/mascot-3d/

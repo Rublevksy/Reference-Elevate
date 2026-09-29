@@ -92,8 +92,6 @@ export function PlatformScene({
       <motion.g
         transform="translate(450 380)"
         className={active ? 'platform-spin' : ''}
-        animate={flash ? { scale: [1, 1.06, 1] } : undefined}
-        transition={flash ? { duration: 0.7, ease: 'easeOut' } : undefined}
         style={{ transformOrigin: '450px 380px' }}
       >
         <g transform="scale(1 0.3)">

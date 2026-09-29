@@ -26,7 +26,7 @@ const styles: Record<Variant, string> = {
 };
 
 /** Magnetický efekt — tlačítko se lehce přitáhne ke kurzoru. */
-function useMagnetic() {
+export function useMagnetic() {
   const ref = useRef<HTMLElement | null>(null);
   const reduced = useReducedMotion();
 

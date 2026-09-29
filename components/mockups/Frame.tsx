@@ -31,10 +31,11 @@ export function BrowserFrame({
 export function PhoneFrame({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`relative mx-auto w-[236px] rounded-[2.2rem] border border-[rgba(80,120,255,0.3)] bg-[#05070d] p-2.5 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.95),0_0_40px_rgba(31,91,255,0.18)] ${className}`}
+      className={`relative mx-auto w-[236px] rounded-[14%/6.5%] border border-[rgba(80,120,255,0.3)] bg-[#05070d] p-[4%] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.95),0_0_40px_rgba(31,91,255,0.18)] ${className}`}
     >
-      <div className="absolute left-1/2 top-3 z-10 h-4 w-20 -translate-x-1/2 rounded-full bg-black" />
-      <div className="relative overflow-hidden rounded-[1.7rem] bg-[#04060b]">{children}</div>
+      {/* rozměry v % šířky — rámeček drží proporce iPhonu v jakékoli velikosti */}
+      <div className="absolute left-1/2 top-[2.4%] z-10 aspect-[4.8/1] w-[33%] -translate-x-1/2 rounded-full bg-black" />
+      <div className="relative overflow-hidden rounded-[11%/5%] bg-[#04060b]">{children}</div>
     </div>
   );
 }

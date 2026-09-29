@@ -8,11 +8,12 @@ import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { scrollToId } from '@/lib/scrollTo';
+import { glideTo, scrollToId } from '@/lib/scrollTo';
 import { site } from '@/content/site';
 
 const ITEMS = [
-  { id: 'sluzby', key: 'services' },
+  // Služby vedou rovnou na rozvinuté panely služeb (NORDA), ne na stůl karet
+  { id: 'detaily', key: 'services' },
   { id: 'proces', key: 'process' },
   { id: 'reference', key: 'references' },
   { id: 'cenik', key: 'pricing' },
@@ -64,7 +65,7 @@ export function Navbar() {
     scrollToId(id);
     clickSuppressTimer.current = window.setTimeout(() => {
       clickSuppress.current = false;
-    }, 1500);
+    }, 900);
   }, []);
 
   useEffect(() => () => {
@@ -126,6 +127,14 @@ export function Navbar() {
         >
           <Link
             href="/"
+            onClick={(event) => {
+              // na hlavní stránce jen okamžitý skok nahoru (bez navigace a efektů)
+              if (window.location.pathname.split('/').filter(Boolean).length <= 1) {
+                event.preventDefault();
+                setOpen(false);
+                glideTo(0);
+              }
+            }}
             className="flex shrink-0 items-center rounded-full px-2 py-1 transition-opacity hover:opacity-80"
             aria-label={t('home')}
           >

@@ -1,96 +1,437 @@
 'use client';
 
-import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from 'framer-motion';
+import { useMotionValueEvent, useScroll } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { Mascot } from '@/components/mascot/Mascot';
 import { processSteps } from '@/content/process';
+import { SYMBOL_POINTS, SYMBOL_VIEWBOX, ease, easeOut, hash, lerp, neonFlicker, seg } from '@/lib/fx';
+import type { Pose } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
-/** Maskot sestupuje podél světelné osy a zastavuje se u každého kroku. */
+/**
+ * Každý krok se skládá vlastním efektem podle toho, co znamená:
+ * 01 konzultace = chat, 02 návrh = blueprint, 03 vývoj = dekódovaný kód,
+ * 04 spuštění = start rakety, 05 růst = graf. Všechno je funkce polohy
+ * kroku ve viewportu — funguje oběma směry scrollu.
+ */
+const KINDS = ['chat', 'blueprint', 'decode', 'launch', 'growth'] as const;
+type Kind = (typeof KINDS)[number];
+
+const GLYPHS = '01<>/{}=+*#$;[]';
+const INK = '242,245,255';
+const BLUE = '61,123,255';
+
+const q = <T extends Element = HTMLElement>(root: Element, sel: string) => root.querySelector<T & HTMLElement>(sel);
+const qa = (root: Element, sel: string) => Array.from(root.querySelectorAll<HTMLElement>(sel));
+
+function show(el: HTMLElement | null, o: number, transform = '') {
+  if (!el) return;
+  el.style.opacity = o.toFixed(3);
+  el.style.transform = transform;
+}
+
+/** Nadpis rozdělený na znaky (efekty psaní / dekódování); čtečky dostanou celý text. */
+function Chars({ text }: { text: string }) {
+  return (
+    <>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden>
+        {[...text].map((c, i) => (
+          <span key={i} data-ch={c} className="whitespace-pre">
+            {c}
+          </span>
+        ))}
+      </span>
+    </>
+  );
+}
+
+function applyStep(kind: Kind, li: HTMLElement, t: number) {
+  const chars = qa(li, '[data-ch]');
+  const text = q(li, '[data-text]');
+  const n = chars.length;
+
+  if (kind === 'chat') {
+    // nadpis se „píše", pak tři tečky a bublina se zprávou
+    const vis = Math.floor(seg(t, 0, 0.5) * n + 1e-4);
+    chars.forEach((c, k) => (c.style.display = k < vis ? '' : 'none'));
+    show(q(li, '[data-caret]'), t > 0 && t < 0.64 ? 1 : 0);
+    show(q(li, '[data-dots]'), seg(t, 0.46, 0.52) * (1 - seg(t, 0.6, 0.64)));
+    const e = easeOut(seg(t, 0.6, 0.86));
+    show(text, e, `translate3d(0, ${((1 - e) * 10).toFixed(1)}px, 0) scale(${(0.6 + 0.4 * e).toFixed(3)})`);
+    return;
+  }
+
+  if (kind === 'blueprint') {
+    // obrys se narýsuje, nadpis se z obrysu vyplní
+    show(q(li, '[data-marks]'), seg(t, 0, 0.15) * (1 - 0.6 * seg(t, 0.8, 1)));
+    const rect = q<SVGRectElement>(li, '[data-frame]');
+    if (rect) rect.style.strokeDashoffset = (1 - ease(seg(t, 0.02, 0.45))).toFixed(4);
+    const title = q(li, '[data-title]');
+    if (title) {
+      const a = seg(t, 0.42, 0.78);
+      title.style.opacity = seg(t, 0.12, 0.28).toFixed(3);
+      title.style.color = `rgba(${INK},${a.toFixed(3)})`;
+      title.style.setProperty('-webkit-text-stroke', `1px rgba(${BLUE},${(0.95 * (1 - a) + 0.05).toFixed(3)})`);
+    }
+    const e = easeOut(seg(t, 0.64, 0.9));
+    show(text, e, `translate3d(0, ${((1 - e) * 10).toFixed(1)}px, 0)`);
+    return;
+  }
+
+  if (kind === 'decode') {
+    // znaky probliknou kódem a zleva doprava se „rozšifrují"
+    const tick = Math.floor(t * 60);
+    chars.forEach((c, k) => {
+      const real = c.dataset.ch ?? '';
+      const r = 0.08 + (0.55 * k) / Math.max(1, n - 1);
+      let out = real;
+      let color = '';
+      let vis = 'visible';
+      if (real.trim() && t < r) {
+        if (t < r - 0.2) vis = 'hidden';
+        out = GLYPHS[Math.floor(hash(k, tick) * GLYPHS.length)];
+        color = `rgb(${BLUE})`;
+      }
+      if (c.textContent !== out) c.textContent = out;
+      c.style.color = color;
+      c.style.visibility = vis;
+    });
+    const e = easeOut(seg(t, 0.62, 0.88));
+    show(text, e, `translate3d(${((1 - e) * -14).toFixed(1)}px, 0, 0)`);
+    return;
+  }
+
+  if (kind === 'launch') {
+    // nadpis vystartuje zespodu se světelnou stopou, šipka ELEVATE vzlétne
+    const e = easeOut(seg(t, 0, 0.55));
+    show(q(li, '[data-lift]'), seg(t, 0.04, 0.3), `translate3d(0, ${((1 - e) * 70).toFixed(1)}px, 0)`);
+    const streak = q(li, '[data-streak]');
+    if (streak) {
+      streak.style.opacity = (Math.sin(Math.PI * seg(t, 0, 0.62)) * 0.9).toFixed(3);
+      streak.style.transform = `scaleY(${(0.15 + (1 - e) * 0.85).toFixed(3)})`;
+    }
+    const r = easeOut(seg(t, 0.18, 0.62));
+    show(q(li, '[data-rocket]'), seg(t, 0.18, 0.34), `translate3d(${((1 - r) * -26).toFixed(1)}px, ${((1 - r) * 60).toFixed(1)}px, 0) scale(${(0.6 + 0.4 * r).toFixed(3)})`);
+    const f = easeOut(seg(t, 0.56, 0.86));
+    show(text, f, `translate3d(0, ${((1 - f) * 10).toFixed(1)}px, 0)`);
+    return;
+  }
+
+  // growth — sloupce grafu vyrostou, přes ně se protáhne šipka růstu
+  qa(li, '[data-bar]').forEach((bar, k) => {
+    bar.style.transform = `scaleY(${easeOut(seg(t, 0.04 + k * 0.07, 0.34 + k * 0.07)).toFixed(3)})`;
+  });
+  const line = q<SVGPolylineElement>(li, '[data-growline]');
+  if (line) line.style.strokeDashoffset = (1 - ease(seg(t, 0.34, 0.7))).toFixed(4);
+  show(q(li, '[data-growhead]'), seg(t, 0.66, 0.72));
+  const g = easeOut(seg(t, 0.14, 0.48));
+  show(q(li, '[data-title]'), g, `scale(${(0.88 + 0.12 * g).toFixed(3)})`);
+  const e = easeOut(seg(t, 0.58, 0.86));
+  show(text, e, `translate3d(0, ${((1 - e) * 10).toFixed(1)}px, 0)`);
+}
+
+function StepBody({ kind, title, text }: { kind: Kind; title: string; text: string }) {
+  const h3 = 'font-display text-lg font-bold uppercase text-ink md:text-xl';
+
+  if (kind === 'chat') {
+    return (
+      <div>
+        <h3 data-land="process-title" className={h3}>
+          <Chars text={title} />
+          <span data-caret aria-hidden className="ml-1 inline-block h-[0.9em] w-[3px] translate-y-[0.1em] animate-pulse bg-[var(--blue-bright)] opacity-0" />
+        </h3>
+        <div className="relative mt-3">
+          <span data-dots aria-hidden className="absolute left-0 top-1 flex gap-1 rounded-full border border-[rgba(61,123,255,0.35)] bg-[rgba(31,91,255,0.12)] px-3 py-2 opacity-0">
+            {[0, 1, 2].map((d) => (
+              <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--blue-bright)]" style={{ animationDelay: `${d * 0.12}s` }} />
+            ))}
+          </span>
+          <p data-text className="inline-block origin-top-left rounded-2xl rounded-tl-sm border border-[rgba(61,123,255,0.35)] bg-[rgba(31,91,255,0.12)] px-4 py-2 text-ink/90">
+            {text}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === 'blueprint') {
+    return (
+      <div className="relative inline-block pr-6">
+        <svg aria-hidden className="pointer-events-none absolute -inset-x-3 -inset-y-2 h-[calc(100%+1rem)] w-[calc(100%+1.5rem)] overflow-visible">
+          <rect data-frame x="0" y="0" width="100%" height="100%" rx="6" pathLength={1} fill="none" stroke={`rgba(${BLUE},0.6)`} strokeWidth={1} strokeDasharray="1 1" strokeDashoffset={1} />
+        </svg>
+        <span data-marks aria-hidden className="pointer-events-none absolute -inset-x-3 -inset-y-2 opacity-0">
+          {['-left-1.5 -top-1.5', '-right-1.5 -top-1.5', '-bottom-1.5 -left-1.5', '-bottom-1.5 -right-1.5'].map((pos) => (
+            <span key={pos} className={`absolute ${pos} h-3 w-3`}>
+              <span className="absolute left-1/2 top-0 h-full w-px bg-[var(--blue-bright)]" />
+              <span className="absolute left-0 top-1/2 h-px w-full bg-[var(--blue-bright)]" />
+            </span>
+          ))}
+        </span>
+        <h3 data-land="process-title" data-title className={h3}>
+          {title}
+        </h3>
+        <p data-text className="mt-2 max-w-md text-muted">
+          {text}
+        </p>
+      </div>
+    );
+  }
+
+  if (kind === 'decode') {
+    return (
+      <div>
+        <h3 data-land="process-title" className={h3}>
+          <Chars text={title} />
+        </h3>
+        <p data-text className="mt-2 max-w-md text-muted">
+          <span aria-hidden className="mr-2 font-mono text-sm text-[var(--blue-bright)]">{'</>'}</span>
+          {text}
+        </p>
+      </div>
+    );
+  }
+
+  if (kind === 'launch') {
+    return (
+      <div className="relative">
+        <div data-lift className="relative flex items-center gap-3">
+          <span
+            data-streak
+            aria-hidden
+            className="pointer-events-none absolute left-6 top-full h-24 w-[3px] origin-top rounded-full opacity-0"
+            style={{ background: `linear-gradient(180deg, rgba(${BLUE},0.9), transparent)`, boxShadow: `0 0 14px rgba(${BLUE},0.8)` }}
+          />
+          <h3 data-land="process-title" className={h3}>
+            {title}
+          </h3>
+          <svg data-rocket aria-hidden viewBox={SYMBOL_VIEWBOX} className="h-6 w-5 opacity-0" style={{ filter: `drop-shadow(0 0 6px rgba(${BLUE},0.95))` }}>
+            <polygon points={SYMBOL_POINTS} fill="#3d7bff" />
+          </svg>
+        </div>
+        <p data-text className="mt-2 max-w-md text-muted">
+          {text}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-end gap-5">
+      <div>
+        <h3 data-land="process-title" data-title className={`${h3} origin-left`}>
+          {title}
+        </h3>
+        <p data-text className="mt-2 max-w-md text-muted">
+          {text}
+        </p>
+      </div>
+      <div aria-hidden className="relative mb-1 hidden h-14 w-24 shrink-0 sm:block">
+        <div className="absolute inset-0 flex items-end gap-1.5">
+          {[0.3, 0.45, 0.55, 0.75, 1].map((h, k) => (
+            <span key={k} data-bar className="w-full origin-bottom rounded-t-sm bg-gradient-to-t from-[rgba(31,91,255,0.25)] to-[rgba(61,123,255,0.8)]" style={{ height: `${h * 100}%`, transform: 'scaleY(0)' }} />
+          ))}
+        </div>
+        <svg viewBox="0 0 96 56" className="absolute inset-0 h-full w-full overflow-visible" style={{ filter: `drop-shadow(0 0 5px rgba(${BLUE},0.9))` }}>
+          <polyline data-growline points="4,48 26,38 46,34 68,20 90,4" pathLength={1} fill="none" stroke="#cfe0ff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 1" strokeDashoffset={1} />
+          <polygon data-growhead points="90,4 80,5 88,13" fill="#cfe0ff" opacity={0} />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+const MASCOT_POSES: Pose[] = ['wave', 'think', 'point', 'thumbsUp', 'celebrate'];
+
+/**
+ * Proces jako vodorovná „linka" s pěti zastávkami. Sekce se připne a scroll
+ * posouvá neonovou kolejnici; kometa na ní rozsvěcí uzly (s bliknutím
+ * neonu a světelným kruhem) a karty kroků se střídavě nad a pod kolejnicí
+ * skládají vlastními efekty. Za kartami plují obrysová čísla (paralaxa),
+ * vlevo stojí maskot a pózou komentuje právě aktivní krok.
+ */
 export function Process() {
   const t = useTranslations('process');
   const ref = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const [step, setStep] = useState(0);
+  const [active, setActive] = useState(0);
+  const activeRef = useRef(0);
 
   const steps = t.raw('steps') as { title: string; text: string }[];
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
 
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 65%', 'end 75%'] });
-  const line = useSpring(scrollYProgress, { stiffness: 80, damping: 24, restDelta: 0.001 });
-  const walkerY = useTransform(line, [0, 1], ['0%', '100%']);
+  const apply = useCallback(
+    (p: number) => {
+      const track = trackRef.current;
+      const stage = stageRef.current;
+      if (!track || !stage) return;
+      const cols = qa(track, '[data-col]');
+      if (!cols.length) return;
+      const vw = window.innerWidth;
+      const nodeX = cols.map((c) => c.offsetLeft + c.offsetWidth / 2);
+      const stepW = cols.length > 1 ? nodeX[1] - nodeX[0] : 320;
+      // hlava komety: na startu jede po obrazovce, pak stojí a posouvá se kolejnice
+      // start těsně za prvním uzlem: krok 01 je při otevření sekce složený (tak ho předává přechod)
+      const headTrack = reduced ? nodeX[nodeX.length - 1] + 40 : lerp(nodeX[0] + 14, nodeX[nodeX.length - 1] + 60, p);
+      const HX = vw * (vw < 768 ? 0.5 : 0.46);
+      const maxShift = Math.max(0, track.scrollWidth - vw);
+      const trackX = reduced ? 0 : -Math.min(maxShift, Math.max(0, headTrack - HX));
+      track.style.transform = `translate3d(${trackX.toFixed(1)}px, 0, 0)`;
+      if (fillRef.current) fillRef.current.style.width = `${Math.max(0, headTrack).toFixed(1)}px`;
+      if (headRef.current) {
+        headRef.current.style.transform = `translate3d(${headTrack.toFixed(1)}px, 0, 0)`;
+        headRef.current.style.opacity = reduced || p <= 0.002 || p >= 0.998 ? '0' : '1';
+      }
 
-  useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    setStep(Math.min(steps.length - 1, Math.floor(value * steps.length)));
-  });
+      let current = 0;
+      cols.forEach((col, i) => {
+        const d = headTrack - nodeX[i];
+        if (d >= -20) current = i;
+        const tStep = reduced ? 1 : seg(d, -stepW * 0.6, 10);
+        // skleněná karta se skládá spolu s obsahem — žádná prázdná skořápka předem
+        const card = q(col, '[data-card]');
+        if (card) {
+          const c = easeOut(seg(tStep, 0, 0.22));
+          card.style.opacity = c.toFixed(3);
+          card.style.transform = `scale(${(0.92 + 0.08 * c).toFixed(3)})`;
+        }
+        applyStep(KINDS[i % KINDS.length], col, tStep);
+        // obrysové číslo za kartou pluje pomaleji než kolejnice
+        const ghost = q(col, '[data-ghost]');
+        if (ghost) ghost.style.transform = `translate3d(${(-trackX * 0.18 - i * 6).toFixed(1)}px, 0, 0)`;
+        const node = q(col, '[data-node]');
+        if (node) {
+          const lit = reduced ? 1 : neonFlicker(seg(d, -10, 70));
+          node.style.borderColor = `rgba(${BLUE},${(0.22 + 0.78 * lit).toFixed(3)})`;
+          node.style.color = lit > 0.3 ? 'var(--blue-bright)' : 'var(--text-muted)';
+          node.style.background = `rgba(31,91,255,${(0.2 * lit).toFixed(3)})`;
+          node.style.boxShadow = `0 0 ${(28 * lit).toFixed(1)}px rgba(31,91,255,${(0.8 * lit).toFixed(3)})`;
+          const r = reduced ? 1 : seg(d, 0, 170);
+          show(q(col, '[data-ring]'), r > 0 && r < 1 ? 0.8 * (1 - r) : 0, `scale(${(1 + 1.9 * easeOut(r)).toFixed(3)})`);
+          const stem = q(col, '[data-stem]');
+          if (stem) stem.style.transform = `scaleY(${ease(seg(d, -stepW * 0.5, 0)).toFixed(3)})`;
+        }
+      });
+      if (current !== activeRef.current) {
+        activeRef.current = current;
+        setActive(current);
+      }
+    },
+    [reduced],
+  );
+
+  useMotionValueEvent(scrollYProgress, 'change', apply);
+  useEffect(() => {
+    const run = () => apply(scrollYProgress.get());
+    run();
+    const id = window.setTimeout(run, 80);
+    window.addEventListener('resize', run);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('resize', run);
+    };
+  }, [apply, scrollYProgress]);
 
   return (
-    <section id="proces" ref={ref} className="relative py-24 md:py-32" aria-labelledby="proces-title">
-      <div className="shell">
-        <div className="max-w-2xl">
+    <section
+      id="proces"
+      ref={ref}
+      className="relative"
+      style={{ height: reduced ? 'auto' : `${steps.length * 60 + 100}vh` }}
+      aria-labelledby="proces-title"
+    >
+      <div className={reduced ? 'py-24' : 'sticky top-0 flex h-dvh flex-col overflow-hidden'}>
+        <div className="shell pt-24 md:pt-28">
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
             as="h2"
             id="proces-title"
-            className="mt-4 font-display text-[clamp(1.8rem,4.2vw,3rem)] font-bold uppercase leading-[1.08]"
+            className="mt-3 font-display text-[clamp(1.8rem,4.2vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />
-          <p className="mt-5 text-muted">{t('lead')}</p>
+          <p className="mt-3 text-muted">{t('lead')}</p>
         </div>
 
-        <div className="relative mt-16 pl-16 md:pl-24">
-          <div className="absolute left-6 top-2 h-[calc(100%-2rem)] w-px bg-[var(--line)] md:left-10">
-            <motion.div
-              className="absolute inset-x-0 top-0 h-full origin-top bg-gradient-to-b from-[var(--blue-bright)] to-[var(--blue)] shadow-glow"
-              style={{ scaleY: reduced ? 1 : line }}
-            />
-          </div>
-
+        <div ref={stageRef} className={`relative ${reduced ? 'mt-10 overflow-x-auto pb-6' : 'min-h-0 flex-1'}`} data-lenis-prevent={reduced ? true : undefined}>
+          {/* levý okraj kolejnice se rozplývá do zóny, kde stojí maskot */}
+          {/* maskot vlevo dole — póza podle aktivního kroku */}
           {!reduced ? (
-            <motion.div
-              className="pointer-events-none absolute left-6 top-0 hidden h-[calc(100%-2rem)] md:left-10 lg:block"
-              aria-hidden
-            >
-              <motion.div style={{ y: walkerY }} className="sticky top-1/2">
-                <div className="-translate-x-[86%] -translate-y-1/2">
-                  <Mascot pose="walk" height={150} followCursor={false} />
-                </div>
-              </motion.div>
-            </motion.div>
+            <div className="pointer-events-none absolute bottom-0 left-2 z-20 hidden md:block lg:left-8">
+              <Mascot pose={MASCOT_POSES[active] ?? 'idle'} height={250} followCursor={false} />
+            </div>
           ) : null}
 
-          <ol className="space-y-12 md:space-y-16">
-            {steps.map((item, index) => (
-              <li key={item.title} className="relative">
-                <span
-                  className={`absolute -left-[3.05rem] top-1 grid h-10 w-10 place-items-center rounded-full border font-display text-[11px] transition-colors duration-500 md:-left-[4.05rem] ${
-                    index <= step
-                      ? 'border-[var(--blue-bright)] bg-[rgba(31,91,255,0.18)] text-[var(--blue-bright)] shadow-glow'
-                      : 'border-[var(--line)] bg-[var(--bg)] text-muted'
-                  }`}
-                >
-                  {processSteps[index]}
-                </span>
+          <div
+            className="h-full"
+            style={reduced ? undefined : { maskImage: 'linear-gradient(90deg, transparent 0, #000 min(22vw, 300px))', WebkitMaskImage: 'linear-gradient(90deg, transparent 0, #000 min(22vw, 300px))' }}
+          >
+          <div
+            ref={trackRef}
+            className="relative flex h-full min-h-[520px] w-max items-stretch pl-[max(20px,calc((100vw-var(--shell))/2+40px))] pr-[30vw] md:pl-[max(200px,calc((100vw-var(--shell))/2+200px))]"
+          >
+            {/* kolejnice + náplň + kometa (souřadnice uvnitř dráhy) */}
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2">
+              <div className="absolute inset-0 bg-[var(--line)]" />
+              <div ref={fillRef} className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--blue)] to-[var(--blue-bright)] shadow-glow" style={{ width: 0 }} />
+              <div ref={headRef} className="absolute left-0 top-0 opacity-0">
+                <span className="absolute right-0 top-1/2 h-[3px] w-24 -translate-y-1/2 rounded-full" style={{ background: `linear-gradient(90deg, transparent, rgba(${BLUE},0.9))` }} />
+                <span className="absolute left-0 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#dbe8ff] shadow-[0_0_16px_5px_rgba(61,123,255,0.9)]" />
+              </div>
+            </div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: 24 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: '-15% 0px' }}
-                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <h3
-                    className={`font-display text-xl font-bold uppercase transition-colors duration-500 md:text-2xl ${
-                      index <= step ? 'text-ink' : 'text-muted'
-                    }`}
-                  >
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 max-w-md text-muted">{item.text}</p>
-                </motion.div>
-              </li>
-            ))}
-          </ol>
+            <ol className="relative flex">
+              {steps.map((item, index) => {
+                const above = index % 2 === 1;
+                return (
+                  <li key={item.title} data-col className="relative w-[78vw] shrink-0 sm:w-[clamp(300px,26vw,380px)]">
+                    {/* obrysové číslo v pozadí */}
+                    <span
+                      data-ghost
+                      aria-hidden
+                      className={`pointer-events-none absolute left-2 font-display text-[clamp(5rem,11vw,9rem)] font-bold leading-none text-transparent [-webkit-text-stroke:1px_rgba(80,120,255,0.32)] ${
+                        above ? 'bottom-[54%]' : 'top-[54%]'
+                      }`}
+                    >
+                      {processSteps[index]}
+                    </span>
+                    {/* uzel na kolejnici */}
+                    <span
+                      data-node
+                      data-land="process-node"
+                      className="absolute left-1/2 top-1/2 z-10 -ml-6 -mt-6 grid h-12 w-12 place-items-center rounded-full border border-[var(--line)] bg-[var(--bg)] font-display text-xs text-muted"
+                    >
+                      <span data-ring aria-hidden className="absolute inset-0 rounded-full border border-[var(--blue-bright)] opacity-0" />
+                      {processSteps[index]}
+                    </span>
+                    {/* neonový „stonek" od uzlu ke kartě */}
+                    <span
+                      data-stem
+                      aria-hidden
+                      className={`absolute left-1/2 h-10 w-px -translate-x-1/2 bg-[var(--blue-bright)] shadow-glow ${
+                        above ? 'bottom-[calc(50%+24px)] origin-bottom' : 'top-[calc(50%+24px)] origin-top'
+                      }`}
+                      style={{ transform: 'scaleY(0)' }}
+                    />
+                    <div
+                      className={`absolute inset-x-5 ${above ? 'bottom-[calc(50%+64px)]' : 'top-[calc(50%+64px)]'}`}
+                    >
+                      <div data-card className={`glass rounded-2xl border border-[rgba(80,120,255,0.18)] p-5 ${above ? 'origin-bottom' : 'origin-top'}`} style={{ opacity: reduced ? 1 : 0 }}>
+                        <StepBody kind={KINDS[index % KINDS.length]} title={item.title} text={item.text} />
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+          </div>
         </div>
       </div>
     </section>

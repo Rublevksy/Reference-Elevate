@@ -1,6 +1,5 @@
 import { setRequestLocale } from 'next-intl/server';
 import { Hero } from '@/components/sections/Hero';
-import { MacbookIntro } from '@/components/sections/MacbookIntro';
 import { ServicesTable } from '@/components/sections/ServicesTable';
 import { ServiceDeck } from '@/components/sections/ServiceDeck';
 import { WhyAnimatedBlock } from '@/components/sections/WhyAnimated';
@@ -17,7 +16,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <Hero />
-      <MacbookIntro />
       <ServicesTable />
       <TransitionScene variant="cardToPanel" />
       <ServiceDeck />

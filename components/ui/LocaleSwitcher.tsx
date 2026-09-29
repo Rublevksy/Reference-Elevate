@@ -41,19 +41,16 @@ export function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
     setOpen(false);
     if (next === locale) return;
 
-    // krátký blur přes celou stránku, ať výměna textů nepůsobí jako blik
-    document.documentElement.classList.add('lang-switching');
-    const scrollY = window.scrollY;
-
+    // bez efektů: jen výměna textů; pozici scrollu si nová stránka vezme ze sessionStorage
+    // (layout jazyka se přemontuje a SmoothScroll by jinak skočil nahoru)
+    try {
+      sessionStorage.setItem('elevate:keep-scroll', String(Math.round(window.scrollY)));
+    } catch {
+      /* soukromé okno — nevadí */
+    }
     startTransition(() => {
       router.replace(pathname, { locale: next, scroll: false });
     });
-
-    window.setTimeout(() => {
-      window.scrollTo({ top: scrollY, behavior: 'auto' });
-      window.__lenis?.scrollTo(scrollY, { immediate: true });
-      document.documentElement.classList.remove('lang-switching');
-    }, 420);
   };
 
   return (

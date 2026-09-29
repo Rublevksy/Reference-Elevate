@@ -2,6 +2,7 @@
 
 import {
   motion,
+  type MotionValue,
   useMotionValue,
   useMotionValueEvent,
   useScroll,
@@ -19,34 +20,74 @@ import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const COUNT = cases.length;
 
-/** Auto-skrolující screenshot uvnitř zařízení — čas, ne pozice stránky. */
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/**
+ * Auto-scroll screenshotu uvnitř zařízení — jako když někdo web opravdu
+ * prochází: plynulý posun o kus obrazovky, zastavení, další posun…
+ * Na konci chvíli počká a klouže zpět nahoru. Hover zkracuje pauzy.
+ * Zápis přímo do DOM, hover NErestartuje pozici (čte se přes ref).
+ */
 function useAutoScroll(active: boolean, contentRatio: number, hovered: boolean) {
-  const y = useMotionValue(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const raf = useRef(0);
-  const start = useRef(0);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const hoveredRef = useRef(hovered);
+  hoveredRef.current = hovered;
+  const reduced = useReducedMotion();
 
   useEffect(() => {
-    y.set(0);
-    if (!active) return;
-    start.current = performance.now();
+    const img = imgRef.current;
+    if (img) img.style.transform = 'translate3d(0,0,0)';
+    if (!active || reduced) return;
+
+    let raf = 0;
+    let pos = 0;
+    let from = 0;
+    let to = 0;
+    let phase: 'pause' | 'move' = 'pause';
+    let phaseStart = performance.now();
+    let phaseLen = 1100;
 
     const tick = (now: number) => {
       const el = containerRef.current;
-      if (el) {
-        const contentH = el.clientWidth * contentRatio;
-        const maxOffset = Math.max(0, contentH - el.clientHeight);
-        const speed = hovered ? 46 : 14; // px/s
-        const elapsed = (now - start.current) / 1000;
-        y.set(-Math.min(maxOffset, elapsed * speed));
+      const node = imgRef.current;
+      if (el && node) {
+        const maxOffset = Math.max(0, el.clientWidth * contentRatio - el.clientHeight);
+        const t = clamp01((now - phaseStart) / phaseLen);
+        if (phase === 'move') {
+          pos = from + (to - from) * easeInOut(t);
+          if (t >= 1) {
+            phase = 'pause';
+            phaseStart = now;
+            phaseLen = pos >= maxOffset - 1 ? 2200 : hoveredRef.current ? 380 : 1300;
+          }
+        } else if (t >= 1 && maxOffset > 0) {
+          from = pos;
+          const atEnd = pos >= maxOffset - 1;
+          to = atEnd ? 0 : Math.min(maxOffset, pos + el.clientHeight * 0.62);
+          phase = 'move';
+          phaseStart = now;
+          phaseLen = atEnd ? 1700 : hoveredRef.current ? 650 : 1050;
+        }
+        node.style.transform = `translate3d(0, ${(-pos).toFixed(1)}px, 0)`;
       }
-      raf.current = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [active, contentRatio, hovered, y]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, contentRatio, reduced]);
 
-  return { y, containerRef };
+  return { containerRef, imgRef };
+}
+
+/** Pás odlesku na skle — pozici (0…1) řídí scroll stránky. */
+function writeGlare(el: HTMLDivElement | null, g: number) {
+  if (!el) return;
+  const parent = el.parentElement;
+  const w = parent ? parent.clientWidth : 0;
+  el.style.transform = `translate3d(${(-0.6 * w + g * 1.9 * w).toFixed(1)}px, 0, 0) rotate(14deg)`;
+  el.style.opacity = (Math.sin(clamp01(g) * Math.PI) * 0.95).toFixed(3);
 }
 
 function DeviceScreen({
@@ -55,6 +96,7 @@ function DeviceScreen({
   ratio,
   active,
   hovered,
+  glare,
   wipeDelay = 0,
 }: {
   slug: string;
@@ -62,12 +104,31 @@ function DeviceScreen({
   ratio: number;
   active: boolean;
   hovered: boolean;
+  glare: MotionValue<number>;
   wipeDelay?: number;
 }) {
-  const { y, containerRef } = useAutoScroll(active, ratio, hovered);
+  const { containerRef, imgRef } = useAutoScroll(active, ratio, hovered);
+  const glareRef = useRef<HTMLDivElement>(null);
+  // předchozí projekt zůstane pod stíráním nového — obrazovka nikdy nezčerná
+  const prevSlug = useRef(slug);
+  const [under, setUnder] = useState<string | null>(null);
+  useEffect(() => {
+    if (prevSlug.current === slug) return;
+    setUnder(prevSlug.current);
+    prevSlug.current = slug;
+    const id = window.setTimeout(() => setUnder(null), 900);
+    return () => window.clearTimeout(id);
+  }, [slug]);
+
+  useMotionValueEvent(glare, 'change', (g) => writeGlare(glareRef.current, g));
+  useEffect(() => writeGlare(glareRef.current, glare.get()), [glare]);
 
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-[#04060b]">
+      {under ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={`/cases/${under}/${file}.jpg`} alt="" aria-hidden className="absolute inset-x-0 top-0 w-full max-w-none" />
+      ) : null}
       <motion.div
         key={slug}
         className="absolute inset-0"
@@ -76,42 +137,115 @@ function DeviceScreen({
         transition={{ duration: 0.55, delay: wipeDelay, ease: [0.76, 0, 0.24, 1] }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <motion.img
+        <img
+          ref={imgRef}
           src={`/cases/${slug}/${file}.jpg`}
           alt=""
           aria-hidden
           loading="eager"
-          className="absolute inset-x-0 top-0 w-full max-w-none"
-          style={{ y }}
+          decoding="async"
+          className="absolute inset-x-0 top-0 w-full max-w-none will-change-transform"
         />
       </motion.div>
+      {/* hloubka skla: stín při okrajích + statický odraz nahoře */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          boxShadow: 'inset 0 0 28px rgba(0,0,0,0.55)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 22%, transparent 78%, rgba(0,0,0,0.25) 100%)',
+        }}
+      />
+      {/* odlesk, který přejede po skle se scrollem */}
+      <div
+        ref={glareRef}
+        aria-hidden
+        className="pointer-events-none absolute -inset-y-1/4 left-0 w-[38%] opacity-0 mix-blend-screen"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(190,215,255,0.07) 30%, rgba(255,255,255,0.2) 48%, rgba(255,255,255,0.26) 50%, rgba(190,215,255,0.07) 70%, transparent 100%)',
+        }}
+      />
     </div>
   );
 }
 
 /**
- * Notebook a telefon stojí odděleně vedle sebe — mezi nimi je vidět
- * kus pozadí, žádný přesah. Telefon je mírně blíž „kameře" (větší,
- * vlastní stín) a má nepatrně jiný náklon, ať kompozice nepůsobí ploše.
+ * Notebook a telefon stojí odděleně vedle sebe ve skutečném poměru
+ * (iPhone ≈ čtvrtina šířky MacBooku). Scroll stránky jimi hýbe s mírně
+ * odlišnou hloubkou (telefon je blíž — posouvá se víc), po skle přejede
+ * odlesk — nejdřív notebook, pak telefon, jako jeden zdroj světla —
+ * a pod zařízeními dýchá odraz světla obrazovky v barvě projektu.
  */
 function DeviceComposition({
   slug,
+  accent,
   desktopRatio,
   mobileRatio,
   active,
+  progress,
+  segments = 1,
 }: {
   slug: string;
+  accent: string;
   desktopRatio: number;
   mobileRatio: number;
   active: boolean;
+  /** progress scrollu, který řídí odlesk a hloubku; bez něj vlastní průchod viewportem */
+  progress?: MotionValue<number>;
+  /** kolikrát má odlesk přejet během progressu 0…1 (jednou na projekt) */
+  segments?: number;
 }) {
   const reduced = useReducedMotion();
   const [hovered, setHovered] = useState(false);
+  // Screenshot se začne posouvat až po otevření sekce (progress > 0), ne už
+  // při načtení stránky — jinak by při předání z přechodu byl odscrollovaný.
+  const [opened, setOpened] = useState(!progress);
+  const root = useRef<HTMLDivElement>(null);
+  const laptopDepth = useRef<HTMLDivElement>(null);
+  const phoneDepth = useRef<HTMLDivElement>(null);
+  const spill = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const rotateX = useSpring(useTransform(my, [-1, 1], [4, -4]), { stiffness: 90, damping: 16 });
   const rotateY = useSpring(useTransform(mx, [-1, 1], [-4, 4]), { stiffness: 90, damping: 16 });
   const rotateYPhone = useSpring(useTransform(mx, [-1, 1], [-6, 6]), { stiffness: 90, damping: 16 });
+
+  const own = useScroll({ target: root, offset: ['start end', 'end start'] }).scrollYProgress;
+  const source = progress ?? own;
+  // lokální průchod jednoho projektu 0…1
+  const local = useTransform(source, (v) => {
+    const x = clamp01(v) * segments;
+    return x >= segments ? 1 : x - Math.floor(x);
+  });
+  const glareLaptop = useTransform(local, [0.12, 0.62], [0, 1]);
+  const glarePhone = useTransform(local, [0.3, 0.8], [0, 1]);
+
+  const applyDepth = (l: number) => {
+    if (reduced) return;
+    const d = l - 0.5;
+    if (laptopDepth.current) laptopDepth.current.style.transform = `translate3d(0, ${(-d * 14).toFixed(1)}px, 0)`;
+    if (phoneDepth.current) phoneDepth.current.style.transform = `translate3d(0, ${(-d * 40).toFixed(1)}px, 0) rotate(${(d * 2.5).toFixed(2)}deg)`;
+    if (spill.current) {
+      const bump = Math.sin(clamp01((l - 0.12) / 0.68) * Math.PI);
+      spill.current.style.opacity = (0.35 + 0.45 * bump).toFixed(3);
+    }
+  };
+  useMotionValueEvent(local, 'change', applyDepth);
+  useMotionValueEvent(source, 'change', (v) => {
+    if (progress) setOpened(v > 0.002);
+  });
+  // smyčky auto-scrollu běží jen na obrazovce (dřív běžely i dávno po odscrollování)
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const node = root.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting), { rootMargin: '100px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const running = active && opened && onScreen;
+  useEffect(() => applyDepth(local.get()));
 
   const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (reduced) return;
@@ -122,7 +256,8 @@ function DeviceComposition({
 
   return (
     <motion.div
-      className="relative mx-auto flex w-full max-w-[680px] items-end gap-6 sm:gap-10"
+      ref={root}
+      className="relative mx-auto flex w-full max-w-[720px] items-end gap-4 sm:gap-6"
       style={{ perspective: 1400 }}
       onPointerMove={onMove}
       onPointerEnter={() => setHovered(true)}
@@ -132,27 +267,31 @@ function DeviceComposition({
         my.set(0);
       }}
     >
-      <motion.div
-        className="relative min-w-0 flex-[1.65]"
-        style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
-      >
-        <MacbookFrame className="drop-shadow-[0_50px_90px_-30px_rgba(0,0,0,0.9)]">
-          <DeviceScreen slug={slug} file="desktop" ratio={desktopRatio} active={active} hovered={hovered} />
-        </MacbookFrame>
-      </motion.div>
+      {/* odraz světla obrazovek na „stole" */}
+      <div
+        ref={spill}
+        aria-hidden
+        className="pointer-events-none absolute inset-x-[6%] -bottom-8 h-20 rounded-[50%] blur-2xl transition-[background] duration-700"
+        style={{ background: `radial-gradient(closest-side, ${accent}66, transparent)`, opacity: 0.35 }}
+      />
 
-      <motion.div
-        className="relative z-10 min-w-0 flex-1"
-        style={reduced ? undefined : { rotateX, rotateY: rotateYPhone, transformStyle: 'preserve-3d' }}
-        animate={{ y: active ? '-6%' : '0%', scale: active ? 1.06 : 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <PhoneFrame className="!w-full drop-shadow-[0_40px_70px_-20px_rgba(0,0,0,0.95)]">
-          <div className="relative aspect-[390/844] overflow-hidden">
-            <DeviceScreen slug={slug} file="mobile" ratio={mobileRatio} active={active} hovered={hovered} wipeDelay={0.1} />
-          </div>
-        </PhoneFrame>
-      </motion.div>
+      <div ref={laptopDepth} data-land="cases-laptop" className="relative min-w-0 flex-[4.2]">
+        <motion.div style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}>
+          <MacbookFrame className="drop-shadow-[0_50px_90px_-30px_rgba(0,0,0,0.9)]">
+            <DeviceScreen slug={slug} file="desktop" ratio={desktopRatio} active={running} hovered={hovered} glare={glareLaptop} />
+          </MacbookFrame>
+        </motion.div>
+      </div>
+
+      <div ref={phoneDepth} className="relative z-10 min-w-0 flex-1 pb-[1.5%]">
+        <motion.div style={reduced ? undefined : { rotateX, rotateY: rotateYPhone, transformStyle: 'preserve-3d' }}>
+          <PhoneFrame className="!w-full drop-shadow-[0_30px_50px_-18px_rgba(0,0,0,0.95)]">
+            <div data-land="cases-phone" className="relative aspect-[390/844] overflow-hidden">
+              <DeviceScreen slug={slug} file="mobile" ratio={mobileRatio} active={running} hovered={hovered} glare={glarePhone} wipeDelay={0.1} />
+            </div>
+          </PhoneFrame>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -165,6 +304,18 @@ export function Cases() {
   const [index, setIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] });
+
+  // screenshoty všech projektů předem stáhnout a dekódovat — při přepnutí projektu
+  // pak obrazovka nezčerná na dobu dekódování velkého obrázku
+  useEffect(() => {
+    const imgs = cases.flatMap((item) => ['desktop', 'mobile'].map((f) => {
+      const img = new window.Image();
+      img.src = `/cases/${item.slug}/${f}.jpg`;
+      img.decode?.().catch(() => undefined);
+      return img;
+    }));
+    return () => imgs.forEach((img) => (img.src = ''));
+  }, []);
 
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
     const raw = Math.floor(Math.max(0, Math.min(0.9999, p)) * COUNT);
@@ -185,11 +336,12 @@ export function Cases() {
     <section
       id="reference"
       ref={section}
-      className="relative"
-      style={{ height: reduced ? 'auto' : `${COUNT * 100}vh` }}
+      // výška pinu jen na desktopu — na mobilu jsou projekty pod sebou v běžném toku
+      className={reduced ? 'relative' : 'relative md:h-[var(--pin-h)]'}
+      style={reduced ? undefined : ({ '--pin-h': `${COUNT * 92}vh` } as React.CSSProperties)}
       aria-labelledby="reference-title"
     >
-      <div className={reduced ? 'py-16' : 'sticky top-0 h-dvh overflow-hidden'}>
+      <div className={reduced ? 'py-16' : 'py-16 md:sticky md:top-0 md:h-dvh md:overflow-hidden md:py-0'}>
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -269,6 +421,9 @@ export function Cases() {
 
               <DeviceComposition
                 slug={cases[index].slug}
+                accent={accent}
+                progress={scrollYProgress}
+                segments={COUNT}
                 desktopRatio={cases[index].desktopHeight / 1440}
                 mobileRatio={cases[index].mobileHeight / 390}
                 active
@@ -328,6 +483,7 @@ function MobileCase({
       <div className="mt-6">
         <DeviceComposition
           slug={item.slug}
+          accent={item.accent}
           desktopRatio={item.desktopHeight / 1440}
           mobileRatio={item.mobileHeight / 390}
           active={inView}

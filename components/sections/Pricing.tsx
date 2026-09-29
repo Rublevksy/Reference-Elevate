@@ -67,7 +67,9 @@ export function Pricing() {
             return (
               <motion.article
                 key={plan.id}
-                initial={{ opacity: 0, y: 90, rotate: index === 0 ? -2.5 : index === 2 ? 2.5 : 0 }}
+                data-land="price-card"
+                // karty sem „přiveze" přechodová scéna — vlastní vstup by je ukázal podruhé
+                initial={false}
                 whileInView={{ opacity: 1, y: 0, rotate: 0 }}
                 viewport={{ once: true, margin: '-12%' }}
                 transition={{
@@ -127,7 +129,7 @@ export function Pricing() {
                       <motion.li
                         key={feature}
                         className="flex items-start gap-2.5 text-sm text-muted"
-                        initial={{ opacity: 0, x: -8 }}
+                        initial={false}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{

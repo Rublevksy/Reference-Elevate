@@ -1,22 +1,53 @@
 'use client';
 
-import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/FeatureIcon';
 import { SplitHeading } from '@/components/ui/SplitHeading';
-import { Mascot } from '@/components/mascot/Mascot';
-import { SpeechBubble } from '@/components/mascot/SpeechBubble';
 import { services } from '@/content/services';
-import type { Pose } from '@/content/mascot';
+import { createPortal } from 'react-dom';
+import { SITE_SHOT, subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
+import { ease, seg } from '@/lib/fx';
+import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { PlatformScene } from './PlatformScene';
 
 const COUNT = services.length;
-const STAGGER = 0.12;
+const CARD_W = 150;
+const CARD_H = 240;
 const SPRING = { type: 'spring' as const, stiffness: 220, damping: 28, mass: 0.9 };
-/** podkmitávající pružina pro let karet dovnitř — vyšší tuhost, nižší tlumení */
-const FLIGHT_SPRING = { type: 'spring' as const, stiffness: 170, damping: 15, mass: 0.9 };
+/**
+ * Let karet v progressu HERA (viz časová osa v Hero.tsx):
+ *  OUT  — karty vylétnou přímo ze screenshotu webu na displeji notebooku,
+ *         obloukem se rozestoupí kolem něj (s otočkou) a „visí" před kamerou;
+ *  LAND — když se web na displeji srovná se skutečnou sekcí, dosednou do vějíře.
+ * Létají klony ve vlastní fixní vrstvě NAD filmem (připnutá sekce je sticky,
+ * tedy vlastní stacking context — skutečné karty by byly pod filmem).
+ */
+const OUT: [number, number] = [0.46, 0.66];
+/** Střed displeje ve screenshotu a kam která karta vyletí (souřadnice screenshotu 1440 × 900). */
+const SHOT_CENTER = { x: 720, y: 450 };
+const BURST = [
+  { x: 215, y: 430, r: -14, spin: -30, bend: { x: 0, y: -90 } }, // doleva
+  { x: 470, y: 715, r: -8, spin: 24, bend: { x: -60, y: 20 } }, // dolů vlevo
+  { x: 720, y: 170, r: 4, spin: -18, bend: { x: 70, y: 0 } }, // nahoru
+  { x: 970, y: 715, r: 8, spin: -24, bend: { x: 60, y: 20 } }, // dolů vpravo
+  { x: 1225, y: 430, r: 14, spin: 30, bend: { x: 0, y: -90 } }, // doprava
+];
+const LAND: [number, number] = [0.8, 0.97];
+/** posun startu mezi sousedními kartami; délka letu jedné karty tak, aby poslední doletěla přesně na konci úseku */
+const FLIGHT_STAGGER = 0.08;
+const FLIGHT_SPAN = 1 - FLIGHT_STAGGER * (COUNT - 1);
+
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+/** lehký přelet cíle a návrat — „dosednutí" karty na stůl */
+const easeOutBack = (t: number) => {
+  const c = 1.25;
+  return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+};
 
 /**
  * Rozložení vějíře je čistě 2D (translate + rotate + scale).
@@ -38,78 +69,194 @@ function layout(index: number, active: number) {
   };
 }
 
-/** Odkud karta „přilétá" při vstupu do sekce — pro každý index jiná trajektorie. */
-function offscreen(index: number) {
-  const variants = [
-    { x: 0, y: -640, rotate: -130, scale: 0.4, opacity: 0 }, // shora
-    { x: -620, y: 40, rotate: -220, scale: 0.35, opacity: 0 }, // zleva
-    { x: 0, y: 260, rotate: 200, scale: 0.25, opacity: 0 }, // zezadu/zdola
-    { x: 620, y: 40, rotate: 220, scale: 0.35, opacity: 0 }, // zprava
-    { x: 360, y: -520, rotate: -260, scale: 0.4, opacity: 0 }, // diagonála zprava shora
-  ];
-  return variants[index % variants.length];
-}
+const quadBezier = (a: Pt, c: Pt, b: Pt, t: number): Pt => ({
+  x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x,
+  y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y,
+});
 
 export function ServicesTable() {
   const t = useTranslations('services');
   const tItems = useTranslations('services.items');
   const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
-  const [pose, setPose] = useState<Pose>('point');
   const [visible, setVisible] = useState(false);
-  const [animating, setAnimating] = useState(false);
+  const [vw, setVw] = useState(1440);
   const stage = useRef<HTMLDivElement>(null);
-  const walkTimer = useRef<number | null>(null);
 
-  // vstupní choreografie: karty přiletí → kruh zabliká → nadpis/taby → maskot přijde
-  const stageInViewRef = useRef<HTMLDivElement>(null);
-  const stageInView = useInView(stageInViewRef, { once: true, margin: '-15% 0px' });
-  const [entered, setEntered] = useState(reduced);
-  const [flash, setFlash] = useState(reduced);
-  const [showHeading, setShowHeading] = useState(reduced);
-  const [mascotIn, setMascotIn] = useState(reduced);
-
-  const slug = services[active].slug;
-  const bubbleSide = active <= (COUNT - 1) / 2 ? 'left' : 'right';
-
-  const choose = useCallback(
-    (index: number) => {
-      setActive((current) => {
-        if (current === index) return current;
-        if (!reduced) {
-          setPose('walk');
-          setAnimating(true);
-          if (walkTimer.current) window.clearTimeout(walkTimer.current);
-          walkTimer.current = window.setTimeout(() => {
-            setPose('point');
-            setAnimating(false);
-          }, 780);
-        }
-        return index;
-      });
-    },
-    [reduced],
-  );
-
-  // POZOR: `entered` se schválně nesmí objevit v dependency poli —
-  // jakmile by se effect spustil znovu kvůli změně `entered`, React by
-  // ho nejdřív ÚKLIDIL (zrušil právě nastavené timery) a hned zase
-  // vrátil kvůli guard podmínce, takže by se flash/nadpis/maskot nikdy
-  // nespustily. Opakované spuštění hlídá ref, ne stav.
-  const startedRef = useRef(false);
   useEffect(() => {
-    if (reduced || !stageInView || startedRef.current) return;
-    startedRef.current = true;
-    setEntered(true);
-    const t1 = window.setTimeout(() => setFlash(true), STAGGER * (COUNT - 1) * 1000 + 850);
-    const t2 = window.setTimeout(() => setShowHeading(true), STAGGER * (COUNT - 1) * 1000 + 950);
-    const t3 = window.setTimeout(() => setMascotIn(true), STAGGER * (COUNT - 1) * 1000 + 1250);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
+    const update = () => setVw(window.innerWidth);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Nadpis a taby naskočí, jakmile je sekce v okně (ještě pod filmem) —
+  // při rozplynutí filmu už stojí na místě jako na screenshotu v notebooku.
+  // Karty vylétají z obrazovky notebooku v hero filmu: startují přesně tam,
+  // kde by byly na screenshotu webu v displeji, obloukem se rozletí do stran
+  // a dosednou do vějíře. Vše je funkce progressu hera — oba směry scrollu.
+  const headingRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const flightRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const headingInView = useInView(headingRef, { once: true, margin: '-10% 0px' });
+  const [flash, setFlash] = useState(false);
+  const flashRef = useRef(false);
+  const [showHeading, setShowHeading] = useState(false);
+
+  const choose = useCallback((index: number) => setActive(index), []);
+
+  useEffect(() => {
+    if (!reduced) return;
+    setFlash(true);
+    setShowHeading(true);
+  }, [reduced]);
+
+  useEffect(() => {
+    if (reduced || !headingInView) return;
+    const id = window.setTimeout(() => setShowHeading(true), 150);
+    return () => window.clearTimeout(id);
+  }, [reduced, headingInView]);
+
+  const cloneRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const mapRef = useRef<((x: number, y: number) => Pt) | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const applyFlight = useCallback(() => {
+    const container = cardsRef.current;
+    const anchor = container?.closest<HTMLElement>('[data-shot-anchor]');
+    const hero = document.getElementById('hero');
+    if (!container || !anchor) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const desktop = vw >= 768;
+    const heroP = hero ? window.scrollY / Math.max(1, hero.offsetHeight - vh) : 1;
+    // tolerance: plovoucí čárka jinak nechá poslední kartu „v letu" (0.99999…) a bez hoveru
+    const phase = ([a, b]: [number, number], index: number) => {
+      if (reduced || !desktop) return 1;
+      const v = clamp01((clamp01((heroP - a) / (b - a)) - index * FLIGHT_STAGGER) / FLIGHT_SPAN);
+      return v > 0.999 ? 1 : v;
     };
-  }, [reduced, stageInView]);
+    const map = mapRef.current;
+    const ar = anchor.getBoundingClientRect();
+    let landed = true;
+
+    flightRefs.current.forEach((wrap, index) => {
+      const clone = cloneRefs.current[index];
+      const button = wrap?.firstElementChild as HTMLElement | null;
+      if (!wrap || !button) return;
+      const t1 = phase(OUT, index);
+      const t2 = phase(LAND, index);
+      const done = t2 >= 1;
+      // skutečná karta převezme klon přesně v místě dosednutí
+      wrap.style.opacity = done ? '1' : '0';
+      button.style.pointerEvents = done ? '' : 'none';
+      if (done) {
+        if (clone) clone.style.visibility = 'hidden';
+        return;
+      }
+      landed = false;
+      if (!clone) return;
+      if (!map || t1 <= 0) {
+        clone.style.visibility = 'hidden';
+        return;
+      }
+
+      // cíl: skutečná karta ve vějíři (poloha, natočení, měřítko)
+      const rect = button.getBoundingClientRect();
+      const tr = getComputedStyle(button).transform;
+      const mx = tr && tr !== 'none' ? new DOMMatrixReadOnly(tr) : new DOMMatrixReadOnly();
+      const target = { r: (Math.atan2(mx.b, mx.a) * 180) / Math.PI, sx: Math.hypot(mx.a, mx.b), sy: Math.hypot(mx.c, mx.d) };
+      const faceUp = button.dataset.active === 'true';
+
+      // Celý let běží v souřadnicích screenshotu webu na displeji (1440 × 900)
+      // a do viewportu se promítá stejnou homografií jako displej — karty tak
+      // nikdy neopustí obrazovku notebooku a rostou s ní, jak kamera najíždí.
+      const home = { x: rect.left + rect.width / 2 - ar.left - (vw - SITE_SHOT.w) / 2, y: rect.top + rect.height / 2 - ar.top };
+      const burst = BURST[index % BURST.length];
+      const bob = Math.sin(heroP * 110 + index * 1.3) * 10 * t1 * (1 - t2);
+
+      let P: Pt;
+      let S: number;
+      let sxT = 1;
+      let syT = 1;
+      let rot: number;
+      let ry: number;
+      let glow: number;
+      if (t2 <= 0) {
+        // výbuch ze středu displeje — každá karta svým směrem
+        const e = easeOut(t1);
+        const ctrl = { x: lerp(SHOT_CENTER.x, burst.x, 0.5) + burst.bend.x, y: lerp(SHOT_CENTER.y, burst.y, 0.5) + burst.bend.y };
+        P = quadBezier(SHOT_CENTER, ctrl, { x: burst.x, y: burst.y + bob }, e);
+        const pop = Math.sin(Math.PI * t1);
+        S = lerp(0.3, 1, e) * (1 + 0.12 * pop);
+        rot = burst.r * e + burst.spin * pop;
+        ry = 360 * e;
+        glow = 0.35 + 0.65 * pop;
+      } else {
+        // návrat do vějíře na stole
+        const e = easeOut(t2);
+        const from = { x: burst.x, y: burst.y + bob };
+        const ctrl = { x: lerp(from.x, home.x, 0.6), y: Math.min(from.y, home.y) - 40 };
+        P = quadBezier(from, ctrl, home, e);
+        S = 1;
+        sxT = lerp(1, target.sx, e);
+        syT = lerp(1, target.sy, e);
+        rot = lerp(burst.r, target.r, e);
+        ry = faceUp ? 180 * ease(seg(t2, 0.3, 1)) : 0;
+        glow = 0.35 * (1 - e);
+      }
+      // hlídání okrajů displeje: karta (150 × 240 · S) celá uvnitř screenshotu
+      const hw = (CARD_W / 2) * S * 1.1;
+      const hh = (CARD_H / 2) * S * 1.1;
+      P = { x: Math.min(SITE_SHOT.w - hw, Math.max(hw, P.x)), y: Math.min(SITE_SHOT.h - hh, Math.max(hh, P.y)) };
+
+      const pos = map(P.x, P.y);
+      const ex = map(P.x + 1, P.y);
+      const ls = Math.max(0.02, Math.hypot(ex.x - pos.x, ex.y - pos.y));
+      clone.style.visibility = '';
+      clone.style.transform = `translate3d(${(pos.x - CARD_W / 2).toFixed(1)}px, ${(pos.y - CARD_H / 2).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${(ls * S * sxT).toFixed(4)}, ${(ls * S * syT).toFixed(4)})`;
+      clone.style.opacity = clamp01(t1 / 0.05).toFixed(3);
+      clone.style.filter = glow > 0.02 ? `drop-shadow(0 0 ${(20 * glow * ls).toFixed(1)}px rgba(61,123,255,${(0.8 * glow).toFixed(2)}))` : '';
+      const flipper = clone.firstElementChild as HTMLElement | null;
+      if (flipper) flipper.style.transform = `rotateY(${ry.toFixed(1)}deg)`;
+    });
+
+    if (landed !== flashRef.current) {
+      flashRef.current = landed;
+      setFlash(landed);
+    }
+  }, [reduced]);
+
+  // hero kreslí po snímcích (lerp) — let karet se přepočítá s každým snímkem
+  useEffect(
+    () =>
+      subscribeHeroFrame((state) => {
+        mapRef.current = state.map;
+        applyFlight();
+      }),
+    [applyFlight],
+  );
+  useEffect(() => {
+    let raf = 0;
+    const run = () => {
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          applyFlight();
+        });
+    };
+    applyFlight();
+    window.addEventListener('scroll', run, { passive: true });
+    window.addEventListener('resize', run);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', run);
+      window.removeEventListener('resize', run);
+    };
+  }, [applyFlight, active, mounted]);
 
   // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce
   useEffect(() => {
@@ -123,13 +270,15 @@ export function ServicesTable() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => () => {
-    if (walkTimer.current) window.clearTimeout(walkTimer.current);
-  }, []);
-
   return (
-    <section id="sluzby" className="relative overflow-hidden py-24 md:py-28" aria-labelledby="sluzby-title">
-      <div ref={stageInViewRef} className="shell text-center">
+    <section
+      id="sluzby"
+      data-nav-offset={reduced ? undefined : 70}
+      className={`relative overflow-x-clip py-24 ${reduced ? 'md:py-28' : 'md:h-[202vh] md:py-0'}`}
+      aria-labelledby="sluzby-title"
+    >
+      <div data-shot-anchor className={reduced ? '' : 'md:sticky md:top-0 md:h-dvh md:overflow-hidden md:pt-28'}>
+      <div ref={headingRef} className="shell text-center">
         <motion.div
           initial={reduced ? undefined : { opacity: 0, y: 16 }}
           animate={showHeading ? { opacity: 1, y: 0 } : undefined}
@@ -184,145 +333,63 @@ export function ServicesTable() {
       </motion.div>
 
       {/* ===== STŮL (desktop) ===== */}
-      <div ref={stage} className="relative mt-2 hidden h-[520px] md:block">
+      <div ref={stage} className="relative mt-2 hidden h-[clamp(380px,calc(100dvh-392px),520px)] md:block">
         <div className="pointer-events-none absolute inset-0 mx-auto h-full w-full max-w-5xl">
           <PlatformScene active={visible && !reduced} flash={flash} />
         </div>
 
         {/* karty */}
-        <div className="absolute inset-x-0 bottom-[86px] mx-auto h-[250px] max-w-5xl">
+        <div ref={cardsRef} className="absolute inset-x-0 bottom-[86px] z-20 mx-auto h-[250px] max-w-5xl">
           {services.map((item, index) => {
             const isActive = index === active;
-            const target = entered ? layout(index, active) : offscreen(index);
-            const start = offscreen(index);
             return (
-              <motion.button
+              <div
                 key={item.slug}
+                ref={(el) => {
+                  flightRefs.current[index] = el;
+                }}
+                className="pointer-events-none absolute left-1/2 top-0 -ml-[75px] h-[240px] w-[150px]"
+                style={{
+                  zIndex: isActive ? 40 : 10 + (COUNT - Math.abs(index - active)),
+                  opacity: reduced ? 1 : 0,
+                }}
+              >
+              <motion.button
                 type="button"
+                data-src-card
+                data-active={isActive ? 'true' : 'false'}
                 onClick={() => choose(index)}
                 onMouseEnter={() => choose(index)}
-                className="absolute left-1/2 top-0 h-[240px] w-[150px] -translate-x-1/2 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
-                style={{
-                  perspective: 900,
-                  zIndex: isActive ? 40 : 10 + (COUNT - Math.abs(index - active)),
-                  willChange: animating || !entered ? 'transform' : 'auto',
-                }}
-                initial={start}
-                animate={target}
-                transition={
-                  reduced
-                    ? { duration: 0 }
-                    : !entered
-                      ? { duration: 0 }
-                      : { ...FLIGHT_SPRING, delay: index * STAGGER }
-                }
+                className="pointer-events-auto absolute inset-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
+                style={{ perspective: 900 }}
+                initial={layout(index, active)}
+                animate={layout(index, active)}
+                transition={reduced ? { duration: 0 } : SPRING}
               >
-                {/* zbytkový „motion blur" — tlumená kopie na startovní pozici, jen doznívá opacitou */}
-                {entered && !reduced ? (
-                  <motion.span
-                    aria-hidden
-                    className="absolute inset-0 rounded-2xl"
-                    style={{
-                      background: 'linear-gradient(160deg,#0b1330 0%,#060a18 55%,#0a1430 100%)',
-                      transform: `translate(${start.x}px, ${start.y}px) rotate(${start.rotate}deg) scale(${start.scale})`,
-                    }}
-                    initial={{ opacity: 0.45 }}
-                    animate={{ opacity: 0 }}
-                    transition={{ duration: 0.5, delay: index * STAGGER }}
-                  />
-                ) : null}
-
                 <motion.div
                   className="preserve-3d relative h-full w-full"
                   initial={false}
                   animate={{ rotateY: isActive ? 180 : 0 }}
                   transition={reduced ? { duration: 0 } : { ...SPRING, damping: 26 }}
                 >
-                  {/* rub */}
-                  <span
-                    className="backface-hidden absolute inset-0 grid place-items-center overflow-hidden rounded-2xl border border-[rgba(80,120,255,0.35)]"
-                    style={{ background: 'linear-gradient(160deg,#0b1330 0%,#060a18 55%,#0a1430 100%)' }}
-                  >
-                    <svg viewBox="0 0 120 180" className="absolute inset-0 h-full w-full text-[rgba(120,160,255,0.3)]" aria-hidden>
-                      <rect x="8" y="8" width="104" height="164" rx="10" fill="none" stroke="currentColor" strokeWidth="0.7" />
-                      <rect x="14" y="14" width="92" height="152" rx="7" fill="none" stroke="currentColor" strokeWidth="0.4" strokeDasharray="3 5" />
-                      <circle cx="60" cy="90" r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                      <circle cx="60" cy="90" r="20" fill="none" stroke="currentColor" strokeWidth="0.4" strokeDasharray="2 4" />
-                      {Array.from({ length: 20 }).map((_, dot) => (
-                        <circle key={dot} cx={12 + ((dot * 37) % 96)} cy={16 + ((dot * 53) % 148)} r={dot % 3 === 0 ? 1.1 : 0.6} fill="rgba(200,220,255,0.5)" />
-                      ))}
-                    </svg>
-                    <span className="relative z-10 flex flex-col items-center gap-2 text-[var(--blue-bright)]">
-                      <Icon name={item.icon} className="h-7 w-7" />
-                      <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted">{item.num}</span>
-                    </span>
-                  </span>
-
-                  {/* líc */}
-                  <span
-                    className="backface-hidden absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(61,123,255,0.55)] p-4 text-center"
-                    style={{
-                      transform: 'rotateY(180deg)',
-                      background: 'linear-gradient(165deg,rgba(18,30,70,0.96),rgba(6,10,22,0.98))',
-                      boxShadow: '0 0 46px rgba(31,91,255,0.45)',
-                    }}
-                  >
-                    <span className="font-display text-xs tracking-[0.22em] text-[var(--blue-bright)]">{item.num}</span>
-                    <Icon name={item.icon} className="h-8 w-8 text-ink" />
-                    <span className="font-display text-sm font-bold uppercase leading-tight text-ink">
-                      {tItems(`${item.slug}.card`)}
-                    </span>
+                  <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                  <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
+                    <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
                   </span>
                 </motion.div>
               </motion.button>
+              </div>
             );
           })}
         </div>
+      </div>
 
-        {/* maskot chodí podél předního okraje stolu — vždy nad kartami */}
-        <motion.div
-          className="pointer-events-none absolute bottom-6 left-1/2 z-[70] hidden lg:block"
-          initial={reduced ? undefined : { x: -560, opacity: 0 }}
-          animate={
-            mascotIn
-              ? { x: (active - (COUNT - 1) / 2) * 158 + 112, opacity: 1 }
-              : reduced
-                ? { x: (active - (COUNT - 1) / 2) * 158 + 112, opacity: 1 }
-                : undefined
-          }
-          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22 }}
-        >
-          <div className="relative">
-            <Mascot pose={pose} height={290} followCursor={false} />
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={slug}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`pointer-events-auto absolute -top-2 w-[220px] ${
-                  bubbleSide === 'right' ? 'right-[78%]' : 'left-[78%]'
-                }`}
-              >
-                <SpeechBubble text={tItems(`${slug}.mascotLine`)} compact side={bubbleSide} />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </motion.div>
       </div>
 
       {/* ===== KARUSEL (mobil) — nativní scroll-snap, žádné JS přetahování ===== */}
       <div className="mt-8 md:hidden">
-        <div className="flex justify-center">
-          <Mascot pose={pose} height={180} followCursor={false} />
-        </div>
-        <div className="mt-3 px-5">
-          <SpeechBubble text={tItems(`${slug}.mascotLine`)} compact className="mx-auto" />
-        </div>
-
         <ul
           className="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[calc(50vw-75px)] pb-6"
-          data-lenis-prevent
           onScroll={(event) => {
             const el = event.currentTarget;
             const index = Math.round(el.scrollLeft / 166);
@@ -357,6 +424,31 @@ export function ServicesTable() {
           ))}
         </ul>
       </div>
+      {/* letící klony karet — fixní vrstva nad hero filmem */}
+      {mounted && !reduced
+        ? createPortal(
+            <div aria-hidden className="pointer-events-none fixed inset-0 z-30 hidden overflow-hidden md:block">
+              {services.map((item, index) => (
+                <div
+                  key={item.slug}
+                  ref={(el) => {
+                    cloneRefs.current[index] = el;
+                  }}
+                  className="absolute left-0 top-0 will-change-transform"
+                  style={{ width: CARD_W, height: CARD_H, visibility: 'hidden', perspective: 900, zIndex: index === 0 ? 20 : 10 - index }}
+                >
+                  <div className="preserve-3d relative h-full w-full">
+                    <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                    <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
+                      <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   );
 }

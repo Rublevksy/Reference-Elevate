@@ -1,26 +1,30 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Mascot } from './Mascot';
-import { SpeechBubble } from './SpeechBubble';
+import { AnimatePresence, motion, useScroll, useSpring, useTransform, useVelocity } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { mascotCues, type Pose } from '@/content/mascot';
+import { Mascot } from './Mascot';
+import { mascotCues, type MascotShot, type Pose } from '@/content/mascot';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
-const IDLE_MS = 20_000;
+const FULL_H = 300;
+const WAIST_H = 460;
+const WAIST_VISIBLE = 0.56;
 
 /**
- * Průvodce v pravém dolním rohu. Sleduje, nad kterou sekcí uživatel je,
- * a podle content/mascot.ts mění pózu i repliku. Ve velkých scénách
- * (hero, stůl karet, proces) se schová — tam maskot vystupuje přímo ve scéně.
+ * Průvodce — velká postava v rohu, pro každou sekci vlastní „záběr":
+ * celá postava nebo do pasu (vykukuje zespodu), vlevo/vpravo, natočený
+ * k obsahu nebo od něj. Při změně sekce odejde ze záběru a vrátí se
+ * v novém. Setrvačnost scrollu ho jemně naklání, klik = zamávání.
+ * Kde maskot hraje přímo ve scéně (hero, Proces, kontakt…), není vidět.
  */
 export function MascotGuide() {
   const t = useTranslations('mascot');
+  const reduced = useReducedMotion();
   const [cueId, setCueId] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-  const [minimized, setMinimized] = useState(false);
-  const [override, setOverride] = useState<{ text: string; pose: Pose } | null>(null);
-  const idleTimer = useRef<number | null>(null);
+  const [closed, setClosed] = useState(false);
+  const [wave, setWave] = useState(false);
+  const waveTimer = useRef<number | null>(null);
 
   const cue = mascotCues.find((item) => item.sectionId === cueId) ?? null;
 
@@ -28,115 +32,76 @@ export function MascotGuide() {
     const sections = mascotCues
       .map((item) => document.getElementById(item.sectionId))
       .filter((node): node is HTMLElement => Boolean(node));
-
     if (!sections.length) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          setCueId(visible.target.id);
-          setDismissed(false);
-          setOverride(null);
-        }
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setCueId(visible.target.id);
       },
       { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.2, 0.6] },
     );
-
     sections.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, []);
 
-  // Nečinnost na kontaktu → jemné pošťouchnutí
-  const resetIdle = useCallback(() => {
-    if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    if (cueId !== 'kontakt') return;
-    idleTimer.current = window.setTimeout(() => {
-      setOverride({ text: t('idleNudge'), pose: 'point' });
-      setDismissed(false);
-    }, IDLE_MS);
-  }, [cueId, t]);
+  const { scrollY } = useScroll();
+  const velocity = useSpring(useVelocity(scrollY), { stiffness: 120, damping: 22 });
+  const lean = useTransform(velocity, [-3000, 0, 3000], [-6, 0, 6], { clamp: true });
+  const sink = useTransform(velocity, [-3000, 0, 3000], [-12, 0, 12], { clamp: true });
 
-  useEffect(() => {
-    resetIdle();
-    const events: (keyof WindowEventMap)[] = ['pointermove', 'keydown', 'scroll', 'pointerdown'];
-    events.forEach((event) => window.addEventListener(event, resetIdle, { passive: true }));
-    return () => {
-      events.forEach((event) => window.removeEventListener(event, resetIdle));
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    };
-  }, [resetIdle]);
+  useEffect(() => () => {
+    if (waveTimer.current) window.clearTimeout(waveTimer.current);
+  }, []);
 
   const onPoke = () => {
-    if (minimized) {
-      setMinimized(false);
-      setDismissed(false);
-      return;
-    }
-    const lines = t.raw('random') as string[];
-    const line = lines[Math.floor(Math.random() * lines.length)];
-    setOverride({ text: line, pose: 'wave' });
-    setDismissed(false);
+    setWave(true);
+    if (waveTimer.current) window.clearTimeout(waveTimer.current);
+    waveTimer.current = window.setTimeout(() => setWave(false), 1800);
   };
 
-  const hidden = !cue || (cue.hidden && !override);
-  const pose = override?.pose ?? cue?.pose ?? 'idle';
-  const text = override?.text ?? (cue ? t(`cues.${cue.cue}`) : '');
+  const shot: MascotShot | undefined = cue?.shot;
+  const visible = Boolean(cue && !cue.hidden && shot) && !closed;
+  const pose: Pose = wave ? 'wave' : (cue?.pose ?? 'idle');
+  const waist = shot?.framing === 'waist';
+  const figureH = waist ? WAIST_H : FULL_H;
+  const boxH = waist ? Math.round(WAIST_H * WAIST_VISIBLE) : FULL_H;
+  const side = shot?.side ?? 'right';
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-4 z-[95] hidden items-end gap-3 md:flex">
+    <div className={`pointer-events-none fixed bottom-0 z-[95] hidden md:block ${side === 'left' ? 'left-4' : 'right-4'}`}>
       <AnimatePresence mode="wait">
-        {!hidden && !dismissed && !minimized && text ? (
-          <SpeechBubble
-            key={text}
-            text={text}
-            compact
-            side="right"
-            className="pointer-events-auto mb-3"
-            onClose={() => setDismissed(true)}
-          />
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {!hidden ? (
+        {visible && shot ? (
           <motion.div
-            key="guide"
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.9 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto relative"
+            key={`${cueId}`}
+            className="group pointer-events-auto relative"
+            initial={reduced ? { opacity: 0 } : { y: '110%', rotate: side === 'left' ? -8 : 8, filter: 'brightness(0.25) saturate(0.4)' }}
+            animate={reduced ? { opacity: 1 } : { y: '0%', rotate: 0, filter: 'brightness(1) saturate(1)' }}
+            exit={reduced ? { opacity: 0 } : { y: '110%', rotate: side === 'left' ? 6 : -6, filter: 'brightness(0.25) saturate(0.4)', transition: { duration: 0.35, ease: 'easeIn' } }}
+            transition={{ type: 'spring', stiffness: 130, damping: 18, mass: 0.9 }}
+            style={{ transformOrigin: '50% 100%' }}
           >
-            <button
+            <motion.button
               type="button"
               onClick={onPoke}
-              onDoubleClick={() => setMinimized(true)}
-              aria-label={minimized ? t('expand') : t('guideLabel')}
-              className={`glass group relative grid place-items-center overflow-hidden rounded-full transition-all duration-500 ${
-                minimized ? 'h-14 w-14' : 'h-24 w-24'
-              }`}
+              aria-label={t('guideLabel')}
+              className="block origin-bottom outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
+              style={reduced ? undefined : { rotate: lean, y: sink }}
             >
-              <span
-                aria-hidden
-                className="absolute inset-0 rounded-full opacity-70"
-                style={{ background: 'radial-gradient(circle at 50% 120%, rgba(31,91,255,0.4), transparent 60%)' }}
-              />
-              <Mascot pose={pose} height={minimized ? 56 : 96} bust followCursor={!minimized} />
+              {/* do pasu: vyšší postava, spodek schovaný za okrajem obrazovky */}
+              <div className="relative overflow-hidden" style={{ height: boxH, width: Math.round(figureH * 0.62) }}>
+                <div className="absolute inset-x-0 top-0" style={{ height: figureH, transform: `perspective(900px) rotateY(${shot.turn}deg)`, transformOrigin: '50% 100%' }}>
+                  <Mascot pose={pose} height={figureH} flip={Boolean(shot.flip)} followCursor />
+                </div>
+              </div>
+            </motion.button>
+            <button
+              type="button"
+              onClick={() => setClosed(true)}
+              className={`absolute top-2 grid h-6 w-6 place-items-center rounded-full border border-[var(--line)] bg-[var(--bg-elevated)] text-[11px] text-muted opacity-0 transition-opacity hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 ${side === 'left' ? 'left-0' : 'right-0'}`}
+              aria-label={t('collapse')}
+            >
+              ×
             </button>
-
-            {!minimized ? (
-              <button
-                type="button"
-                onClick={() => setMinimized(true)}
-                className="absolute -left-1 -top-1 grid h-6 w-6 place-items-center rounded-full border border-[var(--line)] bg-[var(--bg-elevated)] text-[10px] text-muted transition-colors hover:text-ink"
-                aria-label={t('collapse')}
-              >
-                –
-              </button>
-            ) : null}
           </motion.div>
         ) : null}
       </AnimatePresence>

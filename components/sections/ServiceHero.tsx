@@ -91,7 +91,8 @@ export function ServiceHero({ slug }: { slug: string }) {
           />
           <div className="relative">
             <Mascot pose="point" height={380} />
-            <div className="absolute -left-24 top-10 w-[220px]">
+            {/* titulek vlevo v úrovni pasu — nezakrývá obličej ani gesto */}
+            <div className="absolute -left-48 top-[52%] w-[200px]">
               <SpeechBubble text={tItem('mascotLine')} compact />
             </div>
           </div>

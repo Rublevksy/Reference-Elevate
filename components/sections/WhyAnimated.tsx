@@ -25,7 +25,8 @@ export function WhyAnimated() {
   const [animated, setAnimated] = useState(true);
   const [glitch, setGlitch] = useState(false);
   const [ready, setReady] = useState(false);
-  const [shotOffset, setShotOffset] = useState(0);
+  const shotRef = useRef<HTMLImageElement>(null);
+  const [inView, setInView] = useState(false);
 
   const target = useRef(0);
   const current = useRef(0);
@@ -61,13 +62,24 @@ export function WhyAnimated() {
     const node = screen.current;
     if (node) {
       const shotHeight = node.clientWidth * DESKTOP_RATIO;
-      setShotOffset(-eased * Math.max(0, shotHeight - node.clientHeight));
+      // přímý zápis — dřív setState při každém scrollu překresloval celou sekci
+      const y = -eased * Math.max(0, shotHeight - node.clientHeight);
+      if (shotRef.current) shotRef.current.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
     }
   });
 
+  // smyčka videa běží jen když je sekce na obrazovce
+  useEffect(() => {
+    const node = section.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { rootMargin: '100px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   // plynulé dojíždění videa k cíli, ať scrubbing neseká
   useEffect(() => {
-    if (!animated || reduced) return;
+    if (!animated || reduced || !inView) return;
     const tick = () => {
       const el = video.current;
       if (el && el.duration) {
@@ -79,7 +91,7 @@ export function WhyAnimated() {
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, [animated, reduced]);
+  }, [animated, reduced, inView]);
 
   const toggle = () => {
     setGlitch(true);
@@ -91,8 +103,8 @@ export function WhyAnimated() {
     <section
       id="proc-animace"
       ref={section}
-      className="relative"
-      style={{ height: reduced ? 'auto' : '300vh' }}
+      // pin (scrubbing videa v notebooku) jen na desktopu; mobil má telefon v běžném toku
+      className={reduced ? 'relative' : 'relative md:h-[220vh]'}
       aria-labelledby="proc-animace-title"
     >
       <div className={reduced ? '' : 'md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:justify-center'}>
@@ -132,16 +144,15 @@ export function WhyAnimated() {
           </div>
 
           {/* ---- notebook (desktop) ---- */}
-          <div className="relative mx-auto mt-8 hidden w-full max-w-[720px] md:block">
+          <div data-land="why-laptop" className="relative mx-auto mt-8 hidden w-full max-w-[720px] md:block">
+            {/* bez vlastní vstupní animace — notebook sem „přiveze" přechodová scéna;
+                druhé objevení při dojetí do záběru působilo jako dvojitý skok */}
             <motion.div
-              initial={{ rotateX: 14, y: 30, opacity: 0 }}
-              whileInView={{ rotateX: 0, y: 0, opacity: 1 }}
-              viewport={{ once: true, margin: '-20%' }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              initial={false}
               style={{ perspective: 1400 }}
             >
               <MacbookFrame>
-                <div ref={screen} className="absolute inset-0 overflow-hidden bg-[#04060b]">
+                <div ref={screen} data-why-screen className="absolute inset-0 overflow-hidden bg-[#04060b]">
                   {/* animovaná verze — scrubbing videa */}
                   <motion.video
                     ref={video}
@@ -159,12 +170,12 @@ export function WhyAnimated() {
                       je už předem zmenšený, optimizér by nic nepřidal. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <motion.img
+                    ref={shotRef}
                     src="/demo/desktop.jpg"
                     alt=""
                     aria-hidden
                     loading="lazy"
                     className="absolute inset-x-0 top-0 w-full max-w-none grayscale"
-                    style={{ y: shotOffset }}
                     animate={{ opacity: animated ? 0 : 1 }}
                     transition={{ duration: 0.25 }}
                   />

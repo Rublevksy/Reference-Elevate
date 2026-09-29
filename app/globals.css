@@ -20,8 +20,9 @@
     border-color: var(--line);
   }
 
+  /* navigace skáče na sekce okamžitě (lib/scrollTo) — žádný plynulý dojezd */
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -42,6 +43,12 @@
     font-family: var(--font-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+  }
+
+  /* švy mezi sekcemi: přechodové scény (TransitionScene) zhasínají předchozí
+     a rozsvěcují další sekci přes tyto proměnné, sekce je nikdy nepřepisují */
+  main > section {
+    opacity: calc(var(--seam-in, 1) * var(--seam-out, 1));
   }
 
   ::selection {
@@ -79,11 +86,13 @@
     .shell { padding-inline: 40px; }
   }
 
+  /* sklo bez backdrop-filter: rozmazávání toho, co je pod pohyblivou vrstvou,
+     bylo při scrollu nejdražší operace na stránce — na tmavém pozadí stačí
+     hustší gradient a jemný vnitřní odlesk */
   .glass {
-    background: linear-gradient(160deg, rgba(20, 28, 48, 0.72), rgba(8, 12, 22, 0.72));
+    background: linear-gradient(160deg, rgba(20, 28, 48, 0.97), rgba(8, 12, 22, 0.97));
     border: 1px solid var(--line);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    box-shadow: inset 0 1px 0 rgba(160, 190, 255, 0.06);
   }
 
   .text-gradient-blue {
@@ -138,14 +147,12 @@
     to { --beam-angle: 360deg; }
   }
 
-  /* jemný blur při přepnutí jazyka */
-  .lang-switching main,
-  .lang-switching header,
-  .lang-switching footer {
-    filter: blur(7px);
-    opacity: 0.55;
-    transition: filter 0.2s ease, opacity 0.2s ease;
+  /* šipka „dolů ke službám" v heru — jemné pošťouchnutí */
+  @keyframes hero-nudge {
+    0%, 100% { transform: translateY(-2px); }
+    50% { transform: translateY(3px); }
   }
+
 
   /* stůl karet — ambientní pohyb, jediné dvě animace v celé scéně */
   .platform-spin { animation: platform-spin 110s linear infinite; }
