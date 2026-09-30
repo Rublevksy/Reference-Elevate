@@ -4,14 +4,25 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { FALLBACK_PROJECTS, type Project } from '@/lib/content/projects';
 import { site } from '@/content/site';
 
-type Content = { projects: Project[]; contactEmail: string };
+export type ContentValue = {
+  projects: Project[];
+  contactEmail: string;
+  city: string;
+  social: { label: string; href: string }[];
+};
 
-const ContentContext = createContext<Content>({ projects: FALLBACK_PROJECTS, contactEmail: site.email });
+const ContentContext = createContext<ContentValue>({
+  projects: FALLBACK_PROJECTS,
+  contactEmail: site.email,
+  city: site.city,
+  social: [...site.social],
+});
 
-/** Obsah z databáze (projekty, kontakt) pro klientské sekce. */
-export function ContentProvider({ value, children }: { value: Content; children: ReactNode }) {
+/** Obsah z databáze (projekty, kontakt, sítě) pro klientské sekce. */
+export function ContentProvider({ value, children }: { value: ContentValue; children: ReactNode }) {
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 }
 
 export const useProjects = () => useContext(ContentContext).projects;
 export const useContactEmail = () => useContext(ContentContext).contactEmail;
+export const useSiteContact = () => useContext(ContentContext);

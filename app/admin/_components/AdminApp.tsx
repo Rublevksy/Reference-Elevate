@@ -11,12 +11,15 @@ import {
   savePricing,
   saveProject,
   saveSettings,
+  saveTexts,
+  type SettingsInput,
   setPassword,
   setPublished,
   signOut,
   type ProjectInput,
 } from '../actions';
 import { Btn, Card, Field, inputClass, SaveStatus, useSave } from './ui';
+import { EDIT_GROUPS } from '@/lib/content/editable';
 
 /* ------------------------------------------------------------------ */
 /*  Obrázky: zmenšení v prohlížeči + nahrání přes podepsanou adresu     */
@@ -435,19 +438,143 @@ function PricingTab({ initial }: { initial: Record<string, unknown> }) {
 /*  Kontakt a účet                                                     */
 /* ------------------------------------------------------------------ */
 
-function ContactTab({ initial }: { initial: string }) {
-  const [email, setEmail] = useState(initial);
+function CompanyTab({ initial }: { initial: SettingsInput }) {
+  const [v, setV] = useState<SettingsInput>(initial);
+  const [dirty, setDirty] = useState(false);
   const save = useSave();
+  const set = (patch: Partial<SettingsInput>) => {
+    setV((prev) => ({ ...prev, ...patch }));
+    setDirty(true);
+  };
+  const setSocial = (k: keyof SettingsInput['social'], url: string) => set({ social: { ...v.social, [k]: url } });
+
   return (
-    <Card title="Kontaktní e-mail" subtitle="Zobrazuje se na webu a chodí na něj poptávky z formuláře." className="max-w-2xl">
-      <Field label="E-mail" hint="Bez vlastní ověřené domény v Resend doručuje formulář jen na e-mail, se kterým je účet Resend založený.">
-        <input className={inputClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </Field>
-      <div className="mt-6 flex items-center gap-4">
-        <Btn variant="primary" disabled={save.busy} onClick={() => save.run(() => saveSettings({ contactEmail: email }))}>Uložit</Btn>
+    <div className="space-y-6">
+      <Card title="Kontaktní e-mail" subtitle="Zobrazuje se na webu a chodí na něj poptávky z formuláře." className="max-w-3xl">
+        <Field label="E-mail" hint="Bez vlastní ověřené domény v Resend doručuje formulář jen na e-mail, se kterým je účet Resend založený.">
+          <input className={inputClass} type="email" value={v.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} />
+        </Field>
+      </Card>
+      <Card title="Firma" subtitle="Patička, kontaktní sekce, strukturovaná data pro Google a stránka Ochrana osobních údajů." className="max-w-3xl">
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Město"><input className={inputClass} value={v.city} onChange={(e) => set({ city: e.target.value })} /></Field>
+          <Field label="IČO" hint="8 číslic, nepovinné"><input className={inputClass} inputMode="numeric" value={v.ico} onChange={(e) => set({ ico: e.target.value })} /></Field>
+          <Field label="Právní název" className="md:col-span-2"><input className={inputClass} value={v.legalName} onChange={(e) => set({ legalName: e.target.value })} /></Field>
+        </div>
+      </Card>
+      <Card title="Sociální sítě" subtitle="Prázdný odkaz = síť se na webu nezobrazí." className="max-w-3xl">
+        <div className="grid gap-5">
+          {(['instagram', 'linkedin', 'behance'] as const).map((k) => (
+            <Field key={k} label={k === 'linkedin' ? 'LinkedIn' : k === 'behance' ? 'Behance' : 'Instagram'}>
+              <input className={inputClass} value={v.social[k]} placeholder="https://" onChange={(e) => setSocial(k, e.target.value)} />
+            </Field>
+          ))}
+        </div>
+      </Card>
+      <div className="flex max-w-3xl items-center justify-end gap-4">
+        {save.state === 'idle' && dirty ? <span className="text-sm text-muted">Neuložené změny</span> : null}
         <SaveStatus state={save.state} error={save.error} />
+        <Btn variant="primary" disabled={save.busy || !dirty} onClick={async () => (await save.run(() => saveSettings(v))) && setDirty(false)}>
+          Uložit
+        </Btn>
       </div>
-    </Card>
+    </div>
+  );
+}
+
+function TextsTab({ defaults, overrides }: { defaults: Record<string, string>; overrides: Record<string, string> }) {
+  const [values, setValues] = useState<Record<string, string>>(() => ({ ...defaults, ...overrides }));
+  const [saved, setSaved] = useState<Record<string, string>>(() => ({ ...defaults, ...overrides }));
+  const [group, setGroup] = useState(EDIT_GROUPS[0].id);
+  const [query, setQuery] = useState('');
+  const save = useSave();
+
+  // porovnávat bez ořezu — části nadpisů mají záměrné mezery na krajích
+  const changedFromDefault = (path: string) => values[path] !== defaults[path];
+  const dirtyCount = Object.keys(values).filter((p) => values[p] !== saved[p]).length;
+  const q = query.trim().toLowerCase();
+  const visibleGroups = q
+    ? EDIT_GROUPS.map((g) => ({ ...g, fields: g.fields.filter((f) => f.label.toLowerCase().includes(q) || values[f.path].toLowerCase().includes(q)) })).filter((g) => g.fields.length)
+    : EDIT_GROUPS.filter((g) => g.id === group);
+
+  const submit = async () => {
+    const changes = Object.fromEntries(Object.entries(values).filter(([p, v]) => v !== defaults[p] && v.trim()));
+    if (await save.run(() => saveTexts(changes))) setSaved({ ...values });
+  };
+
+  return (
+    <div className="grid gap-6 pb-24 md:grid-cols-[230px_1fr]">
+      <aside className="min-w-0 md:sticky md:top-[132px] md:self-start">
+        <input className={`${inputClass} mb-4`} placeholder="Hledat text…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible" aria-label="Sekce webu">
+          {EDIT_GROUPS.map((g) => {
+            const changed = g.fields.filter((f) => changedFromDefault(f.path)).length;
+            const active = !q && group === g.id;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setGroup(g.id);
+                }}
+                className={`flex shrink-0 items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors ${
+                  active ? 'bg-[rgba(31,91,255,0.16)] text-ink shadow-[inset_0_0_0_1px_rgba(61,123,255,0.45)]' : 'text-muted hover:bg-white/[0.04] hover:text-ink'
+                }`}
+              >
+                {g.title}
+                {changed ? <span className="rounded-full bg-[rgba(61,123,255,0.25)] px-1.5 text-[10px] text-[#cfe0ff]">{changed}</span> : null}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      <div className="min-w-0 space-y-6">
+        {visibleGroups.length === 0 ? <p className="text-sm text-muted">Nic nenalezeno.</p> : null}
+        {visibleGroups.map((g) => (
+          <Card key={g.id} title={g.title} subtitle={g.subtitle}>
+            <div className="grid gap-5 md:grid-cols-2">
+              {g.fields.map((f) => {
+                const long = f.long || defaults[f.path].length > 70;
+                const changed = changedFromDefault(f.path);
+                return (
+                  <div key={f.path} className={long ? 'md:col-span-2' : ''}>
+                    <Field label={f.label} hint={f.hint}>
+                      {long ? (
+                        <textarea
+                          className={`${inputClass} min-h-[76px] leading-relaxed`}
+                          value={values[f.path]}
+                          onChange={(e) => setValues((prev) => ({ ...prev, [f.path]: e.target.value }))}
+                        />
+                      ) : (
+                        <input className={inputClass} value={values[f.path]} onChange={(e) => setValues((prev) => ({ ...prev, [f.path]: e.target.value }))} />
+                      )}
+                    </Field>
+                    {changed ? (
+                      <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
+                        <span className="min-w-0 truncate">Původní: {defaults[f.path]}</span>
+                        <button type="button" className="shrink-0 text-[#9fc0ff] hover:text-ink" onClick={() => setValues((prev) => ({ ...prev, [f.path]: defaults[f.path] }))}>
+                          Vrátit původní
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[rgba(6,9,18,0.92)] backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-end gap-4 px-5 py-3">
+          {save.state === 'idle' && dirtyCount ? <span className="text-sm text-muted">Neuložené změny: {dirtyCount}</span> : null}
+          <SaveStatus state={save.state} error={save.error} />
+          <Btn variant="primary" onClick={submit} disabled={save.busy || (!dirtyCount && save.state !== 'error')}>Uložit texty</Btn>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -490,8 +617,9 @@ function AccountTab({ email }: { email: string }) {
 
 const TABS = [
   ['projects', 'Projekty'],
+  ['texts', 'Texty webu'],
   ['pricing', 'Ceník'],
-  ['contact', 'Kontakt'],
+  ['company', 'Kontakt a firma'],
   ['account', 'Účet'],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -500,12 +628,16 @@ export function AdminApp({
   email,
   projects,
   pricing,
-  contactEmail,
+  settings,
+  textDefaults,
+  textOverrides,
 }: {
   email: string;
   projects: ProjectRow[];
   pricing: Record<string, unknown>;
-  contactEmail: string;
+  settings: SettingsInput;
+  textDefaults: Record<string, string>;
+  textOverrides: Record<string, string>;
 }) {
   const [tab, setTab] = useState<Tab>('projects');
   // záložka v adrese (#cenik…) — obnovení stránky zůstane na stejném místě
@@ -541,7 +673,7 @@ export function AdminApp({
               type="button"
               onClick={() => go(id)}
               aria-current={tab === id ? 'page' : undefined}
-              className={`relative px-4 pb-3 pt-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
+              className={`relative shrink-0 whitespace-nowrap px-4 pb-3 pt-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
             >
               {label}
               <span
@@ -556,8 +688,9 @@ export function AdminApp({
       {/* záložky zůstávají připojené — přepnutí je okamžité a rozepsané změny se neztratí */}
       <main className="relative mx-auto max-w-5xl px-5 py-8">
         <div hidden={tab !== 'projects'}><ProjectsTab projects={projects} /></div>
+        <div hidden={tab !== 'texts'}><TextsTab defaults={textDefaults} overrides={textOverrides} /></div>
         <div hidden={tab !== 'pricing'}><PricingTab initial={pricing} /></div>
-        <div hidden={tab !== 'contact'}><ContactTab initial={contactEmail} /></div>
+        <div hidden={tab !== 'company'}><CompanyTab initial={settings} /></div>
         <div hidden={tab !== 'account'}><AccountTab email={email} /></div>
       </main>
     </div>

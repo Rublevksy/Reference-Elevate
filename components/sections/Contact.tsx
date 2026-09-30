@@ -14,7 +14,7 @@ import { Mascot } from '@/components/mascot/Mascot';
 import { SpeechBubble } from '@/components/mascot/SpeechBubble';
 import { makeContactSchema, type ContactInput } from '@/lib/contactSchema';
 import { site } from '@/content/site';
-import { useContactEmail } from '@/components/ContentProvider';
+import { useSiteContact } from '@/components/ContentProvider';
 
 const STEP_FIELDS: (keyof ContactInput)[][] = [
   ['needs'],
@@ -35,7 +35,7 @@ const field =
   'w-full rounded-xl border border-[var(--line)] bg-white/[0.03] px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-[rgba(61,123,255,0.6)]';
 
 export function Contact({ preselectIndex }: { preselectIndex?: number }) {
-  const contactEmail = useContactEmail();
+  const { contactEmail, city, social } = useSiteContact();
   const t = useTranslations('contact');
   const tMascot = useTranslations('mascot');
   const [step, setStep] = useState(0);
@@ -379,12 +379,12 @@ export function Contact({ preselectIndex }: { preselectIndex?: number }) {
                 <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
                   <MapPin className="h-4 w-4" aria-hidden />
                 </span>
-                {site.city}
+                {city}
               </li>
             </ul>
 
             <ul className="flex flex-wrap gap-2">
-              {site.social.map((item) => (
+              {social.map((item) => (
                 <li key={item.label}>
                   <a
                     href={item.href}

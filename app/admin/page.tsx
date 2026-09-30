@@ -5,6 +5,8 @@ import type { ProjectRow } from '@/lib/content/projects';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { currentAdmin } from '@/lib/supabase/requireAdmin';
 import { AdminApp } from './_components/AdminApp';
+import type { SettingsInput } from './actions';
+import { EDITABLE_PATHS, getPath } from '@/lib/content/editable';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,14 +33,30 @@ export default async function AdminPage() {
   }
   const block = (key: string) => blocks.data?.find((b) => b.key === key)?.data as Record<string, unknown> | undefined;
   const pricing = (block('pricing_cs') ?? csMessages.pricing) as Record<string, unknown>;
-  const settings = block('settings') as { contact_email?: string } | undefined;
+  const s = (block('settings') ?? {}) as Record<string, unknown>;
+  const social = (s.social ?? {}) as Record<string, string>;
+  const pick = (v: unknown, d: string) => (typeof v === 'string' ? v : d);
+  const settings: SettingsInput = {
+    contactEmail: pick(s.contact_email, site.email),
+    city: pick(s.city, site.city),
+    legalName: pick(s.legal_name, site.legalName),
+    ico: pick(s.ico, site.ico),
+    social: Object.fromEntries(
+      site.social.map((x) => [x.label.toLowerCase(), pick(social[x.label.toLowerCase()], x.href)]),
+    ) as SettingsInput['social'],
+  };
+  // výchozí texty ze souboru + uložené změny
+  const defaults = Object.fromEntries([...EDITABLE_PATHS].map((p) => [p, String(getPath(csMessages, p) ?? '')]));
+  const overrides = (block('messages_cs') ?? {}) as Record<string, string>;
 
   return (
     <AdminApp
       email={admin.email}
       projects={(projects.data ?? []) as ProjectRow[]}
       pricing={pricing}
-      contactEmail={settings?.contact_email ?? site.email}
+      settings={settings}
+      textDefaults={defaults}
+      textOverrides={overrides}
     />
   );
 }

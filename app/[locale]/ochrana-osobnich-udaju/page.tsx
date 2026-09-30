@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { locales } from '@/i18n/routing';
 import { site } from '@/content/site';
+import { getSettings } from '@/lib/content/server';
 
 type Params = { params: Promise<{ locale: string }> };
 
@@ -26,12 +27,14 @@ export default async function PrivacyPage({ params }: Params) {
   const t = await getTranslations({ locale, namespace: 'privacy' });
 
   const sections = t.raw('sections') as { title: string; body: string }[];
+  const settings = await getSettings();
+  const company = settings.ico ? `${settings.legalName}, IČO ${settings.ico}` : settings.legalName;
   const fill = (body: string) =>
     body
-      .replace('{company}', site.legalName)
-      .replace('{city}', site.address.city)
+      .replace('{company}', company)
+      .replace('{city}', settings.city)
       .replace('{postal}', site.address.postalCode)
-      .replace('{email}', site.email);
+      .replace('{email}', settings.contactEmail);
 
   return (
     <article className="shell max-w-3xl pb-24 pt-[136px] md:pt-[180px]">

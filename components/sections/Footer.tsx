@@ -10,10 +10,10 @@ import { serviceSlugs } from '@/content/services';
 import { site } from '@/content/site';
 import { poseSprite } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { useContactEmail } from '@/components/ContentProvider';
+import { useSiteContact } from '@/components/ContentProvider';
 
 export function Footer() {
-  const contactEmail = useContactEmail();
+  const { contactEmail, city, social } = useSiteContact();
   const t = useTranslations('footer');
   const tServices = useTranslations('services.items');
   const tNav = useTranslations('nav');
@@ -65,10 +65,10 @@ export function Footer() {
           <ul className="space-y-2.5 text-sm text-muted">
             <li><a href={`mailto:${contactEmail}`} className="transition-colors hover:text-ink">{contactEmail}</a></li>
             {site.phone ? <li><a href={`tel:${site.phoneHref}`} className="transition-colors hover:text-ink">{site.phone}</a></li> : null}
-            <li>{site.city}</li>
+            <li>{city}</li>
           </ul>
           <ul className="mt-5 flex flex-wrap gap-2">
-            {site.social.map((item) => (
+            {social.map((item) => (
               <li key={item.label}>
                 <a
                   href={item.href}

@@ -31,11 +31,22 @@ export const getProjects = unstable_cache(
   { tags: [CONTENT_TAG], revalidate: 3600 },
 );
 
+export type BlockKey = 'pricing_cs' | 'settings' | 'messages_cs';
+
+/**
+ * Bloky obsahu čte server přes service role (jen na serveru) — nové bloky
+ * tak nepotřebují úpravu RLS politik v databázi.
+ */
+const serverClient = () => {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_PUBLISHABLE_KEY;
+  return createClient(SUPABASE_URL, key, { auth: { persistSession: false, autoRefreshToken: false } });
+};
+
 export const getBlock = unstable_cache(
-  async (key: 'pricing_cs' | 'settings'): Promise<Record<string, unknown> | null> => {
+  async (key: BlockKey): Promise<Record<string, unknown> | null> => {
     if (!supabaseConfigured) return null;
     try {
-      const { data, error } = await publicClient().from('content_blocks').select('data').eq('key', key).maybeSingle();
+      const { data, error } = await serverClient().from('content_blocks').select('data').eq('key', key).maybeSingle();
       if (error || !data) return null;
       return data.data as Record<string, unknown>;
     } catch {
@@ -46,10 +57,30 @@ export const getBlock = unstable_cache(
   { tags: [CONTENT_TAG], revalidate: 3600 },
 );
 
-export type SiteSettings = { contactEmail: string };
+export type SocialLink = { label: string; href: string };
+export type SiteSettings = {
+  contactEmail: string;
+  city: string;
+  legalName: string;
+  ico: string;
+  social: SocialLink[];
+};
 
+const str = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim() : fallback);
+
+/** Kontakt a firemní údaje: z administrace, jinak výchozí z content/site.ts. */
 export async function getSettings(): Promise<SiteSettings> {
-  const block = await getBlock('settings');
-  const email = typeof block?.contact_email === 'string' && block.contact_email.includes('@') ? block.contact_email : site.email;
-  return { contactEmail: email };
+  const b = (await getBlock('settings')) ?? {};
+  const email = str(b.contact_email, site.email);
+  const socials = (b.social ?? {}) as Record<string, unknown>;
+  return {
+    contactEmail: email.includes('@') ? email : site.email,
+    city: str(b.city, site.city),
+    legalName: str(b.legal_name, site.legalName),
+    ico: str(b.ico, site.ico),
+    // prázdný odkaz = síť se na webu neukáže
+    social: site.social
+      .map((s) => ({ label: s.label, href: typeof socials[s.label.toLowerCase()] === 'string' ? (socials[s.label.toLowerCase()] as string).trim() : s.href }))
+      .filter((s) => s.href),
+  };
 }

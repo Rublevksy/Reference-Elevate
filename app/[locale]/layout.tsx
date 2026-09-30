@@ -119,11 +119,11 @@ export default async function LocaleLayout({
     priceRange: '$$',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: site.address.city,
+      addressLocality: settings.city,
       postalCode: site.address.postalCode,
       addressCountry: site.address.country,
     },
-    sameAs: site.social.map((s) => s.href),
+    sameAs: settings.social.map((s) => s.href),
   };
 
   const cyrillic = CYRILLIC.has(locale);
@@ -141,7 +141,7 @@ export default async function LocaleLayout({
           {t('skip')}
         </a>
         <NextIntlClientProvider>
-          <ContentProvider value={{ projects, contactEmail: settings.contactEmail }}>
+          <ContentProvider value={{ projects, contactEmail: settings.contactEmail, city: settings.city, social: settings.social }}>
           <Preloader />
           <Backdrop />
           <Cursor />

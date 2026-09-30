@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { CONTENT_TAG } from '@/lib/content/server';
+import { EDITABLE_PATHS, getPath } from '@/lib/content/editable';
+import csMessages from '@/messages/cs.json';
 import type { ProjectRow } from '@/lib/content/projects';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/supabase/requireAdmin';
@@ -170,12 +172,53 @@ export async function savePricing(data: Record<string, unknown>): Promise<Result
   }
 }
 
-export async function saveSettings(input: { contactEmail: string }): Promise<Result> {
+export type SettingsInput = {
+  contactEmail: string;
+  city: string;
+  legalName: string;
+  ico: string;
+  social: { instagram: string; linkedin: string; behance: string };
+};
+
+export async function saveSettings(input: SettingsInput): Promise<Result> {
   try {
     await requireAdmin();
     const email = input.contactEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'Neplatný e-mail.' };
-    const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'settings', data: { contact_email: email } });
+    const ico = input.ico.replace(/\s+/g, '');
+    if (ico && !/^\d{8}$/.test(ico)) return { ok: false, error: 'IČO má 8 číslic.' };
+    const social: Record<string, string> = {};
+    for (const [k, v] of Object.entries(input.social)) {
+      const url = v.trim();
+      if (url && !/^https?:\/\//.test(url)) return { ok: false, error: `Odkaz ${k} musí začínat https://` };
+      social[k] = url;
+    }
+    const data = { contact_email: email, city: input.city.trim(), legal_name: input.legalName.trim(), ico, social };
+    const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'settings', data });
+    if (error) throw error;
+    publish();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Změněné texty webu (čeština). Ukládají se jen povolená pole a jen ta, která
+ * se liší od výchozího textu — co zůstane výchozí, bere se dál ze souboru.
+ */
+export async function saveTexts(changes: Record<string, string>): Promise<Result> {
+  try {
+    await requireAdmin();
+    const data: Record<string, string> = {};
+    for (const [path, value] of Object.entries(changes)) {
+      if (!EDITABLE_PATHS.has(path) || typeof value !== 'string') continue;
+      // bez ořezu: části nadpisů mají záměrné mezery na krajích
+      if (!value.trim()) continue;
+      if (value.length > 1200) return { ok: false, error: `Text „${path}" je příliš dlouhý.` };
+      if (value !== getPath(csMessages, path)) data[path] = value;
+    }
+    const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'messages_cs', data });
     if (error) throw error;
     publish();
     return { ok: true };
