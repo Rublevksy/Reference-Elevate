@@ -184,6 +184,19 @@ export async function saveSettings(input: { contactEmail: string }): Promise<Res
   }
 }
 
+export async function setPassword(password: string): Promise<Result> {
+  try {
+    await requireAdmin();
+    if (password.length < 10) return { ok: false, error: 'Heslo musí mít aspoň 10 znaků.' };
+    const supabase = await supabaseServer();
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function signOut() {
   const supabase = await supabaseServer();
   await supabase.auth.signOut();

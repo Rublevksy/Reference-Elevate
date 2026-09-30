@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 /** Samostatný kořen pro administraci (mimo jazykové verze webu). */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="cs" className={`${display.variable} ${sans.variable}`}>
-      <body className="min-h-dvh bg-[var(--bg)] text-ink antialiased">{children}</body>
+    <html lang="cs" className={`${display.variable} ${sans.variable}`} suppressHydrationWarning>
+      <body className="min-h-dvh bg-[var(--bg)] text-ink antialiased" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

@@ -131,8 +131,8 @@ export default async function LocaleLayout({
   const sans = cyrillic ? sansCyrillic : sansLatin;
 
   return (
-    <html lang={htmlLang[locale as Locale]} className={`${display.variable} ${sans.variable} ${hand.variable}`}>
-      <body className="min-h-dvh antialiased">
+    <html lang={htmlLang[locale as Locale]} className={`${display.variable} ${sans.variable} ${hand.variable}`} suppressHydrationWarning>
+      <body className="min-h-dvh antialiased" suppressHydrationWarning>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <a
           href="#obsah"
