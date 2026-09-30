@@ -10,14 +10,12 @@ import { plans, type Plan } from '@/content/pricing';
 import { serviceMeta } from '@/content/services';
 import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { navigateTo } from '@/lib/scrollTo';
 
-/** Přenese vybranou službu do formuláře a odskrolí k němu. */
+/** Přenese vybranou službu do formuláře a přejde k němu (bez přehrávání přechodu). */
 function pick(needIndex: number, plan: string) {
   window.dispatchEvent(new CustomEvent('elevate:preselect', { detail: { needIndex, plan } }));
-  const target = document.getElementById('kontakt');
-  if (!target) return;
-  if (window.__lenis) window.__lenis.scrollTo(target, { offset: -90, duration: 1.1 });
-  else target.scrollIntoView({ behavior: 'smooth' });
+  navigateTo('kontakt');
 }
 
 /** Pozadí karty — sdílené se scénou přechodu, aby se při předání kryly. */
@@ -230,6 +228,9 @@ export function Pricing() {
         {plans.map((plan) => (
           <article
             key={plan.id}
+            id={`cena-${plan.id}`}
+            data-nav-offset={-13}
+            data-nav-highlight
             data-land="price-card"
             className={`${PRICE_CARD_CLASS} group w-full transition-transform duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
             style={{ background: PRICE_CARD_BG }}

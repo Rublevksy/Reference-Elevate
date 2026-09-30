@@ -8,7 +8,8 @@ import { Link } from '@/i18n/navigation';
 import { Logo } from '@/components/ui/Logo';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { glideTo, scrollToId } from '@/lib/scrollTo';
+import { navState, navigateToTop } from '@/lib/scrollTo';
+import { SectionLink } from '@/components/ui/SectionLink';
 import { site } from '@/content/site';
 import { useContactEmail } from '@/components/ContentProvider';
 
@@ -58,16 +59,16 @@ export function Navbar() {
   const clickSuppress = useRef(false);
   const clickSuppressTimer = useRef<number | null>(null);
 
-  const handleNavClick = useCallback((id: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
+  /** Klik v menu: aktivní položku převezme klik, pozorovatel scrollu se na chvíli odmlčí. */
+  const onNavigate = useCallback((id: string) => () => {
     setOpen(false);
     setActive(id);
+    setHidden(false);
     clickSuppress.current = true;
     if (clickSuppressTimer.current) window.clearTimeout(clickSuppressTimer.current);
-    scrollToId(id);
     clickSuppressTimer.current = window.setTimeout(() => {
       clickSuppress.current = false;
-    }, 900);
+    }, 1400);
   }, []);
 
   useEffect(() => () => {
@@ -77,6 +78,12 @@ export function Navbar() {
   useMotionValueEvent(scrollY, 'change', (y) => {
     const delta = y - lastY.current;
     setShrunk(y > 40);
+    // skok navigace není skrolování dolů — lištu nechat vidět
+    if (performance.now() < navState.until) {
+      lastY.current = y;
+      setHidden(false);
+      return;
+    }
     // schovat jen při rychlém skrolu dolů, nahoru vždy ukázat
     if (y > 180 && delta > 8) setHidden(true);
     else if (delta < -4) setHidden(false);
@@ -130,11 +137,12 @@ export function Navbar() {
           <Link
             href="/"
             onClick={(event) => {
-              // na hlavní stránce jen okamžitý skok nahoru (bez navigace a efektů)
+              // na hlavní stránce jen rychlý návrat nahoru (bez navigace a přehrávání scén)
               if (window.location.pathname.split('/').filter(Boolean).length <= 1) {
                 event.preventDefault();
                 setOpen(false);
-                glideTo(0);
+                setActive(null);
+                navigateToTop();
               }
             }}
             className="flex shrink-0 items-center rounded-full px-2 py-1 transition-opacity hover:opacity-80"
@@ -150,9 +158,9 @@ export function Navbar() {
               const isActive = active === item.id;
               return (
                 <li key={item.id} className="relative">
-                  <a
-                    href={`#${item.id}`}
-                    onClick={handleNavClick(item.id)}
+                  <SectionLink
+                    to={item.id}
+                    onNavigate={onNavigate(item.id)}
                     className={`group/item relative block rounded-full px-3.5 py-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${
                       isActive ? 'text-ink' : 'text-muted hover:text-ink'
                     }`}
@@ -165,7 +173,7 @@ export function Navbar() {
                       />
                     ) : null}
                     <RollLabel label={t(item.key)} active={isActive} />
-                  </a>
+                  </SectionLink>
                 </li>
               );
             })}
@@ -176,9 +184,9 @@ export function Navbar() {
           </div>
 
           {/* CTA s paprskem po rámečku */}
-          <a
-            href="#kontakt"
-            onClick={handleNavClick('kontakt')}
+          <SectionLink
+            to="kontakt"
+            onNavigate={onNavigate('kontakt')}
             className="group/cta relative ml-1 hidden shrink-0 items-center gap-2 overflow-hidden rounded-full bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-4 py-2.5 font-display text-[11px] uppercase tracking-[0.1em] text-white shadow-[0_0_22px_var(--blue-glow)] transition-shadow hover:shadow-[0_0_34px_var(--blue-glow)] sm:flex"
           >
             <span className="relative z-10">{t('cta')}</span>
@@ -193,7 +201,7 @@ export function Navbar() {
               />
             </span>
             {!reduced ? <span aria-hidden className="beam" /> : null}
-          </a>
+          </SectionLink>
 
           <div className="flex items-center gap-1.5 lg:hidden">
             <LocaleSwitcher compact />
@@ -234,17 +242,21 @@ export function Navbar() {
 
             <nav className="mt-6 flex flex-col px-5" aria-label={tA11y('mobileNav')}>
               {ITEMS.map((item, index) => (
-                <motion.a
+                <motion.div
                   key={item.id}
-                  href={`#${item.id}`}
-                  onClick={handleNavClick(item.id)}
                   initial={{ opacity: 0, y: 26 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.14 + index * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="border-b border-[var(--line)] py-4 font-display text-[28px] uppercase leading-none tracking-tight text-ink"
+                  className="border-b border-[var(--line)]"
                 >
-                  {t(item.key)}
-                </motion.a>
+                  <SectionLink
+                    to={item.id}
+                    onNavigate={onNavigate(item.id)}
+                    className="block py-4 font-display text-[28px] uppercase leading-none tracking-tight text-ink"
+                  >
+                    {t(item.key)}
+                  </SectionLink>
+                </motion.div>
               ))}
             </nav>
 
@@ -254,14 +266,14 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <a
-                href="#kontakt"
-                onClick={handleNavClick('kontakt')}
+              <SectionLink
+                to="kontakt"
+                onNavigate={onNavigate('kontakt')}
                 className="flex w-full items-center justify-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-6 py-4 font-display text-[12px] uppercase tracking-[0.12em] text-white shadow-glow"
               >
                 {t('cta')}
                 <ArrowRight className="h-4 w-4" aria-hidden />
-              </a>
+              </SectionLink>
 
               <div className="mt-8 flex items-center justify-between">
                 <LocaleSwitcher compact />

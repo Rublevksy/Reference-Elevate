@@ -4,13 +4,23 @@
  * změny se při sestavení stránky položí přes texty ze souboru — co se
  * nezměnilo, bere se dál ze souboru.
  *
+ * Struktura kopíruje web shora dolů: sekce → skupiny → pole. Kde přesně
+ * text na webu je, ukazuje v administraci screenshot se zvýrazněním
+ * (public/admin-hints, skript scripts/capture-admin-hints.mjs) — popisky
+ * tu proto jen pojmenovávají, `note` je vyhrazená pro omezení (délka, pořadí).
+ *
  * Záměrně tu NENÍ: nadpis a záložky sekce Služby (jejich screenshot je
  * zapečený ve filmu na displeji notebooku), navigace a služební texty.
  */
-export type EditField = { path: string; label: string; long?: boolean; hint?: string };
-export type EditGroup = { id: string; title: string; subtitle?: string; fields: EditField[] };
+export type EditField = { path: string; label: string; long?: boolean; note?: string };
+export type EditGroup = { id: string; title: string; fields: EditField[] };
+export type EditSection = { id: string; title: string; groups: EditGroup[]; preview?: 'serp' };
 
-const SERVICE_SLUGS = [
+const f = (path: string, label: string, extra: Partial<EditField> = {}): EditField => ({ path, label, ...extra });
+const options = (base: string, labels: string[], prefix = 'Volba'): EditField[] =>
+  labels.map((label, i) => f(`${base}.${i}`, `${prefix} „${label}“`));
+
+const SERVICES = [
   ['weby', '01 Weby'],
   ['seo', '02 SEO'],
   ['e-shopy', '03 E-shopy'],
@@ -18,144 +28,272 @@ const SERVICE_SLUGS = [
   ['aplikace', '05 Aplikace'],
 ] as const;
 
-const servicePanel = ([slug, label]: (typeof SERVICE_SLUGS)[number]): EditGroup => ({
-  id: `panel-${slug}`,
-  title: `Panel ${label}`,
-  subtitle: 'Velký panel služby pod stolem s kartami (a karta služby na stole).',
-  fields: [
-    { path: `services.items.${slug}.card`, label: 'Název na kartě', hint: 'Líc karty na stole služeb' },
-    { path: `services.items.${slug}.headline.0`, label: 'Nadpis — začátek', hint: 'Nadpis se skládá ze tří částí; prostřední je modře' },
-    { path: `services.items.${slug}.headline.1`, label: 'Nadpis — modrá část' },
-    { path: `services.items.${slug}.headline.2`, label: 'Nadpis — konec' },
-    { path: `services.items.${slug}.features.0.title`, label: 'Výhoda 1 — tučně' },
-    { path: `services.items.${slug}.features.0.sub`, label: 'Výhoda 1 — pod tím' },
-    { path: `services.items.${slug}.features.1.title`, label: 'Výhoda 2 — tučně' },
-    { path: `services.items.${slug}.features.1.sub`, label: 'Výhoda 2 — pod tím' },
-    { path: `services.items.${slug}.features.2.title`, label: 'Výhoda 3 — tučně' },
-    { path: `services.items.${slug}.features.2.sub`, label: 'Výhoda 3 — pod tím' },
-    { path: `services.items.${slug}.cta`, label: 'Text tlačítka' },
-  ],
-});
+const NEEDS = ['Web', 'E-shop', 'SEO', 'Logo a design', 'Aplikace', 'Projekt na míru', 'Nevím, poraďte mi'];
+const NICHES = ['Služby a řemesla', 'Auto-moto', 'Zdraví a krása', 'Gastro a ubytování', 'Reality a stavebnictví', 'Obchod a e-commerce', 'Vzdělávání a kurzy', 'Jiný obor'];
+const STARTS = ['Nic, od nuly', 'Starý web', 'Jen nápad'];
+const ASSETS = ['Logo', 'Texty', 'Fotky', 'Grafický manuál'];
+const STYLES = ['Minimalistický', 'Výrazný', 'Prémiový', 'Hravý', 'Technický', 'Nechám na vás'];
+const COLORS = ['Modrá', 'Černá', 'Bílá', 'Zelená', 'Červená', 'Oranžová', 'Fialová', 'Zlatá'];
+const BUDGETS = ['do 10 000', '10–30 000', '30–60 000', '60–120 000', 'nad 120 000', 'Zatím nevím'];
+const TIMELINES = ['Co nejdřív', 'Do měsíce', 'Do tří měsíců', 'Nespěchá'];
+const CHANNELS = ['E-mail', 'Telefon', 'Telegram'];
+const STEP_NAMES = ['Projekt', 'Výchozí stav', 'Vzhled', 'Rozpočet', 'Kontakt'];
 
-export const EDIT_GROUPS: EditGroup[] = [
+export const EDIT_SECTIONS: EditSection[] = [
   {
     id: 'hero',
     title: 'Úvodní obrazovka',
-    subtitle: 'Text vpravo vedle neonové šipky (na mobilu dole).',
-    fields: [
-      { path: 'hero.eyebrow', label: 'Nadpis nad titulkem' },
-      { path: 'hero.tagline.0', label: 'Titulek — 1. řádek' },
-      { path: 'hero.tagline.1', label: 'Titulek — 2. řádek' },
-      { path: 'hero.taglineAccent', label: 'Titulek — modré zakončení' },
-      { path: 'hero.subtitle', label: 'Podtitulek' },
-      { path: 'hero.ctaBook', label: 'Hlavní tlačítko' },
-      { path: 'hero.ctaBookNote', label: 'Drobný text v tlačítku' },
-      { path: 'hero.ctaWork', label: 'Odkaz na práce' },
-      { path: 'hero.scrollHint', label: 'Pozvánka ke skrolování' },
+    groups: [
+      {
+        id: 'hero-main',
+        title: 'Texty',
+        fields: [
+          f('hero.eyebrow', 'Nadpis nad titulkem'),
+          f('hero.tagline.0', 'Titulek — 1. řádek'),
+          f('hero.tagline.1', 'Titulek — 2. řádek'),
+          f('hero.taglineAccent', 'Titulek — modré zakončení'),
+          f('hero.subtitle', 'Podtitulek', { long: true }),
+          f('hero.ctaBook', 'Hlavní tlačítko'),
+          f('hero.ctaBookNote', 'Drobný text v tlačítku'),
+          f('hero.ctaWork', 'Odkaz na práce'),
+          f('hero.scrollHint', 'Pozvánka ke skrolování'),
+        ],
+      },
     ],
   },
   {
     id: 'why',
     title: 'Weby, které žijí',
-    subtitle: 'Sekce s notebookem a přepínačem statický / animovaný.',
-    fields: [
-      { path: 'whyAnimated.title', label: 'Nadpis — bílá část' },
-      { path: 'whyAnimated.titleAccent', label: 'Nadpis — modrá část' },
-      { path: 'whyAnimated.lead', label: 'Úvodní věta' },
-      { path: 'whyAnimated.static', label: 'Přepínač — vlevo' },
-      { path: 'whyAnimated.animated', label: 'Přepínač — vpravo' },
-      { path: 'whyAnimated.hint', label: 'Nápověda pod notebookem' },
-      { path: 'whyAnimated.pills.0', label: 'Štítek 1' },
-      { path: 'whyAnimated.pills.1', label: 'Štítek 2' },
-      { path: 'whyAnimated.pills.2', label: 'Štítek 3' },
-      { path: 'whyAnimated.footnote', label: 'Poznámka pod štítky' },
+    groups: [
+      {
+        id: 'why-main',
+        title: 'Texty',
+        fields: [
+          f('whyAnimated.title', 'Nadpis — bílá část'),
+          f('whyAnimated.titleAccent', 'Nadpis — modrá část'),
+          f('whyAnimated.lead', 'Úvodní věta', { long: true }),
+          f('whyAnimated.static', 'Přepínač — statický'),
+          f('whyAnimated.animated', 'Přepínač — animovaný'),
+          f('whyAnimated.hint', 'Nápověda u přepínače'),
+          f('whyAnimated.pills.0', 'Štítek 1'),
+          f('whyAnimated.pills.1', 'Štítek 2'),
+          f('whyAnimated.pills.2', 'Štítek 3'),
+          f('whyAnimated.footnote', 'Poznámka pod štítky', { long: true }),
+        ],
+      },
     ],
   },
   {
     id: 'process',
     title: 'Proces',
-    subtitle: 'Pět kroků spolupráce.',
-    fields: [
-      { path: 'process.eyebrow', label: 'Nadpis nad titulkem' },
-      { path: 'process.title', label: 'Nadpis — bílá část' },
-      { path: 'process.titleAccent', label: 'Nadpis — modrá část' },
-      { path: 'process.lead', label: 'Úvodní věta' },
-      ...[0, 1, 2, 3, 4].flatMap((i) => [
-        { path: `process.steps.${i}.title`, label: `Krok ${i + 1} — název` },
-        { path: `process.steps.${i}.text`, label: `Krok ${i + 1} — text` },
-      ]),
+    groups: [
+      {
+        id: 'process-head',
+        title: 'Záhlaví',
+        fields: [
+          f('process.eyebrow', 'Nadpis nad titulkem'),
+          f('process.title', 'Nadpis — bílá část'),
+          f('process.titleAccent', 'Nadpis — modrá část'),
+          f('process.lead', 'Úvodní věta'),
+        ],
+      },
+      ...[0, 1, 2, 3, 4].map((i) => ({
+        id: `process-step-${i}`,
+        title: `Krok ${i + 1}`,
+        fields: [f(`process.steps.${i}.title`, 'Název kroku'), f(`process.steps.${i}.text`, 'Text kroku', { long: true })],
+      })),
     ],
   },
   {
     id: 'cases',
     title: 'Práce',
-    subtitle: 'Nadpis sekce s projekty (projekty samotné jsou na záložce Projekty).',
-    fields: [
-      { path: 'cases.title', label: 'Nadpis — bílá část' },
-      { path: 'cases.titleAccent', label: 'Nadpis — modrá část' },
-      { path: 'cases.visit', label: 'Tlačítko „navštívit web"' },
+    groups: [
+      {
+        id: 'cases-head',
+        title: 'Záhlaví sekce',
+        fields: [
+          f('cases.eyebrow', 'Nadpis nad titulkem'),
+          f('cases.title', 'Nadpis — bílá část'),
+          f('cases.titleAccent', 'Nadpis — modrá část'),
+          f('cases.lead', 'Úvodní text', { long: true }),
+          f('cases.visit', 'Tlačítko u projektu'),
+        ],
+      },
     ],
   },
-  ...SERVICE_SLUGS.map(servicePanel),
+  {
+    id: 'services',
+    title: 'Služby — panely',
+    groups: SERVICES.map(([slug, label]) => ({
+      id: `panel-${slug}`,
+      title: label,
+      fields: [
+        f(`services.items.${slug}.card`, 'Název na kartě'),
+        f(`services.items.${slug}.headline.0`, 'Nadpis — začátek'),
+        f(`services.items.${slug}.headline.1`, 'Nadpis — modrá část'),
+        f(`services.items.${slug}.headline.2`, 'Nadpis — konec'),
+        ...[0, 1, 2].flatMap((i) => [
+          f(`services.items.${slug}.features.${i}.title`, `Výhoda ${i + 1} — tučně`),
+          f(`services.items.${slug}.features.${i}.sub`, `Výhoda ${i + 1} — pod tím`),
+        ]),
+        f(`services.items.${slug}.cta`, 'Text tlačítka'),
+      ],
+    })),
+  },
   {
     id: 'contact',
-    title: 'Kontakt a formulář',
-    fields: [
-      { path: 'contact.eyebrow', label: 'Nadpis nad titulkem' },
-      { path: 'contact.title', label: 'Nadpis — bílá část' },
-      { path: 'contact.titleAccent', label: 'Nadpis — modrá část' },
-      { path: 'contact.steps.0', label: 'Krok 1 — otázka' },
-      { path: 'contact.steps.1', label: 'Krok 2 — otázka' },
-      { path: 'contact.steps.2', label: 'Krok 3 — otázka' },
-      ...['Web', 'E-shop', 'SEO', 'Design', 'Aplikace', 'Nevím'].map((v, i) => ({ path: `contact.needs.${i}`, label: `Volba „${v}"`, hint: i === 0 ? 'Pořadí musí odpovídat službám (tlačítka v Ceníku je předvybírají)' : undefined })),
-      ...[0, 1, 2, 3, 4].map((i) => ({ path: `contact.budgets.${i}`, label: `Rozpočet — volba ${i + 1}` })),
-      ...[0, 1, 2].map((i) => ({ path: `contact.timelines.${i}`, label: `Termín — volba ${i + 1}` })),
-      { path: 'contact.budgetLabel', label: 'Popisek „rozpočet"' },
-      { path: 'contact.timelineLabel', label: 'Popisek „termín"' },
-      { path: 'contact.siteLabel', label: 'Popisek „máte web?"' },
-      { path: 'contact.nameLabel', label: 'Popisek „jméno"' },
-      { path: 'contact.emailLabel', label: 'Popisek „e-mail"' },
-      { path: 'contact.messageLabel', label: 'Popisek „zpráva"' },
-      { path: 'contact.messagePlaceholder', label: 'Nápověda v poli zpráva' },
-      { path: 'contact.consent', label: 'Souhlas se zpracováním údajů', long: true },
-      { path: 'contact.submit', label: 'Tlačítko odeslání' },
-      { path: 'contact.successTitle', label: 'Po odeslání — nadpis' },
-      { path: 'contact.successText', label: 'Po odeslání — text' },
+    title: 'Kontaktní formulář',
+    groups: [
+      {
+        id: 'contact-head',
+        title: 'Záhlaví a průběh',
+        fields: [
+          f('contact.eyebrow', 'Nadpis nad titulkem'),
+          f('contact.title', 'Nadpis — bílá část'),
+          f('contact.titleAccent', 'Nadpis — modrá část'),
+          f('contact.lead', 'Úvodní text', { long: true }),
+          ...STEP_NAMES.map((name, i) => f(`contact.steps.${i}`, `Průběh — krok ${i + 1} (${name})`)),
+          f('contact.back', 'Tlačítko zpět'),
+          f('contact.next', 'Tlačítko pokračovat'),
+        ],
+      },
+      {
+        id: 'contact-1',
+        title: 'Krok 1 · Projekt',
+        fields: [
+          f('contact.questions.0', 'Otázka kroku'),
+          f('contact.needsLabel', 'Popisek — typ projektu'),
+          f('contact.needsHint', 'Nápověda pod popiskem'),
+          ...options('contact.needs', NEEDS).map((x, i) => (i === 0 ? { ...x, note: 'Pořadí voleb odpovídá službám (tlačítka v Ceníku je předvybírají).' } : x)),
+          f('contact.planLabel', 'Štítek vybraného balíčku z Ceníku'),
+          f('contact.nicheLabel', 'Popisek — obor'),
+          ...options('contact.niches', NICHES),
+          f('contact.nicheDetailLabel', 'Popisek — upřesnění oboru'),
+          f('contact.nicheDetailPlaceholder', 'Nápověda v poli upřesnění'),
+        ],
+      },
+      {
+        id: 'contact-2',
+        title: 'Krok 2 · Výchozí stav',
+        fields: [
+          f('contact.questions.1', 'Otázka kroku'),
+          f('contact.startLabel', 'Popisek — co už máte'),
+          ...options('contact.starts', STARTS),
+          f('contact.currentSiteLabel', 'Popisek — adresa webu'),
+          f('contact.currentSitePlaceholder', 'Nápověda v poli adresa'),
+          f('contact.assetsLabel', 'Popisek — podklady'),
+          ...options('contact.assets', ASSETS),
+        ],
+      },
+      {
+        id: 'contact-3',
+        title: 'Krok 3 · Vzhled',
+        fields: [
+          f('contact.questions.2', 'Otázka kroku'),
+          f('contact.refsLabel', 'Popisek — oblíbené weby'),
+          f('contact.refsHint', 'Nápověda pod popiskem', { long: true }),
+          f('contact.refsPlaceholder', 'Nápověda v poli odkazu'),
+          f('contact.refsAdd', 'Přidat další odkaz'),
+          f('contact.styleLabel', 'Popisek — styl'),
+          ...options('contact.styles', STYLES),
+          f('contact.colorsLabel', 'Popisek — barvy'),
+          ...options('contact.colors', COLORS, 'Barva'),
+          f('contact.colorNotePlaceholder', 'Nápověda v poli firemní barvy'),
+        ],
+      },
+      {
+        id: 'contact-4',
+        title: 'Krok 4 · Rozpočet a termín',
+        fields: [
+          f('contact.questions.3', 'Otázka kroku'),
+          f('contact.budgetLabel', 'Popisek — rozpočet'),
+          f('contact.budgetHint', 'Nápověda pod popiskem', { long: true }),
+          ...options('contact.budgets', BUDGETS),
+          f('contact.timelineLabel', 'Popisek — termín'),
+          ...options('contact.timelines', TIMELINES),
+          f('contact.deadlineLabel', 'Popisek — pevný termín'),
+          f('contact.deadlineHint', 'Nápověda pod popiskem'),
+        ],
+      },
+      {
+        id: 'contact-5',
+        title: 'Krok 5 · Kontakt',
+        fields: [
+          f('contact.questions.4', 'Otázka kroku'),
+          f('contact.nameLabel', 'Popisek — jméno'),
+          f('contact.emailLabel', 'Popisek — e-mail'),
+          f('contact.channelLabel', 'Popisek — jak se ozvat'),
+          ...options('contact.channels', CHANNELS),
+          f('contact.phoneLabel', 'Popisek — telefon'),
+          f('contact.telegramLabel', 'Popisek — Telegram'),
+          f('contact.messageLabel', 'Popisek — zpráva'),
+          f('contact.messagePlaceholder', 'Nápověda v poli zpráva'),
+          f('contact.summaryLabel', 'Nadpis shrnutí'),
+          f('contact.consent', 'Souhlas se zpracováním údajů', { long: true }),
+          f('contact.submit', 'Tlačítko odeslání'),
+        ],
+      },
+      {
+        id: 'contact-done',
+        title: 'Po odeslání',
+        fields: [
+          f('contact.successTitle', 'Nadpis'),
+          f('contact.successText', 'Text', { long: true }),
+          f('contact.successLink', 'Odkaz na konci textu'),
+        ],
+      },
     ],
   },
   {
     id: 'mascot',
-    title: 'Maskot',
-    subtitle: 'Bubliny maskota u kontaktního formuláře.',
-    fields: [
-      { path: 'contact.hints.0', label: 'Krok 1', long: true },
-      { path: 'contact.hints.1', label: 'Krok 2', long: true },
-      { path: 'contact.hints.2', label: 'Krok 3', long: true },
-      { path: 'mascot.success', label: 'Po odeslání formuláře', long: true },
+    title: 'Maskot u formuláře',
+    groups: [
+      {
+        id: 'mascot-hints',
+        title: 'Nápověda na začátku kroku',
+        fields: STEP_NAMES.map((name, i) => f(`contact.hints.${i}`, `Krok ${i + 1} · ${name}`, { long: true })),
+      },
+      { id: 'mascot-needs', title: 'Reakce · typ projektu', fields: options('contact.reactions.needs', NEEDS, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-niches', title: 'Reakce · obor', fields: options('contact.reactions.niches', NICHES, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-starts', title: 'Reakce · výchozí stav', fields: options('contact.reactions.starts', STARTS, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-styles', title: 'Reakce · styl', fields: options('contact.reactions.styles', STYLES, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-budgets', title: 'Reakce · rozpočet', fields: options('contact.reactions.budgets', BUDGETS, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-timelines', title: 'Reakce · termín', fields: options('contact.reactions.timelines', TIMELINES, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-channels', title: 'Reakce · jak se ozvat', fields: options('contact.reactions.channels', CHANNELS, 'Po volbě').map((x) => ({ ...x, long: true })) },
+      { id: 'mascot-done', title: 'Po odeslání', fields: [f('mascot.success', 'Replika po odeslání', { long: true })] },
     ],
   },
   {
     id: 'footer',
     title: 'Patička',
-    subtitle: 'Město, sociální sítě a firemní údaje jsou na záložce Kontakt a firma.',
-    fields: [
-      { path: 'footer.tagline', label: 'Slogan pod logem', long: true },
-      { path: 'footer.rights', label: 'Text za ©' },
+    groups: [
+      {
+        id: 'footer-main',
+        title: 'Texty',
+        fields: [f('footer.tagline', 'Slogan pod logem', { long: true }), f('footer.rights', 'Text za ©')],
+      },
     ],
   },
   {
     id: 'seo',
-    title: 'SEO a sdílení',
-    subtitle: 'Titulek a popis ve výsledcích Google a náhledu odkazu na sítích.',
-    fields: [
-      { path: 'meta.home.title', label: 'Titulek stránky', hint: 'Ideálně do 60 znaků' },
-      { path: 'meta.home.description', label: 'Popis', long: true, hint: 'Ideálně 120–160 znaků' },
-      { path: 'meta.ogTitle', label: 'Titulek náhledu na sociálních sítích' },
+    title: 'Google a sdílení',
+    preview: 'serp',
+    groups: [
+      {
+        id: 'seo-main',
+        title: 'Výsledek vyhledávání a náhled odkazu',
+        fields: [
+          f('meta.home.title', 'Titulek stránky', { note: 'Ideálně do 60 znaků.' }),
+          f('meta.home.description', 'Popis', { long: true, note: 'Ideálně 120–160 znaků.' }),
+          f('meta.ogTitle', 'Titulek náhledu na sociálních sítích'),
+        ],
+      },
     ],
   },
 ];
 
-export const EDITABLE_PATHS = new Set(EDIT_GROUPS.flatMap((g) => g.fields.map((f) => f.path)));
+export const EDIT_FIELDS: EditField[] = EDIT_SECTIONS.flatMap((s) => s.groups.flatMap((g) => g.fields));
+export const EDITABLE_PATHS = new Set(EDIT_FIELDS.map((x) => x.path));
 
 export function getPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), obj);
@@ -182,5 +320,46 @@ export function applyTextOverrides<T extends Record<string, unknown>>(messages: 
   for (const [path, value] of Object.entries(overrides)) {
     if (EDITABLE_PATHS.has(path) && typeof value === 'string' && value.trim()) setPath(out, path, value);
   }
+  return out;
+}
+
+/**
+ * Texty mimo záložku Texty webu, které mají v administraci také obrazovou
+ * nápovědu — Ceník (upravuje se na vlastní záložce, data jsou v databázi).
+ */
+const PLAN_IDS = ['web', 'seo', 'eshop', 'design', 'app'];
+export const HINT_EXTRA_PATHS: string[] = [
+  ...['title', 'titleAccent', 'lead', 'from', 'includes', 'extra', 'term', 'vat', 'customPrice', 'customCta', 'custom.name', 'custom.tagline'].map((k) => `pricing.${k}`),
+  ...PLAN_IDS.flatMap((id) => [
+    ...['name', 'price', 'tagline', 'extra', 'term', 'cta'].map((k) => `pricing.plans.${id}.${k}`),
+    ...Array.from({ length: 12 }, (_, i) => `pricing.plans.${id}.features.${i}`),
+  ]),
+  ...Array.from({ length: 8 }, (_, i) => `pricing.custom.items.${i}`),
+  ...Array.from({ length: 6 }, (_, i) => [`pricing.faq.${i}.q`, `pricing.faq.${i}.a`]).flat(),
+];
+
+/** Pořadí značek: nejdřív pole Textů webu, pak texty Ceníku. */
+export const HINT_PATHS: string[] = [...EDIT_FIELDS.map((x) => x.path), ...HINT_EXTRA_PATHS];
+
+/*
+ * Značkování textů pro screenshoty nápověd v administraci (jen vývoj).
+ * Každý text dostane neviditelnou značku s pořadím v HINT_PATHS:
+ * na začátek U+2063, 10 bitů (U+200B = 0, U+200C = 1), U+2064; na konec U+2062.
+ * Skript scripts/capture-admin-hints.mjs podle nich najde, kde text na webu je.
+ */
+export const MARK_START = '\u2063';
+export const MARK_END = '\u2064';
+export const MARK_CLOSE = '\u2062';
+
+export function markIndex(index: number) {
+  return MARK_START + index.toString(2).padStart(10, '0').replace(/0/g, '\u200B').replace(/1/g, '\u200C') + MARK_END;
+}
+
+export function annotateTexts<T extends Record<string, unknown>>(messages: T): T {
+  const out = structuredClone(messages);
+  HINT_PATHS.forEach((path, i) => {
+    const value = getPath(out, path);
+    if (typeof value === 'string') setPath(out, path, markIndex(i) + value + MARK_CLOSE);
+  });
   return out;
 }

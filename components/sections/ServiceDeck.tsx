@@ -3,11 +3,12 @@
 import { useMotionValueEvent, useScroll } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from '@/i18n/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/FeatureIcon';
 import { services } from '@/content/services';
+import { plans } from '@/content/pricing';
+import { SectionLink } from '@/components/ui/SectionLink';
 import { NORDA_BOXES, NORDA_VISUALS, NordaStage, STAGE_W } from '@/components/norda/NordaVisuals';
 import { clamp01, ease, easeIn, easeOut, lerp, seg } from '@/lib/fx';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -47,6 +48,7 @@ function ServiceText({ index }: { index: number }) {
   const tItems = useTranslations(`services.items.${service.slug}`);
   const headline = tItems.raw('headline') as string[];
   const features = tItems.raw('features') as { title: string; sub: string }[];
+  const plan = plans.find((p) => p.slug === service.slug)?.id ?? 'web';
   return (
     <div className="min-w-0">
       <p data-t="num" className="flex items-center gap-3 text-xs text-muted">
@@ -77,16 +79,23 @@ function ServiceText({ index }: { index: number }) {
         ))}
       </ul>
       <div data-t="cta" className="mt-7 flex items-center gap-4">
-        <Button href="#kontakt" className="!px-5 !py-3 !text-[11px]">
+        {/* poptávka s předvybranou službou ve formuláři */}
+        <Button
+          href="#kontakt"
+          className="!px-5 !py-3 !text-[11px]"
+          onClick={() => window.dispatchEvent(new CustomEvent('elevate:preselect', { detail: { needIndex: service.needIndex, plan: '' } }))}
+        >
           {tItems('cta')}
         </Button>
-        <Link
-          href={`/sluzby/${service.slug}`}
+        {/* karta služby v Ceníku: cena a co přesně je v balíčku */}
+        <SectionLink
+          to={`cena-${plan}`}
           aria-label={t('learnMore')}
+          title={t('learnMore')}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--line)] text-ink transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-[var(--blue-bright)]"
         >
           <ArrowUpRight className="h-4 w-4" aria-hidden />
-        </Link>
+        </SectionLink>
       </div>
     </div>
   );
@@ -407,7 +416,7 @@ export function ServiceDeck() {
       {reduced ? (
         <div className="shell space-y-6 py-16">
           {services.map((service, i) => (
-            <div key={service.slug} className="glass overflow-hidden rounded-card">
+            <div key={service.slug} data-nav-id={`sluzba-${service.slug}`} className="glass overflow-hidden rounded-card">
               <CardBody index={i} />
             </div>
           ))}
@@ -415,6 +424,19 @@ export function ServiceDeck() {
       ) : (
         <MobileDeck />
       )}
+
+      {/* kotvy služeb pro navigaci (patička): střed čtecího okna dané služby ve scéně */}
+      {!reduced
+        ? services.map((service, i) => (
+            <span
+              key={service.slug}
+              id={`sluzba-${service.slug}`}
+              aria-hidden
+              className="pointer-events-none absolute left-0 hidden h-px w-px md:block"
+              style={{ top: `${i * (DWELL_VH + MORPH_VH) + DWELL_VH * 0.5}vh` }}
+            />
+          ))
+        : null}
 
       {/* ---- DESKTOP: jeden panel, služby se v něm mění morfy ---- */}
       {!reduced ? (
@@ -537,7 +559,7 @@ function MobileDeck() {
       {services.map((service, i) => {
         const Visual = NORDA_VISUALS[service.slug];
         return (
-          <article key={service.slug} id={`panel-${service.slug}`} data-nav-offset={-10} data-mpanel className="shell relative pb-16">
+          <article key={service.slug} id={`panel-${service.slug}`} data-nav-id={`sluzba-${service.slug}`} data-nav-offset={-10} data-mpanel className="shell relative pb-16">
             <div
               data-mvis
               className="relative overflow-hidden rounded-[22px] border border-[rgba(80,120,255,0.28)] bg-[rgba(8,12,26,0.92)] shadow-[0_30px_70px_-30px_rgba(31,91,255,0.55)]"

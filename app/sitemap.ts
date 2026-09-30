@@ -1,5 +1,4 @@
 import type { MetadataRoute } from 'next';
-import { serviceSlugs } from '@/content/services';
 import { locales } from '@/i18n/routing';
 import { site } from '@/content/site';
 
@@ -18,13 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
       alternates: alternates(''),
     },
-    ...serviceSlugs.map((slug) => ({
-      url: `${site.url}/${locale}/sluzby/${slug}`,
-      lastModified: now,
-      changeFrequency: 'monthly' as const,
-      priority: 0.8,
-      alternates: alternates(`/sluzby/${slug}`),
-    })),
     {
       url: `${site.url}/${locale}/ochrana-osobnich-udaju`,
       lastModified: now,

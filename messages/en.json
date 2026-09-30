@@ -44,12 +44,7 @@
     "title": "A complete solution for",
     "titleAccent": "your growth",
     "subtitle": "Pick a service.",
-    "learnMore": "Learn more",
-    "pickCard": "Pick a card",
-    "included": "What's",
-    "includedAccent": "included",
-    "backToServices": "Back to all services",
-    "serviceLabel": "Service",
+    "learnMore": "Price and what is included",
     "items": {
       "weby": {
         "tab": "Websites",
@@ -59,10 +54,7 @@
           "websites",
           " that sell"
         ],
-        "lead": "We build websites that deliver results. Design, performance and strategy in one.",
         "cta": "Free consultation",
-        "ctaSecondary": "Service detail",
-        "mascotLine": "A site that sells.",
         "features": [
           {
             "title": "Modern",
@@ -76,51 +68,7 @@
             "title": "More",
             "sub": "customers"
           }
-        ],
-        "includes": [
-          {
-            "title": "Designed for you",
-            "text": "No templates. Structure and visuals come from your business and your customers."
-          },
-          {
-            "title": "Copy and structure",
-            "text": "We help order the arguments so a visitor gets the value within seconds."
-          },
-          {
-            "title": "Motion that guides the eye",
-            "text": "We use movement where it helps — never as decoration."
-          },
-          {
-            "title": "Speed and technical SEO",
-            "text": "Optimised images, clean code, measurable Core Web Vitals."
-          },
-          {
-            "title": "Content management",
-            "text": "Connected to a CMS so you can change texts and photos yourself."
-          },
-          {
-            "title": "Analytics from day one",
-            "text": "You know where people come from and where they drop off."
-          }
-        ],
-        "faq": [
-          {
-            "q": "How long does a new website take?",
-            "a": "Typically 4–8 weeks depending on scope. You'll get an exact date after the first consultation."
-          },
-          {
-            "q": "Can I manage the site myself?",
-            "a": "Yes. We connect the site to a CMS and hand over a short training plus documentation."
-          },
-          {
-            "q": "What do you need from me?",
-            "a": "A basic idea of the goal, company materials and photos. We'll figure out the rest together."
-          }
-        ],
-        "meta": {
-          "title": "Modern website development | ELEVATE Prague",
-          "description": "Custom modern websites that sell. Design, speed, motion and technical SEO from the Prague studio ELEVATE."
-        }
+        ]
       },
       "seo": {
         "tab": "SEO",
@@ -130,10 +78,7 @@
           "results",
           ""
         ],
-        "lead": "We improve your visibility in search and bring in relevant visitors.",
         "cta": "Growth starts today",
-        "ctaSecondary": "Service detail",
-        "mascotLine": "Straight to the top.",
         "features": [
           {
             "title": "More",
@@ -147,47 +92,7 @@
             "title": "More",
             "sub": "customers"
           }
-        ],
-        "includes": [
-          {
-            "title": "Analysis and audit",
-            "text": "We find what holds the site back — technically, in content and against competitors."
-          },
-          {
-            "title": "Keywords",
-            "text": "We find queries that actually lead to enquiries, not just visits."
-          },
-          {
-            "title": "Technical optimisation",
-            "text": "Speed, indexing, structured data, internal linking."
-          },
-          {
-            "title": "Content",
-            "text": "A topic plan and texts that answer real customer questions."
-          },
-          {
-            "title": "Reporting",
-            "text": "A regular, readable overview of rankings, traffic and conversions."
-          }
-        ],
-        "faq": [
-          {
-            "q": "How soon will I see results?",
-            "a": "First movements usually show within weeks, steady growth is a matter of months. You'll get a concrete estimate after the audit."
-          },
-          {
-            "q": "Do you guarantee first place on Google?",
-            "a": "No — nobody can seriously guarantee that. We guarantee the process, transparent reporting and work towards measurable goals."
-          },
-          {
-            "q": "Do you do SEO for a site you didn't build?",
-            "a": "Yes, we start with an audit and propose what's worth fixing first."
-          }
-        ],
-        "meta": {
-          "title": "SEO that brings results | ELEVATE",
-          "description": "SEO by ELEVATE: audit, keywords, technical optimisation and content. Better visibility and relevant visitors."
-        }
+        ]
       },
       "e-shopy": {
         "tab": "E-shops",
@@ -197,10 +102,7 @@
           "sell",
           ""
         ],
-        "lead": "We build high-performing online stores focused on conversions and growth.",
         "cta": "Custom e-shop",
-        "ctaSecondary": "Service detail",
-        "mascotLine": "A store that never sleeps.",
         "features": [
           {
             "title": "Higher",
@@ -214,47 +116,7 @@
             "title": "Safe and fast",
             "sub": "payments"
           }
-        ],
-        "includes": [
-          {
-            "title": "A frictionless path to purchase",
-            "text": "From product to paid in as few steps as possible, with no surprises."
-          },
-          {
-            "title": "Payments and shipping",
-            "text": "Connected to the payment gateways and carriers your customers know."
-          },
-          {
-            "title": "Catalogue and variants",
-            "text": "Filters, variants, stock levels and bulk product imports."
-          },
-          {
-            "title": "Mobile first",
-            "text": "Most purchases start on a phone — that's where we tune the store hardest."
-          },
-          {
-            "title": "Conversion tracking",
-            "text": "You see which checkout step loses people and what to improve."
-          }
-        ],
-        "faq": [
-          {
-            "q": "Do you build on a ready-made platform or from scratch?",
-            "a": "It depends on scope. A smaller store makes sense on a ready platform; for specific processes we build custom. We'll recommend based on your brief."
-          },
-          {
-            "q": "Can you migrate an existing store?",
-            "a": "Yes, including products, orders and SEO redirects."
-          },
-          {
-            "q": "Do you handle ongoing operations?",
-            "a": "Yes, we offer maintenance, updates and continuous conversion optimisation."
-          }
-        ],
-        "meta": {
-          "title": "Custom e-shop development | ELEVATE Prague",
-          "description": "High-performing online stores focused on conversions: fast loading, secure payments and a design that sells on mobile too."
-        }
+        ]
       },
       "design": {
         "tab": "Design",
@@ -264,10 +126,7 @@
           "design",
           " that stands out"
         ],
-        "lead": "We create unique design that builds your brand and trust.",
         "cta": "A site that works for you",
-        "ctaSecondary": "Design proposal",
-        "mascotLine": "First impressions matter most.",
         "features": [
           {
             "title": "Unique",
@@ -281,47 +140,7 @@
             "title": "Fast",
             "sub": "and effective"
           }
-        ],
-        "includes": [
-          {
-            "title": "Visual identity",
-            "text": "Colours, typography and the rules that hold the brand together."
-          },
-          {
-            "title": "UI kit and components",
-            "text": "Reusable blocks you can build future pages from."
-          },
-          {
-            "title": "Prototype",
-            "text": "A clickable design before the first line of code is written."
-          },
-          {
-            "title": "Responsive by design",
-            "text": "Designed for desktop, tablet and mobile — not just scaled down."
-          },
-          {
-            "title": "Developer handover",
-            "text": "A clean Figma file that can be built from without guesswork."
-          }
-        ],
-        "faq": [
-          {
-            "q": "Do I get the source files?",
-            "a": "Yes, the Figma project is yours once we're done."
-          },
-          {
-            "q": "Can you design a logo too?",
-            "a": "Yes, or we build on your existing identity and align it for the web."
-          },
-          {
-            "q": "How many rounds of feedback are included?",
-            "a": "Two rounds of revisions as standard, anything beyond that we handle individually."
-          }
-        ],
-        "meta": {
-          "title": "Web design and visual identity | ELEVATE",
-          "description": "Unique web design that builds brand and trust. Prototypes, UI kits and responsive designs by ELEVATE."
-        }
+        ]
       },
       "aplikace": {
         "tab": "Apps",
@@ -331,10 +150,7 @@
           "Apps",
           " people use"
         ],
-        "lead": "We create modern iOS and Android apps that simplify and grow your business.",
         "cta": "Apps that grow",
-        "ctaSecondary": "App development",
-        "mascotLine": "An app people keep.",
         "features": [
           {
             "title": "App development",
@@ -348,144 +164,8 @@
             "title": "Optimised for",
             "sub": "Google Play"
           }
-        ],
-        "includes": [
-          {
-            "title": "From idea to MVP",
-            "text": "We narrow the scope to what's worth shipping first — and what can wait."
-          },
-          {
-            "title": "iOS and Android",
-            "text": "One codebase, native behaviour on both platforms."
-          },
-          {
-            "title": "Connected to your systems",
-            "text": "APIs, orders, bookings, payments — an app is not an island."
-          },
-          {
-            "title": "Store publishing",
-            "text": "We handle the release, listing copy, screenshots and updates."
-          },
-          {
-            "title": "Operations and growth",
-            "text": "We watch crashes, performance and user behaviour, and iterate."
-          }
-        ],
-        "faq": [
-          {
-            "q": "How much does an app cost?",
-            "a": "Always depends on scope. After the first consultation you get a feature-by-feature breakdown with estimates."
-          },
-          {
-            "q": "Do I need native, or is a web app enough?",
-            "a": "Often a well-built web app is enough. We'll tell you honestly when native isn't worth it."
-          },
-          {
-            "q": "Do you set up App Store and Google Play accounts?",
-            "a": "Yes, we'll walk you through registration and publishing."
-          }
-        ],
-        "meta": {
-          "title": "iOS and Android app development | ELEVATE",
-          "description": "We build modern iOS and Android apps — from MVP to store release. Fast, stable and user friendly."
-        }
+        ]
       }
-    },
-    "faqLabel": "FAQ"
-  },
-  "mockups": {
-    "illustrative": "Illustrative example",
-    "web": {
-      "headline1": "Your business.",
-      "headline2": "To the next level.",
-      "cta": "Free consultation",
-      "checklist": [
-        "Design",
-        "Speed",
-        "SEO",
-        "Conversion"
-      ],
-      "label": "Website"
-    },
-    "seo": {
-      "title": "Results overview",
-      "metrics": [
-        "Traffic",
-        "Keywords",
-        "Conversions"
-      ],
-      "months": [
-        "JAN",
-        "FEB",
-        "MAR",
-        "APR",
-        "MAY",
-        "JUN"
-      ],
-      "plan": "SEO plan",
-      "steps": [
-        "Analysis",
-        "Keywords",
-        "Optimisation",
-        "Content",
-        "Results"
-      ],
-      "serp": "Search results",
-      "query": "web design prague"
-    },
-    "shop": {
-      "nav": [
-        "Home",
-        "Categories",
-        "New in",
-        "Contact"
-      ],
-      "banner1": "Premium",
-      "banner2": "collection",
-      "price": "€99",
-      "addToCart": "Add to cart",
-      "ordered": "Order received",
-      "strip": [
-        {
-          "title": "Free shipping",
-          "sub": "over €80"
-        },
-        {
-          "title": "30-day returns",
-          "sub": "no questions asked"
-        },
-        {
-          "title": "Secure payment",
-          "sub": "100 % protected"
-        }
-      ],
-      "recommended": "Recommended products",
-      "products": [
-        "Cap",
-        "Jacket",
-        "Backpack"
-      ],
-      "productAlt": "Sports shoe"
-    },
-    "design": {
-      "nav": "Home · Services · About · Contact",
-      "headline1": "We build",
-      "headline2": "the future",
-      "sub": "Modern solutions for a modern world",
-      "cta": "Our projects",
-      "devices": [
-        "Desktop",
-        "Tablet",
-        "Mobile"
-      ]
-    },
-    "app": {
-      "back": "Your App",
-      "title": "Overview",
-      "revenue": "Total revenue",
-      "users": "Users",
-      "revenueShort": "Revenue",
-      "performance": "Performance"
     }
   },
   "whyAnimated": {
@@ -549,10 +229,11 @@
     ]
   },
   "cases": {
-    "eyebrow": "",
-    "title": "Websites",
-    "titleAccent": "from scratch",
-    "lead": "",
+    "eyebrow": "Case studies",
+    "title": "Built by us,",
+    "titleAccent": "live for real clients",
+    "lead": "No concept work gathering dust. We designed and built these sites from scratch for real businesses — they're live, so click through and try them yourself.",
+    "live": "{count, plural, one {# site live} other {# sites live}}",
     "tags": [
       "Website from scratch",
       "Design",
@@ -702,67 +383,213 @@
     "eyebrow": "Contact",
     "title": "Ready for the",
     "titleAccent": "next level?",
+    "lead": "Five short steps, about two minutes. From your answers we'll put together a concrete proposal with a ballpark price and get back to you within 24 hours.",
     "stepLabel": "Step",
     "steps": [
-      "What do you need?",
-      "A few details",
+      "Project",
+      "Starting point",
+      "Look & feel",
+      "Budget",
       "Contact"
     ],
-    "hints": [
-      "Pick as many as you like — or “I'm not sure, advise me”.",
-      "A budget mainly helps you: it saves rounds of guessing.",
-      "Last step. We'll get back to you within 24 hours."
+    "questions": [
+      "What are we building for you?",
+      "Where are we starting from?",
+      "How should it feel?",
+      "Budget and timing",
+      "Where should we send the proposal?"
     ],
+    "needsLabel": "Project type",
+    "needsHint": "Pick as many as you like.",
     "needs": [
       "Website",
       "E-shop",
       "SEO",
-      "Design",
+      "Logo & design",
       "App",
-      "I'm not sure, advise me"
+      "Custom project",
+      "Not sure yet, advise me"
     ],
+    "planLabel": "Selected package",
+    "removePlan": "Remove selected package",
+    "nicheLabel": "Industry",
+    "niches": [
+      "Services & trades",
+      "Automotive",
+      "Health & beauty",
+      "Food & hospitality",
+      "Real estate & construction",
+      "Retail & e-commerce",
+      "Education & courses",
+      "Something else"
+    ],
+    "nicheDetailLabel": "What does your business do?",
+    "nicheDetailPlaceholder": "e.g. car repair shop in Prague 10",
+    "startLabel": "What do you already have?",
+    "starts": [
+      "Nothing yet, starting from scratch",
+      "An old website we want to replace",
+      "Just an idea for now"
+    ],
+    "currentSiteLabel": "Current website address",
+    "currentSitePlaceholder": "www.yourcompany.com",
+    "assetsLabel": "Which materials do you already have?",
+    "assets": [
+      "Logo",
+      "Copy",
+      "Photos",
+      "Brand guidelines"
+    ],
+    "refsLabel": "Websites you like",
+    "refsHint": "Competitors are fine too. Add a note after the link about what caught your eye.",
+    "refsPlaceholder": "https://… — I like…",
+    "refsAdd": "Add another link",
+    "refsRemove": "Remove link",
+    "styleLabel": "Style",
+    "styles": [
+      "Clean & minimal",
+      "Bold & striking",
+      "Premium & elegant",
+      "Playful & colourful",
+      "Technical & dark",
+      "Up to you"
+    ],
+    "colorsLabel": "Colours",
+    "colors": [
+      "Blue",
+      "Black",
+      "White",
+      "Green",
+      "Red",
+      "Orange",
+      "Purple",
+      "Gold"
+    ],
+    "colorNotePlaceholder": "Brand colours if you have them — e.g. #1F5BFF",
+    "budgetLabel": "Approximate budget",
+    "budgetHint": "A range is enough. We'll suggest a solution that makes sense — not the most expensive one.",
     "budgets": [
-      "under €2,000",
-      "€2,000–6,000",
-      "€6,000–16,000",
-      "over €16,000",
-      "not sure yet"
+      "up to CZK 10,000",
+      "CZK 10,000–30,000",
+      "CZK 30,000–60,000",
+      "CZK 60,000–120,000",
+      "over CZK 120,000",
+      "Not sure yet"
     ],
+    "timelineLabel": "When do you need it?",
     "timelines": [
       "As soon as possible",
-      "1–2 months",
+      "Within a month",
+      "Within three months",
       "No rush"
     ],
-    "budgetLabel": "Approximate budget",
-    "timelineLabel": "When do you need it?",
-    "siteLabel": "Do you already have a website?",
-    "optional": "optional",
+    "deadlineLabel": "Fixed deadline",
+    "deadlineHint": "Say, a shop opening or the start of the season.",
     "nameLabel": "Name",
-    "emailLabel": "Email",
+    "emailLabel": "E-mail",
+    "channelLabel": "How should we get in touch?",
+    "channels": [
+      "E-mail",
+      "Phone",
+      "Telegram"
+    ],
     "phoneLabel": "Phone",
-    "messageLabel": "Message",
-    "messagePlaceholder": "A few sentences about the project…",
-    "consent": "I agree to the processing of my personal data for the purpose of handling this enquiry.",
-    "consentLink": "More information",
+    "phonePlaceholder": "+420 777 123 456",
+    "telegramLabel": "Telegram",
+    "telegramPlaceholder": "@username",
+    "messageLabel": "Anything else we should know?",
+    "messagePlaceholder": "Experience with a previous agency, competitors, ideas…",
+    "summaryLabel": "Summary",
+    "edit": "Edit",
+    "optional": "optional",
     "back": "Back",
     "next": "Continue",
     "submit": "Send enquiry",
     "sending": "Sending",
-    "successTitle": "Thank you! We'll be in touch within 24 hours.",
-    "successText": "In the meantime, take a look at our",
+    "successTitle": "Thanks — your enquiry is in.",
+    "successText": "We'll go through your answers and get back to you with a proposal within 24 hours. Meanwhile, have a look at our",
+    "hints": [
+      "Let's start easy: what are we building, and for which industry?",
+      "Old site, an idea, or nothing at all? Any start is fine — we just need to know where we stand.",
+      "A link to a site you like says more than three paragraphs of description.",
+      "A range is enough. We'll propose a solution, not the priciest option.",
+      "Last step. We'll reach out wherever suits you best."
+    ],
+    "reactions": {
+      "needs": [
+        "A website is the foundation. We'll build it to bring in customers even at night.",
+        "An e-shop? We'll sort shipping, payments and invoices too — not just a pretty cart.",
+        "SEO, got it. First we measure where you are, then we fix things.",
+        "A logo is the first thing people remember. It has to work on a business card too.",
+        "An app! We'll start with what people need to get done in three taps.",
+        "We'll split a bigger job into stages so you see the first results fast.",
+        "No problem. Your next answers will tell us what makes sense for you."
+      ],
+      "niches": [
+        "Trades mostly need one-tap calling and photos of finished work.",
+        "We know car services: online booking saves a lot of phone calls.",
+        "Clinics and salons live on trust. The site has to earn it at first glance.",
+        "Menu, booking, map. Guests need all of it within ten seconds.",
+        "Real estate and construction sell on photos and references. We'll give them room.",
+        "Retail? The path from product to payment matters most. We'll shorten it.",
+        "Courses need a clear schedule and a sign-up with no extra steps.",
+        "Tell us a few words about the business so we know who we are building for."
+      ],
+      "starts": [
+        "A clean slate is the best start. No patching old code.",
+        "Send the link. Whatever works on the old site, we'll keep.",
+        "An idea is enough. We'll shape the structure and copy with you."
+      ],
+      "styles": [
+        "Minimalism is harder than it looks. Every element needs a reason.",
+        "Bold it is! We're not afraid of big headlines or motion.",
+        "Premium comes from details: type, rhythm and calm.",
+        "Playful works. We'll dose it so it doesn't drown the content.",
+        "Dark and technical? You're looking at one right now.",
+        "Thanks for the trust. We'll show you two directions to choose from."
+      ],
+      "budgets": [
+        "That's enough to start. We'll show you what fits, no sugar-coating.",
+        "In this range a website can do a lot. Good call.",
+        "This leaves room for animation and a custom design.",
+        "A solid budget. We can go deep: content, performance, even an e-shop.",
+        "A big project deserves a staged plan. We'll prepare one.",
+        "That's fine. We'll send two or three priced options to react to."
+      ],
+      "timelines": [
+        "We can move fast. A website usually takes a week once we have your materials.",
+        "A month leaves comfortable room for an extra round of edits.",
+        "Great — there'll be time for proper copy and photos.",
+        "No rush is a luxury. We'll use it for a well-thought-out design."
+      ],
+      "channels": [
+        "E-mail is the safe bet. We'll send a clear proposal with the price.",
+        "We'll call on a weekday. It takes about fifteen minutes.",
+        "Telegram? We'll message you there — we reply fast."
+      ]
+    },
+    "consent": "I agree to the processing of my personal data for the purpose of handling this enquiry.",
+    "consentLink": "More information",
     "successLink": "way of working",
     "honeypot": "Do not fill in",
     "errors": {
-      "needs": "Please select at least one service.",
+      "needs": "Pick at least one option.",
       "name": "Please enter your name.",
-      "email": "Please check the email format.",
+      "email": "Check the e-mail format.",
       "message": "The message is too long.",
       "site": "The address is too long.",
       "consent": "We can't submit the form without your consent.",
       "server": "Please check the details you entered.",
       "rate": "Too many attempts. Please try again in a moment.",
       "send": "The email could not be sent. Please write to us directly at",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "niche": "Pick an industry so we know who we are building for.",
+      "start": "Pick where we are starting from.",
+      "currentSite": "Please add the address of your current website.",
+      "budget": "Pick a range — “Not sure yet” is fine too.",
+      "timeline": "Pick when you need it.",
+      "phone": "Add a phone number so we can call you.",
+      "telegram": "Add your Telegram username."
     }
   },
   "footer": {
@@ -796,7 +623,7 @@
       "detaily": "Keep scrolling.",
       "proc-animace": "Try the switch.",
       "proces": "I'll walk you through.",
-      "reference": "Built from scratch.",
+      "reference": "All of this is live.",
       "cenik": "Prices, no tricks.",
       "kontakt": "Let's do this."
     }

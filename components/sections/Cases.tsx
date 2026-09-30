@@ -361,12 +361,28 @@ export function Cases() {
         />
 
         <div className={reduced ? 'shell' : 'shell md:flex md:h-full md:flex-col md:justify-center md:pb-10 md:pt-[max(104px,13vh)]'}>
-          <SplitHeading
-            as="h2"
-            id="reference-title"
-            className="font-display text-[clamp(1.6rem,3.4vw,2.4rem)] font-bold uppercase leading-[1.08]"
-            parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
-          />
+          {/* hlavička: hned je jasné, že jde o hotové weby skutečných klientů */}
+          <header className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,400px)] md:items-end md:gap-12">
+            <div>
+              <p className="eyebrow flex flex-wrap items-center gap-x-4 gap-y-2">
+                {t('eyebrow')}
+                <span className="inline-flex items-center gap-2 rounded-full border border-[rgba(61,220,151,0.28)] bg-[rgba(61,220,151,0.06)] px-3 py-1 text-[10px] tracking-[0.16em] text-[#9ff0c9]">
+                  <span className="relative flex h-1.5 w-1.5">
+                    {!reduced ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3ddc97] opacity-70" /> : null}
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#3ddc97]" />
+                  </span>
+                  {t('live', { count: cases.length })}
+                </span>
+              </p>
+              <SplitHeading
+                as="h2"
+                id="reference-title"
+                className="mt-4 font-display text-[clamp(1.6rem,3.4vw,2.4rem)] font-bold uppercase leading-[1.08]"
+                parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true, newLine: true }]}
+              />
+            </div>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted md:mt-0 md:text-[15px]">{t('lead')}</p>
+          </header>
 
           {/* ---- DESKTOP: pevná kompozice zařízení, projekty se mění vlevo ---- */}
           {!reduced ? (

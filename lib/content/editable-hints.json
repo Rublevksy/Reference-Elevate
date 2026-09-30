@@ -1,0 +1,3390 @@
+{
+ "viewport": [
+  1440,
+  900
+ ],
+ "shots": {
+  "01-hero": {
+   "src": "/admin-hints/01-hero.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "02-hero": {
+   "src": "/admin-hints/02-hero.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "03-hero": {
+   "src": "/admin-hints/03-hero.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "04-proc-animace": {
+   "src": "/admin-hints/04-proc-animace.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "05-proces": {
+   "src": "/admin-hints/05-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "06-proces": {
+   "src": "/admin-hints/06-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "07-proces": {
+   "src": "/admin-hints/07-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "08-proces": {
+   "src": "/admin-hints/08-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "09-proces": {
+   "src": "/admin-hints/09-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "10-proces": {
+   "src": "/admin-hints/10-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "11-proces": {
+   "src": "/admin-hints/11-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "12-proces": {
+   "src": "/admin-hints/12-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "13-proces": {
+   "src": "/admin-hints/13-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "14-proces": {
+   "src": "/admin-hints/14-proces.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "15-reference": {
+   "src": "/admin-hints/15-reference.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "16-detaily": {
+   "src": "/admin-hints/16-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "17-detaily": {
+   "src": "/admin-hints/17-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "18-detaily": {
+   "src": "/admin-hints/18-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "19-detaily": {
+   "src": "/admin-hints/19-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "20-detaily": {
+   "src": "/admin-hints/20-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "21-detaily": {
+   "src": "/admin-hints/21-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "22-detaily": {
+   "src": "/admin-hints/22-detaily.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "23-cenik": {
+   "src": "/admin-hints/23-cenik.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "24-cenik": {
+   "src": "/admin-hints/24-cenik.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "25-cenik": {
+   "src": "/admin-hints/25-cenik.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "26-cenik": {
+   "src": "/admin-hints/26-cenik.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "27-cenik": {
+   "src": "/admin-hints/27-cenik.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "28-cenik-otazky": {
+   "src": "/admin-hints/28-cenik-otazky.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "29-cenik-otazky": {
+   "src": "/admin-hints/29-cenik-otazky.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "30-cenik-otazky": {
+   "src": "/admin-hints/30-cenik-otazky.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "31-kontakt": {
+   "src": "/admin-hints/31-kontakt.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "32-maskot-needs": {
+   "src": "/admin-hints/32-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "33-formular-1": {
+   "src": "/admin-hints/33-formular-1.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "34-maskot-needs": {
+   "src": "/admin-hints/34-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "35-maskot-needs": {
+   "src": "/admin-hints/35-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "36-maskot-needs": {
+   "src": "/admin-hints/36-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "37-maskot-needs": {
+   "src": "/admin-hints/37-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "38-maskot-needs": {
+   "src": "/admin-hints/38-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "39-maskot-needs": {
+   "src": "/admin-hints/39-maskot-needs.webp",
+   "w": 408,
+   "h": 276
+  },
+  "40-maskot-niches": {
+   "src": "/admin-hints/40-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "41-maskot-niches": {
+   "src": "/admin-hints/41-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "42-maskot-niches": {
+   "src": "/admin-hints/42-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "43-maskot-niches": {
+   "src": "/admin-hints/43-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "44-maskot-niches": {
+   "src": "/admin-hints/44-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "45-maskot-niches": {
+   "src": "/admin-hints/45-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "46-maskot-niches": {
+   "src": "/admin-hints/46-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "47-maskot-niches": {
+   "src": "/admin-hints/47-maskot-niches.webp",
+   "w": 408,
+   "h": 276
+  },
+  "48-maskot-napoveda": {
+   "src": "/admin-hints/48-maskot-napoveda.webp",
+   "w": 408,
+   "h": 276
+  },
+  "49-formular-2": {
+   "src": "/admin-hints/49-formular-2.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "50-maskot-starts": {
+   "src": "/admin-hints/50-maskot-starts.webp",
+   "w": 408,
+   "h": 276
+  },
+  "51-maskot-starts": {
+   "src": "/admin-hints/51-maskot-starts.webp",
+   "w": 408,
+   "h": 276
+  },
+  "52-maskot-starts": {
+   "src": "/admin-hints/52-maskot-starts.webp",
+   "w": 408,
+   "h": 276
+  },
+  "53-formular-2": {
+   "src": "/admin-hints/53-formular-2.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "54-maskot-napoveda": {
+   "src": "/admin-hints/54-maskot-napoveda.webp",
+   "w": 408,
+   "h": 276
+  },
+  "55-formular-3": {
+   "src": "/admin-hints/55-formular-3.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "56-maskot-styles": {
+   "src": "/admin-hints/56-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "57-maskot-styles": {
+   "src": "/admin-hints/57-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "58-maskot-styles": {
+   "src": "/admin-hints/58-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "59-maskot-styles": {
+   "src": "/admin-hints/59-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "60-maskot-styles": {
+   "src": "/admin-hints/60-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "61-maskot-styles": {
+   "src": "/admin-hints/61-maskot-styles.webp",
+   "w": 408,
+   "h": 276
+  },
+  "62-maskot-napoveda": {
+   "src": "/admin-hints/62-maskot-napoveda.webp",
+   "w": 408,
+   "h": 276
+  },
+  "63-formular-4": {
+   "src": "/admin-hints/63-formular-4.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "64-maskot-budgets": {
+   "src": "/admin-hints/64-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "65-maskot-budgets": {
+   "src": "/admin-hints/65-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "66-maskot-budgets": {
+   "src": "/admin-hints/66-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "67-maskot-budgets": {
+   "src": "/admin-hints/67-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "68-maskot-budgets": {
+   "src": "/admin-hints/68-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "69-maskot-budgets": {
+   "src": "/admin-hints/69-maskot-budgets.webp",
+   "w": 408,
+   "h": 276
+  },
+  "70-maskot-timelines": {
+   "src": "/admin-hints/70-maskot-timelines.webp",
+   "w": 408,
+   "h": 276
+  },
+  "71-maskot-timelines": {
+   "src": "/admin-hints/71-maskot-timelines.webp",
+   "w": 408,
+   "h": 276
+  },
+  "72-maskot-timelines": {
+   "src": "/admin-hints/72-maskot-timelines.webp",
+   "w": 408,
+   "h": 276
+  },
+  "73-maskot-timelines": {
+   "src": "/admin-hints/73-maskot-timelines.webp",
+   "w": 408,
+   "h": 276
+  },
+  "74-maskot-napoveda": {
+   "src": "/admin-hints/74-maskot-napoveda.webp",
+   "w": 408,
+   "h": 276
+  },
+  "75-formular-5": {
+   "src": "/admin-hints/75-formular-5.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "76-formular-5": {
+   "src": "/admin-hints/76-formular-5.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "77-maskot-channels": {
+   "src": "/admin-hints/77-maskot-channels.webp",
+   "w": 408,
+   "h": 276
+  },
+  "78-formular-5": {
+   "src": "/admin-hints/78-formular-5.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "79-maskot-channels": {
+   "src": "/admin-hints/79-maskot-channels.webp",
+   "w": 408,
+   "h": 276
+  },
+  "80-formular-5": {
+   "src": "/admin-hints/80-formular-5.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "81-maskot-channels": {
+   "src": "/admin-hints/81-maskot-channels.webp",
+   "w": 408,
+   "h": 276
+  },
+  "82-formular-hotovo": {
+   "src": "/admin-hints/82-formular-hotovo.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "83-kontakt-firma": {
+   "src": "/admin-hints/83-kontakt-firma.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "84-paticka": {
+   "src": "/admin-hints/84-paticka.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "85-ochrana-udaju": {
+   "src": "/admin-hints/85-ochrana-udaju.webp",
+   "w": 1440,
+   "h": 900
+  }
+ },
+ "fields": {
+  "hero.eyebrow": {
+   "shot": "01-hero",
+   "box": [
+    1069,
+    150,
+    199,
+    15
+   ]
+  },
+  "hero.tagline.0": {
+   "shot": "01-hero",
+   "box": [
+    1025,
+    178,
+    358,
+    54
+   ]
+  },
+  "hero.tagline.1": {
+   "shot": "01-hero",
+   "box": [
+    1025,
+    222,
+    306,
+    98
+   ]
+  },
+  "hero.taglineAccent": {
+   "shot": "01-hero",
+   "box": [
+    1025,
+    310,
+    128,
+    54
+   ]
+  },
+  "hero.subtitle": {
+   "shot": "01-hero",
+   "box": [
+    1025,
+    400,
+    288,
+    22
+   ]
+  },
+  "hero.ctaBook": {
+   "shot": "01-hero",
+   "box": [
+    1093,
+    469,
+    220,
+    16
+   ]
+  },
+  "hero.ctaBookNote": {
+   "shot": "01-hero",
+   "box": [
+    1093,
+    487,
+    107,
+    15
+   ]
+  },
+  "hero.ctaWork": {
+   "shot": "01-hero",
+   "box": [
+    1025,
+    542,
+    115,
+    15
+   ]
+  },
+  "hero.scrollHint": {
+   "shot": "01-hero",
+   "box": [
+    588,
+    858,
+    264,
+    12
+   ]
+  },
+  "services.items.weby.card": {
+   "shot": "02-hero",
+   "box": [
+    293,
+    459,
+    47,
+    33
+   ]
+  },
+  "services.items.seo.card": {
+   "shot": "02-hero",
+   "box": [
+    410,
+    355,
+    18,
+    15
+   ]
+  },
+  "services.items.e-shopy.card": {
+   "shot": "02-hero",
+   "box": [
+    784,
+    687,
+    52,
+    19
+   ]
+  },
+  "services.items.design.card": {
+   "shot": "02-hero",
+   "box": [
+    859,
+    480,
+    6,
+    12
+   ]
+  },
+  "services.items.aplikace.card": {
+   "shot": "03-hero",
+   "box": [
+    1135,
+    467,
+    49,
+    53
+   ]
+  },
+  "whyAnimated.title": {
+   "shot": "04-proc-animace",
+   "box": [
+    448,
+    117,
+    398,
+    60
+   ]
+  },
+  "whyAnimated.titleAccent": {
+   "shot": "04-proc-animace",
+   "box": [
+    858,
+    117,
+    122,
+    60
+   ]
+  },
+  "whyAnimated.lead": {
+   "shot": "04-proc-animace",
+   "box": [
+    568,
+    187,
+    303,
+    22
+   ]
+  },
+  "whyAnimated.static": {
+   "shot": "04-proc-animace",
+   "box": [
+    610,
+    240,
+    53,
+    19
+   ]
+  },
+  "whyAnimated.animated": {
+   "shot": "04-proc-animace",
+   "box": [
+    759,
+    240,
+    70,
+    19
+   ]
+  },
+  "whyAnimated.hint": {
+   "shot": "04-proc-animace",
+   "box": [
+    634,
+    747,
+    172,
+    17
+   ]
+  },
+  "whyAnimated.pills.0": {
+   "shot": "04-proc-animace",
+   "box": [
+    563,
+    792,
+    95,
+    17
+   ]
+  },
+  "whyAnimated.pills.1": {
+   "shot": "04-proc-animace",
+   "box": [
+    702,
+    792,
+    74,
+    17
+   ]
+  },
+  "whyAnimated.pills.2": {
+   "shot": "04-proc-animace",
+   "box": [
+    819,
+    792,
+    58,
+    17
+   ]
+  },
+  "whyAnimated.footnote": {
+   "shot": "04-proc-animace",
+   "box": [
+    662,
+    833,
+    116,
+    17
+   ]
+  },
+  "process.steps.0.title": {
+   "shot": "05-proces",
+   "box": [
+    340,
+    789,
+    168,
+    25
+   ]
+  },
+  "process.eyebrow": {
+   "shot": "06-proces",
+   "box": [
+    140,
+    112,
+    58,
+    15
+   ]
+  },
+  "process.title": {
+   "shot": "06-proces",
+   "box": [
+    140,
+    136,
+    411,
+    60
+   ]
+  },
+  "process.titleAccent": {
+   "shot": "06-proces",
+   "box": [
+    562,
+    136,
+    288,
+    60
+   ]
+  },
+  "process.lead": {
+   "shot": "06-proces",
+   "box": [
+    140,
+    206,
+    210,
+    22
+   ]
+  },
+  "process.steps.0.text": {
+   "shot": "06-proces",
+   "box": [
+    358,
+    699,
+    172,
+    22
+   ]
+  },
+  "process.steps.1.title": {
+   "shot": "07-proces",
+   "box": [
+    715,
+    420,
+    89,
+    25
+   ]
+  },
+  "process.steps.1.text": {
+   "shot": "08-proces",
+   "box": [
+    715,
+    456,
+    182,
+    22
+   ]
+  },
+  "process.steps.2.title": {
+   "shot": "09-proces",
+   "box": [
+    956,
+    649,
+    238,
+    25
+   ]
+  },
+  "process.steps.2.text": {
+   "shot": "10-proces",
+   "box": [
+    872,
+    686,
+    172,
+    22
+   ]
+  },
+  "process.steps.3.title": {
+   "shot": "11-proces",
+   "box": [
+    975,
+    428,
+    125,
+    25
+   ]
+  },
+  "process.steps.3.text": {
+   "shot": "12-proces",
+   "box": [
+    857,
+    456,
+    187,
+    22
+   ]
+  },
+  "process.steps.4.title": {
+   "shot": "13-proces",
+   "box": [
+    875,
+    650,
+    124,
+    53
+   ]
+  },
+  "process.steps.4.text": {
+   "shot": "14-proces",
+   "box": [
+    756,
+    714,
+    113,
+    22
+   ]
+  },
+  "cases.eyebrow": {
+   "shot": "15-reference",
+   "box": [
+    140,
+    121,
+    84,
+    15
+   ]
+  },
+  "cases.title": {
+   "shot": "15-reference",
+   "box": [
+    140,
+    155,
+    291,
+    47
+   ]
+  },
+  "cases.titleAccent": {
+   "shot": "15-reference",
+   "box": [
+    140,
+    196,
+    492,
+    47
+   ]
+  },
+  "cases.lead": {
+   "shot": "15-reference",
+   "box": [
+    900,
+    169,
+    364,
+    70
+   ]
+  },
+  "cases.visit": {
+   "shot": "15-reference",
+   "box": [
+    161,
+    588,
+    127,
+    14
+   ]
+  },
+  "services.items.weby.headline.0": {
+   "shot": "16-detaily",
+   "box": [
+    291,
+    400,
+    249,
+    50
+   ]
+  },
+  "services.items.weby.headline.1": {
+   "shot": "16-detaily",
+   "box": [
+    291,
+    443,
+    160,
+    50
+   ]
+  },
+  "services.items.weby.headline.2": {
+   "shot": "16-detaily",
+   "box": [
+    291,
+    443,
+    332,
+    92
+   ]
+  },
+  "services.items.weby.features.0.title": {
+   "shot": "16-detaily",
+   "box": [
+    359,
+    612,
+    47,
+    17
+   ]
+  },
+  "services.items.weby.features.0.sub": {
+   "shot": "16-detaily",
+   "box": [
+    359,
+    627,
+    37,
+    17
+   ]
+  },
+  "services.items.weby.features.1.title": {
+   "shot": "16-detaily",
+   "box": [
+    498,
+    612,
+    39,
+    17
+   ]
+  },
+  "services.items.weby.features.1.sub": {
+   "shot": "16-detaily",
+   "box": [
+    498,
+    627,
+    45,
+    17
+   ]
+  },
+  "services.items.weby.features.2.title": {
+   "shot": "16-detaily",
+   "box": [
+    359,
+    684,
+    24,
+    17
+   ]
+  },
+  "services.items.weby.features.2.sub": {
+   "shot": "16-detaily",
+   "box": [
+    359,
+    699,
+    55,
+    17
+   ]
+  },
+  "services.items.weby.cta": {
+   "shot": "16-detaily",
+   "box": [
+    311,
+    770,
+    206,
+    14
+   ]
+  },
+  "services.items.seo.headline.0": {
+   "shot": "17-detaily",
+   "box": [
+    179,
+    260,
+    285,
+    92
+   ]
+  },
+  "services.items.seo.headline.1": {
+   "shot": "17-detaily",
+   "box": [
+    179,
+    345,
+    274,
+    50
+   ]
+  },
+  "services.items.seo.features.0.title": {
+   "shot": "17-detaily",
+   "box": [
+    247,
+    472,
+    30,
+    17
+   ]
+  },
+  "services.items.seo.features.0.sub": {
+   "shot": "17-detaily",
+   "box": [
+    247,
+    487,
+    69,
+    17
+   ]
+  },
+  "services.items.seo.features.1.title": {
+   "shot": "17-detaily",
+   "box": [
+    408,
+    472,
+    30,
+    17
+   ]
+  },
+  "services.items.seo.features.1.sub": {
+   "shot": "17-detaily",
+   "box": [
+    408,
+    487,
+    37,
+    17
+   ]
+  },
+  "services.items.seo.features.2.title": {
+   "shot": "17-detaily",
+   "box": [
+    537,
+    472,
+    24,
+    17
+   ]
+  },
+  "services.items.seo.features.2.sub": {
+   "shot": "17-detaily",
+   "box": [
+    537,
+    487,
+    55,
+    17
+   ]
+  },
+  "services.items.seo.cta": {
+   "shot": "17-detaily",
+   "box": [
+    199,
+    560,
+    155,
+    14
+   ]
+  },
+  "services.items.e-shopy.headline.0": {
+   "shot": "18-detaily",
+   "box": [
+    179,
+    260,
+    409,
+    50
+   ]
+  },
+  "services.items.e-shopy.headline.1": {
+   "shot": "18-detaily",
+   "box": [
+    179,
+    303,
+    285,
+    50
+   ]
+  },
+  "services.items.e-shopy.features.0.title": {
+   "shot": "18-detaily",
+   "box": [
+    247,
+    430,
+    30,
+    17
+   ]
+  },
+  "services.items.e-shopy.features.0.sub": {
+   "shot": "18-detaily",
+   "box": [
+    247,
+    445,
+    43,
+    17
+   ]
+  },
+  "services.items.e-shopy.features.1.title": {
+   "shot": "18-detaily",
+   "box": [
+    382,
+    430,
+    88,
+    17
+   ]
+  },
+  "services.items.e-shopy.features.1.sub": {
+   "shot": "18-detaily",
+   "box": [
+    382,
+    445,
+    95,
+    17
+   ]
+  },
+  "services.items.e-shopy.features.2.title": {
+   "shot": "18-detaily",
+   "box": [
+    247,
+    502,
+    104,
+    17
+   ]
+  },
+  "services.items.e-shopy.features.2.sub": {
+   "shot": "18-detaily",
+   "box": [
+    247,
+    517,
+    35,
+    17
+   ]
+  },
+  "services.items.e-shopy.cta": {
+   "shot": "18-detaily",
+   "box": [
+    199,
+    592,
+    132,
+    14
+   ]
+  },
+  "services.items.design.headline.0": {
+   "shot": "19-detaily",
+   "box": [
+    179,
+    261,
+    250,
+    50
+   ]
+  },
+  "services.items.design.headline.1": {
+   "shot": "19-detaily",
+   "box": [
+    179,
+    303,
+    202,
+    50
+   ]
+  },
+  "services.items.design.headline.2": {
+   "shot": "19-detaily",
+   "box": [
+    179,
+    345,
+    398,
+    50
+   ]
+  },
+  "services.items.design.features.0.title": {
+   "shot": "19-detaily",
+   "box": [
+    247,
+    475,
+    48,
+    17
+   ]
+  },
+  "services.items.design.features.0.sub": {
+   "shot": "19-detaily",
+   "box": [
+    247,
+    490,
+    37,
+    17
+   ]
+  },
+  "services.items.design.features.1.title": {
+   "shot": "19-detaily",
+   "box": [
+    387,
+    475,
+    53,
+    17
+   ]
+  },
+  "services.items.design.features.1.sub": {
+   "shot": "19-detaily",
+   "box": [
+    387,
+    490,
+    104,
+    17
+   ]
+  },
+  "services.items.design.features.2.title": {
+   "shot": "19-detaily",
+   "box": [
+    247,
+    547,
+    39,
+    17
+   ]
+  },
+  "services.items.design.features.2.sub": {
+   "shot": "19-detaily",
+   "box": [
+    247,
+    562,
+    57,
+    17
+   ]
+  },
+  "services.items.design.cta": {
+   "shot": "20-detaily",
+   "box": [
+    199,
+    630,
+    237,
+    14
+   ]
+  },
+  "services.items.aplikace.headline.1": {
+   "shot": "21-detaily",
+   "box": [
+    179,
+    261,
+    263,
+    50
+   ]
+  },
+  "services.items.aplikace.headline.2": {
+   "shot": "21-detaily",
+   "box": [
+    179,
+    304,
+    293,
+    92
+   ]
+  },
+  "services.items.aplikace.features.0.title": {
+   "shot": "22-detaily",
+   "box": [
+    247,
+    472,
+    77,
+    17
+   ]
+  },
+  "services.items.aplikace.features.0.sub": {
+   "shot": "22-detaily",
+   "box": [
+    247,
+    487,
+    75,
+    17
+   ]
+  },
+  "services.items.aplikace.features.1.title": {
+   "shot": "22-detaily",
+   "box": [
+    416,
+    472,
+    96,
+    17
+   ]
+  },
+  "services.items.aplikace.features.1.sub": {
+   "shot": "22-detaily",
+   "box": [
+    416,
+    487,
+    55,
+    17
+   ]
+  },
+  "services.items.aplikace.features.2.title": {
+   "shot": "22-detaily",
+   "box": [
+    247,
+    544,
+    96,
+    17
+   ]
+  },
+  "services.items.aplikace.features.2.sub": {
+   "shot": "22-detaily",
+   "box": [
+    247,
+    559,
+    65,
+    17
+   ]
+  },
+  "services.items.aplikace.cta": {
+   "shot": "22-detaily",
+   "box": [
+    199,
+    630,
+    209,
+    14
+   ]
+  },
+  "pricing.plans.web.name": {
+   "shot": "23-cenik",
+   "box": [
+    279,
+    411,
+    45,
+    17
+   ]
+  },
+  "pricing.from": {
+   "shot": "23-cenik",
+   "box": [
+    236,
+    453,
+    13,
+    12
+   ]
+  },
+  "pricing.plans.web.price": {
+   "shot": "23-cenik",
+   "box": [
+    257,
+    441,
+    105,
+    33
+   ]
+  },
+  "pricing.plans.web.tagline": {
+   "shot": "23-cenik",
+   "box": [
+    233,
+    473,
+    154,
+    41
+   ]
+  },
+  "pricing.includes": {
+   "shot": "23-cenik",
+   "box": [
+    229,
+    552,
+    42,
+    12
+   ]
+  },
+  "pricing.plans.web.features.0": {
+   "shot": "23-cenik",
+   "box": [
+    236,
+    572,
+    128,
+    40
+   ]
+  },
+  "pricing.plans.web.features.1": {
+   "shot": "23-cenik",
+   "box": [
+    234,
+    616,
+    125,
+    34
+   ]
+  },
+  "pricing.plans.web.features.2": {
+   "shot": "23-cenik",
+   "box": [
+    232,
+    648,
+    128,
+    33
+   ]
+  },
+  "pricing.plans.web.features.3": {
+   "shot": "23-cenik",
+   "box": [
+    229,
+    680,
+    135,
+    32
+   ]
+  },
+  "pricing.plans.web.features.4": {
+   "shot": "23-cenik",
+   "box": [
+    227,
+    711,
+    127,
+    33
+   ]
+  },
+  "pricing.plans.web.features.5": {
+   "shot": "23-cenik",
+   "box": [
+    225,
+    743,
+    135,
+    27
+   ]
+  },
+  "pricing.plans.web.features.6": {
+   "shot": "23-cenik",
+   "box": [
+    223,
+    775,
+    115,
+    21
+   ]
+  },
+  "pricing.extra": {
+   "shot": "23-cenik",
+   "box": [
+    219,
+    811,
+    43,
+    12
+   ]
+  },
+  "pricing.plans.web.extra": {
+   "shot": "23-cenik",
+   "box": [
+    218,
+    813,
+    135,
+    42
+   ]
+  },
+  "pricing.term": {
+   "shot": "23-cenik",
+   "box": [
+    221,
+    868,
+    28,
+    14
+   ]
+  },
+  "pricing.plans.web.term": {
+   "shot": "23-cenik",
+   "box": [
+    253,
+    870,
+    76,
+    18
+   ]
+  },
+  "pricing.plans.seo.name": {
+   "shot": "23-cenik",
+   "box": [
+    481,
+    405,
+    30,
+    15
+   ]
+  },
+  "pricing.plans.seo.price": {
+   "shot": "23-cenik",
+   "box": [
+    460,
+    435,
+    102,
+    29
+   ]
+  },
+  "pricing.plans.seo.tagline": {
+   "shot": "23-cenik",
+   "box": [
+    438,
+    468,
+    131,
+    30
+   ]
+  },
+  "pricing.plans.seo.features.0": {
+   "shot": "23-cenik",
+   "box": [
+    445,
+    566,
+    124,
+    29
+   ]
+  },
+  "pricing.plans.seo.features.1": {
+   "shot": "23-cenik",
+   "box": [
+    444,
+    598,
+    113,
+    29
+   ]
+  },
+  "pricing.plans.seo.features.2": {
+   "shot": "23-cenik",
+   "box": [
+    443,
+    629,
+    128,
+    26
+   ]
+  },
+  "pricing.plans.seo.features.3": {
+   "shot": "23-cenik",
+   "box": [
+    442,
+    661,
+    141,
+    28
+   ]
+  },
+  "pricing.plans.seo.features.4": {
+   "shot": "23-cenik",
+   "box": [
+    441,
+    693,
+    114,
+    28
+   ]
+  },
+  "pricing.plans.seo.features.5": {
+   "shot": "23-cenik",
+   "box": [
+    439,
+    725,
+    117,
+    28
+   ]
+  },
+  "pricing.plans.seo.features.6": {
+   "shot": "23-cenik",
+   "box": [
+    438,
+    756,
+    129,
+    27
+   ]
+  },
+  "pricing.plans.seo.extra": {
+   "shot": "23-cenik",
+   "box": [
+    435,
+    806,
+    129,
+    37
+   ]
+  },
+  "pricing.plans.seo.term": {
+   "shot": "23-cenik",
+   "box": [
+    471,
+    863,
+    74,
+    15
+   ]
+  },
+  "pricing.plans.eshop.name": {
+   "shot": "23-cenik",
+   "box": [
+    683,
+    398,
+    65,
+    14
+   ]
+  },
+  "pricing.plans.eshop.price": {
+   "shot": "23-cenik",
+   "box": [
+    664,
+    430,
+    115,
+    27
+   ]
+  },
+  "pricing.plans.eshop.tagline": {
+   "shot": "23-cenik",
+   "box": [
+    643,
+    463,
+    147,
+    39
+   ]
+  },
+  "pricing.plans.eshop.features.0": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    562,
+    123,
+    25
+   ]
+  },
+  "pricing.plans.eshop.features.1": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    593,
+    104,
+    25
+   ]
+  },
+  "pricing.plans.eshop.features.2": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    625,
+    128,
+    38
+   ]
+  },
+  "pricing.plans.eshop.features.3": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    670,
+    124,
+    38
+   ]
+  },
+  "pricing.plans.eshop.features.4": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    715,
+    141,
+    25
+   ]
+  },
+  "pricing.plans.eshop.features.5": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    746,
+    126,
+    25
+   ]
+  },
+  "pricing.plans.eshop.features.6": {
+   "shot": "23-cenik",
+   "box": [
+    653,
+    778,
+    142,
+    25
+   ]
+  },
+  "pricing.plans.eshop.extra": {
+   "shot": "23-cenik",
+   "box": [
+    652,
+    826,
+    119,
+    48
+   ]
+  },
+  "pricing.plans.design.name": {
+   "shot": "23-cenik",
+   "box": [
+    885,
+    402,
+    57,
+    29
+   ]
+  },
+  "pricing.plans.design.price": {
+   "shot": "23-cenik",
+   "box": [
+    867,
+    444,
+    105,
+    30
+   ]
+  },
+  "pricing.plans.design.tagline": {
+   "shot": "23-cenik",
+   "box": [
+    847,
+    477,
+    115,
+    30
+   ]
+  },
+  "pricing.plans.design.features.0": {
+   "shot": "23-cenik",
+   "box": [
+    861,
+    574,
+    117,
+    16
+   ]
+  },
+  "pricing.plans.design.features.1": {
+   "shot": "23-cenik",
+   "box": [
+    862,
+    593,
+    125,
+    17
+   ]
+  },
+  "pricing.plans.design.features.2": {
+   "shot": "23-cenik",
+   "box": [
+    863,
+    611,
+    134,
+    30
+   ]
+  },
+  "pricing.plans.design.features.3": {
+   "shot": "23-cenik",
+   "box": [
+    864,
+    642,
+    138,
+    30
+   ]
+  },
+  "pricing.plans.design.features.4": {
+   "shot": "23-cenik",
+   "box": [
+    865,
+    675,
+    128,
+    30
+   ]
+  },
+  "pricing.plans.design.features.5": {
+   "shot": "23-cenik",
+   "box": [
+    866,
+    706,
+    140,
+    30
+   ]
+  },
+  "pricing.plans.design.extra": {
+   "shot": "23-cenik",
+   "box": [
+    867,
+    754,
+    135,
+    40
+   ]
+  },
+  "pricing.plans.design.term": {
+   "shot": "23-cenik",
+   "box": [
+    907,
+    813,
+    73,
+    15
+   ]
+  },
+  "pricing.plans.design.cta": {
+   "shot": "23-cenik",
+   "box": [
+    898,
+    854,
+    64,
+    12
+   ]
+  },
+  "pricing.plans.app.name": {
+   "shot": "23-cenik",
+   "box": [
+    1086,
+    411,
+    75,
+    19
+   ]
+  },
+  "pricing.plans.app.price": {
+   "shot": "23-cenik",
+   "box": [
+    1069,
+    443,
+    114,
+    33
+   ]
+  },
+  "pricing.plans.app.tagline": {
+   "shot": "23-cenik",
+   "box": [
+    1051,
+    474,
+    148,
+    48
+   ]
+  },
+  "pricing.plans.app.features.0": {
+   "shot": "23-cenik",
+   "box": [
+    1069,
+    571,
+    139,
+    35
+   ]
+  },
+  "pricing.plans.app.features.1": {
+   "shot": "23-cenik",
+   "box": [
+    1071,
+    604,
+    128,
+    34
+   ]
+  },
+  "pricing.plans.app.features.2": {
+   "shot": "23-cenik",
+   "box": [
+    1073,
+    635,
+    134,
+    35
+   ]
+  },
+  "pricing.plans.app.features.3": {
+   "shot": "23-cenik",
+   "box": [
+    1076,
+    668,
+    129,
+    34
+   ]
+  },
+  "pricing.plans.app.features.4": {
+   "shot": "23-cenik",
+   "box": [
+    1078,
+    700,
+    111,
+    33
+   ]
+  },
+  "pricing.plans.app.features.5": {
+   "shot": "23-cenik",
+   "box": [
+    1080,
+    732,
+    104,
+    20
+   ]
+  },
+  "pricing.plans.app.features.6": {
+   "shot": "23-cenik",
+   "box": [
+    1082,
+    749,
+    133,
+    35
+   ]
+  },
+  "pricing.plans.app.extra": {
+   "shot": "23-cenik",
+   "box": [
+    1085,
+    797,
+    128,
+    57
+   ]
+  },
+  "pricing.plans.app.term": {
+   "shot": "23-cenik",
+   "box": [
+    1127,
+    870,
+    39,
+    15
+   ]
+  },
+  "pricing.title": {
+   "shot": "24-cenik",
+   "box": [
+    480,
+    156,
+    468,
+    60
+   ]
+  },
+  "pricing.titleAccent": {
+   "shot": "24-cenik",
+   "box": [
+    551,
+    208,
+    326,
+    60
+   ]
+  },
+  "pricing.lead": {
+   "shot": "24-cenik",
+   "box": [
+    434,
+    285,
+    573,
+    46
+   ]
+  },
+  "pricing.plans.eshop.term": {
+   "shot": "25-cenik",
+   "box": [
+    678,
+    857,
+    53,
+    17
+   ]
+  },
+  "pricing.plans.web.cta": {
+   "shot": "26-cenik",
+   "box": [
+    105,
+    643,
+    81,
+    14
+   ]
+  },
+  "pricing.plans.seo.cta": {
+   "shot": "26-cenik",
+   "box": [
+    384,
+    626,
+    87,
+    31
+   ]
+  },
+  "pricing.plans.eshop.cta": {
+   "shot": "26-cenik",
+   "box": [
+    656,
+    643,
+    103,
+    14
+   ]
+  },
+  "pricing.plans.app.cta": {
+   "shot": "26-cenik",
+   "box": [
+    1212,
+    643,
+    118,
+    14
+   ]
+  },
+  "pricing.custom.name": {
+   "shot": "26-cenik",
+   "box": [
+    169,
+    752,
+    174,
+    22
+   ]
+  },
+  "pricing.custom.tagline": {
+   "shot": "26-cenik",
+   "box": [
+    169,
+    783,
+    550,
+    19
+   ]
+  },
+  "pricing.custom.items.0": {
+   "shot": "26-cenik",
+   "box": [
+    184,
+    825,
+    110,
+    17
+   ]
+  },
+  "pricing.custom.items.1": {
+   "shot": "26-cenik",
+   "box": [
+    332,
+    825,
+    99,
+    17
+   ]
+  },
+  "pricing.custom.items.2": {
+   "shot": "26-cenik",
+   "box": [
+    468,
+    825,
+    164,
+    17
+   ]
+  },
+  "pricing.custom.items.3": {
+   "shot": "26-cenik",
+   "box": [
+    670,
+    825,
+    113,
+    17
+   ]
+  },
+  "pricing.customPrice": {
+   "shot": "26-cenik",
+   "box": [
+    908,
+    788,
+    144,
+    22
+   ]
+  },
+  "pricing.customCta": {
+   "shot": "26-cenik",
+   "box": [
+    1093,
+    792,
+    133,
+    14
+   ]
+  },
+  "pricing.faq.0.q": {
+   "shot": "27-cenik",
+   "box": [
+    488,
+    656,
+    70,
+    17
+   ]
+  },
+  "pricing.faq.1.q": {
+   "shot": "27-cenik",
+   "box": [
+    622,
+    656,
+    125,
+    17
+   ]
+  },
+  "pricing.faq.2.q": {
+   "shot": "27-cenik",
+   "box": [
+    811,
+    656,
+    121,
+    17
+   ]
+  },
+  "pricing.vat": {
+   "shot": "27-cenik",
+   "box": [
+    642,
+    713,
+    156,
+    17
+   ]
+  },
+  "pricing.faq.0.a": {
+   "shot": "28-cenik-otazky",
+   "box": [
+    525,
+    752,
+    391,
+    39
+   ]
+  },
+  "pricing.faq.1.a": {
+   "shot": "29-cenik-otazky",
+   "box": [
+    576,
+    752,
+    288,
+    19
+   ]
+  },
+  "pricing.faq.2.a": {
+   "shot": "30-cenik-otazky",
+   "box": [
+    550,
+    752,
+    341,
+    19
+   ]
+  },
+  "contact.eyebrow": {
+   "shot": "31-kontakt",
+   "box": [
+    687,
+    128,
+    67,
+    15
+   ]
+  },
+  "contact.title": {
+   "shot": "31-kontakt",
+   "box": [
+    415,
+    156,
+    599,
+    60
+   ]
+  },
+  "contact.titleAccent": {
+   "shot": "31-kontakt",
+   "box": [
+    422,
+    208,
+    584,
+    60
+   ]
+  },
+  "contact.lead": {
+   "shot": "31-kontakt",
+   "box": [
+    432,
+    286,
+    575,
+    46
+   ]
+  },
+  "contact.steps.0": {
+   "shot": "31-kontakt",
+   "box": [
+    177,
+    454,
+    126,
+    27
+   ]
+  },
+  "contact.steps.1": {
+   "shot": "31-kontakt",
+   "box": [
+    309,
+    454,
+    126,
+    27
+   ]
+  },
+  "contact.steps.2": {
+   "shot": "31-kontakt",
+   "box": [
+    441,
+    454,
+    126,
+    27
+   ]
+  },
+  "contact.steps.3": {
+   "shot": "31-kontakt",
+   "box": [
+    573,
+    454,
+    126,
+    27
+   ]
+  },
+  "contact.steps.4": {
+   "shot": "31-kontakt",
+   "box": [
+    705,
+    454,
+    126,
+    27
+   ]
+  },
+  "contact.questions.0": {
+   "shot": "31-kontakt",
+   "box": [
+    177,
+    510,
+    378,
+    25
+   ]
+  },
+  "contact.needsLabel": {
+   "shot": "31-kontakt",
+   "box": [
+    177,
+    561,
+    83,
+    19
+   ]
+  },
+  "contact.needsHint": {
+   "shot": "31-kontakt",
+   "box": [
+    177,
+    586,
+    155,
+    17
+   ]
+  },
+  "contact.needs.0": {
+   "shot": "31-kontakt",
+   "box": [
+    194,
+    628,
+    29,
+    19
+   ]
+  },
+  "contact.needs.1": {
+   "shot": "31-kontakt",
+   "box": [
+    267,
+    628,
+    46,
+    19
+   ]
+  },
+  "contact.needs.2": {
+   "shot": "31-kontakt",
+   "box": [
+    357,
+    628,
+    26,
+    19
+   ]
+  },
+  "contact.needs.3": {
+   "shot": "31-kontakt",
+   "box": [
+    427,
+    628,
+    89,
+    19
+   ]
+  },
+  "contact.needs.4": {
+   "shot": "31-kontakt",
+   "box": [
+    560,
+    628,
+    54,
+    19
+   ]
+  },
+  "contact.needs.5": {
+   "shot": "31-kontakt",
+   "box": [
+    658,
+    628,
+    96,
+    19
+   ]
+  },
+  "contact.needs.6": {
+   "shot": "31-kontakt",
+   "box": [
+    194,
+    680,
+    117,
+    19
+   ]
+  },
+  "contact.nicheLabel": {
+   "shot": "31-kontakt",
+   "box": [
+    177,
+    739,
+    101,
+    19
+   ]
+  },
+  "contact.niches.0": {
+   "shot": "31-kontakt",
+   "box": [
+    194,
+    782,
+    108,
+    19
+   ]
+  },
+  "contact.niches.1": {
+   "shot": "31-kontakt",
+   "box": [
+    346,
+    782,
+    70,
+    19
+   ]
+  },
+  "contact.niches.2": {
+   "shot": "31-kontakt",
+   "box": [
+    460,
+    782,
+    88,
+    19
+   ]
+  },
+  "contact.niches.3": {
+   "shot": "31-kontakt",
+   "box": [
+    592,
+    782,
+    121,
+    19
+   ]
+  },
+  "contact.niches.4": {
+   "shot": "31-kontakt",
+   "box": [
+    194,
+    834,
+    136,
+    19
+   ]
+  },
+  "contact.niches.5": {
+   "shot": "31-kontakt",
+   "box": [
+    374,
+    834,
+    147,
+    19
+   ]
+  },
+  "contact.niches.6": {
+   "shot": "31-kontakt",
+   "box": [
+    565,
+    834,
+    117,
+    19
+   ]
+  },
+  "contact.niches.7": {
+   "shot": "31-kontakt",
+   "box": [
+    726,
+    834,
+    58,
+    19
+   ]
+  },
+  "contact.hints.0": {
+   "shot": "31-kontakt",
+   "box": [
+    1092,
+    554,
+    162,
+    34
+   ]
+  },
+  "contact.reactions.needs.0": {
+   "shot": "32-maskot-needs",
+   "box": [
+    192,
+    156,
+    165,
+    51
+   ]
+  },
+  "contact.planLabel": {
+   "shot": "33-formular-1",
+   "box": [
+    192,
+    334,
+    86,
+    17
+   ]
+  },
+  "contact.nicheDetailLabel": {
+   "shot": "33-formular-1",
+   "box": [
+    177,
+    643,
+    109,
+    17
+   ]
+  },
+  "contact.next": {
+   "shot": "33-formular-1",
+   "box": [
+    647,
+    763,
+    128,
+    16
+   ]
+  },
+  "contact.nicheDetailPlaceholder": {
+   "shot": "33-formular-1",
+   "box": [
+    177,
+    668,
+    654,
+    46
+   ]
+  },
+  "contact.reactions.needs.1": {
+   "shot": "34-maskot-needs",
+   "box": [
+    192,
+    156,
+    169,
+    51
+   ]
+  },
+  "contact.reactions.needs.2": {
+   "shot": "35-maskot-needs",
+   "box": [
+    192,
+    156,
+    154,
+    51
+   ]
+  },
+  "contact.reactions.needs.3": {
+   "shot": "36-maskot-needs",
+   "box": [
+    192,
+    156,
+    156,
+    51
+   ]
+  },
+  "contact.reactions.needs.4": {
+   "shot": "37-maskot-needs",
+   "box": [
+    192,
+    156,
+    170,
+    51
+   ]
+  },
+  "contact.reactions.needs.5": {
+   "shot": "38-maskot-needs",
+   "box": [
+    192,
+    173,
+    166,
+    34
+   ]
+  },
+  "contact.reactions.needs.6": {
+   "shot": "39-maskot-needs",
+   "box": [
+    192,
+    156,
+    167,
+    51
+   ]
+  },
+  "contact.reactions.niches.0": {
+   "shot": "40-maskot-niches",
+   "box": [
+    192,
+    156,
+    150,
+    51
+   ]
+  },
+  "contact.reactions.niches.1": {
+   "shot": "41-maskot-niches",
+   "box": [
+    192,
+    156,
+    150,
+    51
+   ]
+  },
+  "contact.reactions.niches.2": {
+   "shot": "42-maskot-niches",
+   "box": [
+    192,
+    156,
+    159,
+    51
+   ]
+  },
+  "contact.reactions.niches.3": {
+   "shot": "43-maskot-niches",
+   "box": [
+    192,
+    156,
+    165,
+    51
+   ]
+  },
+  "contact.reactions.niches.4": {
+   "shot": "44-maskot-niches",
+   "box": [
+    192,
+    156,
+    155,
+    51
+   ]
+  },
+  "contact.reactions.niches.5": {
+   "shot": "45-maskot-niches",
+   "box": [
+    192,
+    156,
+    142,
+    51
+   ]
+  },
+  "contact.reactions.niches.6": {
+   "shot": "46-maskot-niches",
+   "box": [
+    192,
+    156,
+    168,
+    51
+   ]
+  },
+  "contact.reactions.niches.7": {
+   "shot": "47-maskot-niches",
+   "box": [
+    192,
+    173,
+    145,
+    34
+   ]
+  },
+  "contact.hints.1": {
+   "shot": "48-maskot-napoveda",
+   "box": [
+    192,
+    156,
+    167,
+    51
+   ]
+  },
+  "contact.questions.1": {
+   "shot": "49-formular-2",
+   "box": [
+    177,
+    217,
+    250,
+    25
+   ]
+  },
+  "contact.startLabel": {
+   "shot": "49-formular-2",
+   "box": [
+    177,
+    268,
+    82,
+    19
+   ]
+  },
+  "contact.starts.0": {
+   "shot": "49-formular-2",
+   "box": [
+    194,
+    373,
+    138,
+    19
+   ]
+  },
+  "contact.starts.1": {
+   "shot": "49-formular-2",
+   "box": [
+    415,
+    373,
+    158,
+    38
+   ]
+  },
+  "contact.starts.2": {
+   "shot": "49-formular-2",
+   "box": [
+    637,
+    373,
+    103,
+    19
+   ]
+  },
+  "contact.assetsLabel": {
+   "shot": "49-formular-2",
+   "box": [
+    177,
+    457,
+    157,
+    19
+   ]
+  },
+  "contact.assets.0": {
+   "shot": "49-formular-2",
+   "box": [
+    194,
+    500,
+    32,
+    19
+   ]
+  },
+  "contact.assets.1": {
+   "shot": "49-formular-2",
+   "box": [
+    270,
+    500,
+    35,
+    19
+   ]
+  },
+  "contact.assets.2": {
+   "shot": "49-formular-2",
+   "box": [
+    349,
+    500,
+    35,
+    19
+   ]
+  },
+  "contact.assets.3": {
+   "shot": "49-formular-2",
+   "box": [
+    428,
+    500,
+    103,
+    19
+   ]
+  },
+  "contact.back": {
+   "shot": "49-formular-2",
+   "box": [
+    194,
+    594,
+    31,
+    19
+   ]
+  },
+  "contact.reactions.starts.0": {
+   "shot": "50-maskot-starts",
+   "box": [
+    192,
+    156,
+    148,
+    51
+   ]
+  },
+  "contact.reactions.starts.1": {
+   "shot": "51-maskot-starts",
+   "box": [
+    192,
+    156,
+    147,
+    51
+   ]
+  },
+  "contact.reactions.starts.2": {
+   "shot": "52-maskot-starts",
+   "box": [
+    192,
+    173,
+    138,
+    34
+   ]
+  },
+  "contact.currentSiteLabel": {
+   "shot": "53-formular-2",
+   "box": [
+    177,
+    457,
+    171,
+    19
+   ]
+  },
+  "contact.currentSitePlaceholder": {
+   "shot": "53-formular-2",
+   "box": [
+    177,
+    489,
+    654,
+    46
+   ]
+  },
+  "contact.hints.2": {
+   "shot": "54-maskot-napoveda",
+   "box": [
+    192,
+    156,
+    163,
+    51
+   ]
+  },
+  "contact.questions.2": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    217,
+    339,
+    25
+   ]
+  },
+  "contact.refsLabel": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    324,
+    654,
+    46
+   ]
+  },
+  "contact.refsHint": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    293,
+    332,
+    17
+   ]
+  },
+  "contact.refsAdd": {
+   "shot": "55-formular-3",
+   "box": [
+    199,
+    381,
+    145,
+    17
+   ]
+  },
+  "contact.styleLabel": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    431,
+    26,
+    19
+   ]
+  },
+  "contact.styles.0": {
+   "shot": "55-formular-3",
+   "box": [
+    258,
+    475,
+    85,
+    36
+   ]
+  },
+  "contact.styles.1": {
+   "shot": "55-formular-3",
+   "box": [
+    479,
+    484,
+    110,
+    18
+   ]
+  },
+  "contact.styles.2": {
+   "shot": "55-formular-3",
+   "box": [
+    701,
+    475,
+    65,
+    36
+   ]
+  },
+  "contact.styles.3": {
+   "shot": "55-formular-3",
+   "box": [
+    258,
+    556,
+    94,
+    18
+   ]
+  },
+  "contact.styles.4": {
+   "shot": "55-formular-3",
+   "box": [
+    479,
+    556,
+    110,
+    18
+   ]
+  },
+  "contact.styles.5": {
+   "shot": "55-formular-3",
+   "box": [
+    701,
+    556,
+    90,
+    18
+   ]
+  },
+  "contact.colorsLabel": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    709,
+    654,
+    46
+   ]
+  },
+  "contact.refsPlaceholder": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    324,
+    654,
+    46
+   ]
+  },
+  "contact.colors.0": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.1": {
+   "shot": "55-formular-3",
+   "box": [
+    227,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.2": {
+   "shot": "55-formular-3",
+   "box": [
+    277,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.3": {
+   "shot": "55-formular-3",
+   "box": [
+    327,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.4": {
+   "shot": "55-formular-3",
+   "box": [
+    377,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.5": {
+   "shot": "55-formular-3",
+   "box": [
+    427,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.6": {
+   "shot": "55-formular-3",
+   "box": [
+    477,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colors.7": {
+   "shot": "55-formular-3",
+   "box": [
+    527,
+    657,
+    40,
+    40
+   ]
+  },
+  "contact.colorNotePlaceholder": {
+   "shot": "55-formular-3",
+   "box": [
+    177,
+    709,
+    654,
+    46
+   ]
+  },
+  "contact.reactions.styles.0": {
+   "shot": "56-maskot-styles",
+   "box": [
+    192,
+    156,
+    167,
+    51
+   ]
+  },
+  "contact.reactions.styles.1": {
+   "shot": "57-maskot-styles",
+   "box": [
+    192,
+    173,
+    169,
+    34
+   ]
+  },
+  "contact.reactions.styles.2": {
+   "shot": "58-maskot-styles",
+   "box": [
+    192,
+    173,
+    169,
+    34
+   ]
+  },
+  "contact.reactions.styles.3": {
+   "shot": "59-maskot-styles",
+   "box": [
+    192,
+    156,
+    137,
+    51
+   ]
+  },
+  "contact.reactions.styles.4": {
+   "shot": "60-maskot-styles",
+   "box": [
+    192,
+    173,
+    155,
+    34
+   ]
+  },
+  "contact.reactions.styles.5": {
+   "shot": "61-maskot-styles",
+   "box": [
+    192,
+    173,
+    165,
+    34
+   ]
+  },
+  "contact.hints.3": {
+   "shot": "62-maskot-napoveda",
+   "box": [
+    192,
+    156,
+    131,
+    51
+   ]
+  },
+  "contact.questions.3": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    217,
+    265,
+    25
+   ]
+  },
+  "contact.budgetLabel": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    268,
+    120,
+    19
+   ]
+  },
+  "contact.budgetHint": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    293,
+    423,
+    17
+   ]
+  },
+  "contact.budgets.0": {
+   "shot": "63-formular-4",
+   "box": [
+    224,
+    340,
+    117,
+    17
+   ]
+  },
+  "contact.budgets.1": {
+   "shot": "63-formular-4",
+   "box": [
+    441,
+    340,
+    125,
+    17
+   ]
+  },
+  "contact.budgets.2": {
+   "shot": "63-formular-4",
+   "box": [
+    660,
+    340,
+    130,
+    17
+   ]
+  },
+  "contact.budgets.3": {
+   "shot": "63-formular-4",
+   "box": [
+    214,
+    400,
+    136,
+    17
+   ]
+  },
+  "contact.budgets.4": {
+   "shot": "63-formular-4",
+   "box": [
+    434,
+    400,
+    141,
+    17
+   ]
+  },
+  "contact.budgets.5": {
+   "shot": "63-formular-4",
+   "box": [
+    670,
+    400,
+    110,
+    17
+   ]
+  },
+  "contact.timelineLabel": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    462,
+    132,
+    19
+   ]
+  },
+  "contact.timelines.0": {
+   "shot": "63-formular-4",
+   "box": [
+    194,
+    505,
+    65,
+    19
+   ]
+  },
+  "contact.timelines.1": {
+   "shot": "63-formular-4",
+   "box": [
+    303,
+    505,
+    67,
+    19
+   ]
+  },
+  "contact.timelines.2": {
+   "shot": "63-formular-4",
+   "box": [
+    414,
+    505,
+    84,
+    19
+   ]
+  },
+  "contact.timelines.3": {
+   "shot": "63-formular-4",
+   "box": [
+    542,
+    505,
+    65,
+    19
+   ]
+  },
+  "contact.deadlineLabel": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    564,
+    87,
+    19
+   ]
+  },
+  "contact.deadlineHint": {
+   "shot": "63-formular-4",
+   "box": [
+    177,
+    589,
+    266,
+    17
+   ]
+  },
+  "contact.reactions.budgets.0": {
+   "shot": "64-maskot-budgets",
+   "box": [
+    192,
+    156,
+    154,
+    51
+   ]
+  },
+  "contact.reactions.budgets.1": {
+   "shot": "65-maskot-budgets",
+   "box": [
+    192,
+    173,
+    160,
+    34
+   ]
+  },
+  "contact.reactions.budgets.2": {
+   "shot": "66-maskot-budgets",
+   "box": [
+    192,
+    173,
+    148,
+    34
+   ]
+  },
+  "contact.reactions.budgets.3": {
+   "shot": "67-maskot-budgets",
+   "box": [
+    192,
+    156,
+    165,
+    51
+   ]
+  },
+  "contact.reactions.budgets.4": {
+   "shot": "68-maskot-budgets",
+   "box": [
+    192,
+    173,
+    162,
+    34
+   ]
+  },
+  "contact.reactions.budgets.5": {
+   "shot": "69-maskot-budgets",
+   "box": [
+    192,
+    156,
+    155,
+    51
+   ]
+  },
+  "contact.reactions.timelines.0": {
+   "shot": "70-maskot-timelines",
+   "box": [
+    192,
+    173,
+    169,
+    34
+   ]
+  },
+  "contact.reactions.timelines.1": {
+   "shot": "71-maskot-timelines",
+   "box": [
+    192,
+    173,
+    149,
+    34
+   ]
+  },
+  "contact.reactions.timelines.2": {
+   "shot": "72-maskot-timelines",
+   "box": [
+    192,
+    173,
+    124,
+    34
+   ]
+  },
+  "contact.reactions.timelines.3": {
+   "shot": "73-maskot-timelines",
+   "box": [
+    192,
+    173,
+    166,
+    34
+   ]
+  },
+  "contact.hints.4": {
+   "shot": "74-maskot-napoveda",
+   "box": [
+    192,
+    173,
+    145,
+    34
+   ]
+  },
+  "contact.questions.4": {
+   "shot": "75-formular-5",
+   "box": [
+    177,
+    217,
+    364,
+    25
+   ]
+  },
+  "contact.nameLabel": {
+   "shot": "75-formular-5",
+   "box": [
+    177,
+    268,
+    44,
+    19
+   ]
+  },
+  "contact.emailLabel": {
+   "shot": "75-formular-5",
+   "box": [
+    514,
+    268,
+    42,
+    19
+   ]
+  },
+  "contact.channelLabel": {
+   "shot": "75-formular-5",
+   "box": [
+    177,
+    370,
+    162,
+    19
+   ]
+  },
+  "contact.channels.0": {
+   "shot": "75-formular-5",
+   "box": [
+    263,
+    441,
+    40,
+    19
+   ]
+  },
+  "contact.channels.1": {
+   "shot": "75-formular-5",
+   "box": [
+    480,
+    441,
+    48,
+    19
+   ]
+  },
+  "contact.channels.2": {
+   "shot": "75-formular-5",
+   "box": [
+    696,
+    441,
+    60,
+    19
+   ]
+  },
+  "contact.messageLabel": {
+   "shot": "75-formular-5",
+   "box": [
+    177,
+    498,
+    232,
+    19
+   ]
+  },
+  "contact.summaryLabel": {
+   "shot": "75-formular-5",
+   "box": [
+    194,
+    663,
+    60,
+    15
+   ]
+  },
+  "contact.consent": {
+   "shot": "75-formular-5",
+   "box": [
+    205,
+    856,
+    391,
+    17
+   ]
+  },
+  "contact.messagePlaceholder": {
+   "shot": "75-formular-5",
+   "box": [
+    177,
+    530,
+    654,
+    86
+   ]
+  },
+  "contact.submit": {
+   "shot": "76-formular-5",
+   "box": [
+    583,
+    798,
+    192,
+    16
+   ]
+  },
+  "contact.reactions.channels.1": {
+   "shot": "77-maskot-channels",
+   "box": [
+    192,
+    173,
+    169,
+    34
+   ]
+  },
+  "contact.phoneLabel": {
+   "shot": "78-formular-5",
+   "box": [
+    177,
+    498,
+    50,
+    19
+   ]
+  },
+  "contact.reactions.channels.2": {
+   "shot": "79-maskot-channels",
+   "box": [
+    192,
+    173,
+    148,
+    34
+   ]
+  },
+  "contact.telegramLabel": {
+   "shot": "80-formular-5",
+   "box": [
+    177,
+    498,
+    62,
+    19
+   ]
+  },
+  "contact.reactions.channels.0": {
+   "shot": "81-maskot-channels",
+   "box": [
+    192,
+    173,
+    167,
+    34
+   ]
+  },
+  "contact.successTitle": {
+   "shot": "82-formular-hotovo",
+   "box": [
+    309,
+    346,
+    391,
+    30
+   ]
+  },
+  "contact.successText": {
+   "shot": "82-formular-hotovo",
+   "box": [
+    290,
+    389,
+    428,
+    39
+   ]
+  },
+  "contact.successLink": {
+   "shot": "82-formular-hotovo",
+   "box": [
+    517,
+    409,
+    119,
+    19
+   ]
+  },
+  "mascot.success": {
+   "shot": "82-formular-hotovo",
+   "box": [
+    1092,
+    261,
+    161,
+    34
+   ]
+  },
+  "settings.contactEmail": {
+   "shot": "83-kontakt-firma",
+   "box": [
+    908,
+    388,
+    392,
+    40
+   ]
+  },
+  "settings.city": {
+   "shot": "83-kontakt-firma",
+   "box": [
+    908,
+    444,
+    392,
+    40
+   ]
+  },
+  "settings.social": {
+   "shot": "83-kontakt-firma",
+   "box": [
+    908,
+    516,
+    392,
+    34
+   ]
+  },
+  "footer.tagline": {
+   "shot": "84-paticka",
+   "box": [
+    140,
+    436,
+    308,
+    19
+   ]
+  },
+  "footer.rights": {
+   "shot": "84-paticka",
+   "box": [
+    235,
+    709,
+    143,
+    17
+   ]
+  },
+  "settings.company": {
+   "shot": "85-ochrana-udaju",
+   "box": [
+    369,
+    360,
+    688,
+    52
+   ]
+  },
+  "services.items.seo.headline.2": {
+   "shot": "17-detaily",
+   "box": [
+    179,
+    260,
+    285,
+    92
+   ],
+   "empty": true
+  },
+  "services.items.e-shopy.headline.2": {
+   "shot": "18-detaily",
+   "box": [
+    179,
+    260,
+    409,
+    50
+   ],
+   "empty": true
+  },
+  "services.items.aplikace.headline.0": {
+   "shot": "21-detaily",
+   "box": [
+    179,
+    261,
+    263,
+    50
+   ],
+   "empty": true
+  }
+ }
+}

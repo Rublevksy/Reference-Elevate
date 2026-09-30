@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr';
 import { routing } from './i18n/routing';
+import { serviceSlugs } from './content/services';
 
 const intl = createMiddleware(routing);
 
@@ -34,6 +35,18 @@ export default async function middleware(request: NextRequest) {
     const target = request.nextUrl.clone();
     target.pathname = '/admin/auth/callback';
     return NextResponse.redirect(target);
+  }
+  // Dřívější podstránky služeb (/cs/sluzby/weby…) už neexistují — služby žijí
+  // na úvodní stránce. Staré odkazy a záznamy ve vyhledávačích přesměrovat
+  // přímo na panel dané služby.
+  const legacy = pathname.match(/^\/(?:(cs|en|ru|uk)\/)?sluzby(?:\/([a-z-]+))?\/?$/);
+  if (legacy) {
+    const [, locale = routing.defaultLocale, slug] = legacy;
+    const target = request.nextUrl.clone();
+    target.pathname = `/${locale}`;
+    target.search = '';
+    target.hash = slug && (serviceSlugs as readonly string[]).includes(slug) ? `sluzba-${slug}` : 'sluzby';
+    return NextResponse.redirect(target, 308);
   }
   return intl(request);
 }

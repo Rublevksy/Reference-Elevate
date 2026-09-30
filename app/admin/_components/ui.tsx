@@ -37,13 +37,24 @@ export function Btn({
 export const inputClass =
   'w-full rounded-xl border border-[var(--line)] bg-[rgba(255,255,255,0.035)] px-3.5 py-2.5 text-sm text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[rgba(138,147,168,0.6)] focus:border-[rgba(61,123,255,0.75)] focus:shadow-[0_0_0_3px_rgba(31,91,255,0.18)]';
 
-export function Field({ label, hint, children, className = '' }: { label: string; hint?: string; children: ReactNode; className?: string }) {
-  return (
-    <label className={`block ${className}`}>
+/**
+ * Pole formuláře. `visual` = obrazová nápověda (výřez webu), zobrazí se
+ * vpravo vedle pole — místo slovního popisu, kde text na webu je.
+ */
+export function Field({ label, hint, children, className = '', visual }: { label: string; hint?: string; children: ReactNode; className?: string; visual?: ReactNode }) {
+  const body = (
+    <label className="block min-w-0 flex-1">
       <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[rgba(170,185,220,0.85)]">{label}</span>
       <div className="mt-2">{children}</div>
       {hint ? <span className="mt-1.5 block text-xs leading-snug text-muted">{hint}</span> : null}
     </label>
+  );
+  if (!visual) return <div className={`block ${className}`}>{body}</div>;
+  return (
+    <div className={`flex items-start gap-3 ${className}`}>
+      {body}
+      <div className="mt-6">{visual}</div>
+    </div>
   );
 }
 
@@ -117,5 +128,48 @@ export function SaveStatus({ state, error, savedText = 'Uloženo' }: { state: Sa
       {state === 'saving' ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[rgba(160,190,255,0.3)] border-t-[var(--blue-bright)]" /> : null}
       {state === 'saving' ? 'Ukládá se…' : state === 'saved' ? `${savedText} ✓` : error}
     </span>
+  );
+}
+
+/** Hledání v textech — lupa uvnitř pole, křížek pro smazání. */
+export function SearchInput({ value, onChange, compact = false }: { value: string; onChange: (v: string) => void; compact?: boolean }) {
+  return (
+    <label className="relative block">
+      <span className="sr-only">Hledat text</span>
+      <svg aria-hidden viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        className={`${inputClass} pl-9 ${value ? 'pr-9' : ''} [&::-webkit-search-cancel-button]:hidden`}
+        placeholder={compact ? 'Hledat…' : 'Hledat v textech…'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {value ? (
+        <button type="button" onClick={() => onChange('')} aria-label="Smazat hledání" className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-ink">
+          ×
+        </button>
+      ) : null}
+    </label>
+  );
+}
+
+/**
+ * Pevná lišta ukládání dole — vždy po ruce, i uprostřed dlouhého formuláře.
+ * Na telefonu přes celou šířku, s ohledem na spodní okraj displeje.
+ */
+export function SaveBar({ dirtyText, state, error, children }: { dirtyText?: string; state: SaveState; error?: string; children: ReactNode }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[rgba(6,9,18,0.94)] pb-[env(safe-area-inset-bottom)] backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-end gap-3 px-4 py-3 sm:gap-4 sm:px-5">
+        <div className="min-w-0 flex-1 text-right text-sm">
+          {state === 'idle' && dirtyText ? <span className="text-muted">{dirtyText}</span> : null}
+          <SaveStatus state={state} error={error} />
+        </div>
+        <div className="shrink-0">{children}</div>
+      </div>
+    </div>
   );
 }

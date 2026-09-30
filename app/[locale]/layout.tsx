@@ -133,6 +133,8 @@ export default async function LocaleLayout({
   return (
     <html lang={htmlLang[locale as Locale]} className={`${display.variable} ${sans.variable} ${hand.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh antialiased" suppressHydrationWarning>
+        {/* úvodní clona jen poprvé v session — při dalším načtení skrýt ještě před vykreslením */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('elevate:preloader')==='1')document.documentElement.classList.add('pl-seen')}catch(e){}" }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <a
           href="#obsah"

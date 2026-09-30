@@ -1,7 +1,8 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import type { ProjectRow } from '@/lib/content/projects';
 import {
@@ -18,8 +19,12 @@ import {
   signOut,
   type ProjectInput,
 } from '../actions';
-import { Btn, Card, Field, inputClass, SaveStatus, useSave } from './ui';
-import { EDIT_GROUPS } from '@/lib/content/editable';
+import { Btn, Card, Field, inputClass, SaveBar, SaveStatus, SearchInput, useSave } from './ui';
+import { EDIT_SECTIONS, type EditField, type EditSection } from '@/lib/content/editable';
+import { HintLightbox, HintMini, HintThumb, SerpPreview, hintFor, type Hint } from './hints';
+import { site } from '@/content/site';
+
+const SITE_URL = site.url;
 
 /* ------------------------------------------------------------------ */
 /*  Obrázky: zmenšení v prohlížeči + nahrání přes podepsanou adresu     */
@@ -150,7 +155,7 @@ function ProjectEditor({ initial, onClose }: { initial: ProjectInput; onClose: (
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(2,4,9,0.78)] px-4 py-10 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(2,4,9,0.82)] px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-10" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="mx-auto max-w-4xl">
         <Card
           title={initial.id ? 'Upravit projekt' : 'Nový projekt'}
@@ -191,15 +196,15 @@ function ProjectEditor({ initial, onClose }: { initial: ProjectInput; onClose: (
             />
           </div>
 
-          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line)] pt-6">
+          <div className="mt-7 flex flex-col gap-4 border-t border-[var(--line)] pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <label className="flex cursor-pointer items-center gap-3 text-sm">
               <Toggle checked={p.published} onChange={(v) => set('published', v)} />
               Zveřejněno na webu
             </label>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
               <SaveStatus state={save.state} error={save.error} />
-              <Btn onClick={onClose}>Zrušit</Btn>
-              <Btn variant="primary" onClick={submit} disabled={save.busy}>
+              <Btn onClick={onClose} className="flex-1 sm:flex-none">Zrušit</Btn>
+              <Btn variant="primary" onClick={submit} disabled={save.busy} className="flex-1 sm:flex-none">
                 Uložit projekt
               </Btn>
             </div>
@@ -262,25 +267,14 @@ function ProjectsTab({ projects }: { projects: ProjectRow[] }) {
         }
       >
         <ul className="space-y-3">
-          {items.map((p, i) => (
-            <li
-              key={p.id}
-              className={`group flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--line)] bg-white/[0.02] p-3 pr-4 transition-colors hover:border-[rgba(80,120,255,0.4)] ${p.published ? '' : 'opacity-60'}`}
-            >
-              <div className="flex flex-col gap-1">
-                <button type="button" aria-label="Posunout výš" disabled={i === 0} onClick={() => move(i, -1)} className="grid h-6 w-6 place-items-center rounded-md text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25">↑</button>
-                <button type="button" aria-label="Posunout níž" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="grid h-6 w-6 place-items-center rounded-md text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25">↓</button>
-              </div>
-              <div className="relative h-[72px] w-[124px] shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-black/40">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.desktop_image} alt="" className="w-full" loading="lazy" />
-                <span className="absolute inset-x-0 bottom-0 h-1" style={{ background: p.accent }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-mono text-[10px] tracking-[0.2em] text-[rgba(160,185,235,0.7)]">№ {String(i + 1).padStart(2, '0')}</p>
-                <p className="mt-0.5 truncate font-display text-sm font-bold uppercase">{p.name}</p>
-                <p className="truncate text-sm text-muted">{p.kind || '—'}</p>
-              </div>
+          {items.map((p, i) => {
+            const moveButtons = (
+              <>
+                <button type="button" aria-label="Posunout výš" disabled={i === 0} onClick={() => move(i, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25 sm:h-6 sm:w-6 sm:rounded-md">↑</button>
+                <button type="button" aria-label="Posunout níž" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25 sm:h-6 sm:w-6 sm:rounded-md">↓</button>
+              </>
+            );
+            const publish = (
               <label className="flex items-center gap-2.5 text-xs text-muted">
                 <Toggle
                   checked={p.published}
@@ -288,6 +282,8 @@ function ProjectsTab({ projects }: { projects: ProjectRow[] }) {
                 />
                 {p.published ? 'Na webu' : 'Skryto'}
               </label>
+            );
+            const actions = (
               <div className="flex gap-2">
                 <Btn size="sm" onClick={() => setEditing({ ...p })}>Upravit</Btn>
                 <Btn
@@ -302,8 +298,38 @@ function ProjectsTab({ projects }: { projects: ProjectRow[] }) {
                   Smazat
                 </Btn>
               </div>
-            </li>
-          ))}
+            );
+            return (
+              <li
+                key={p.id}
+                className={`rounded-2xl border border-[var(--line)] bg-white/[0.02] p-3 transition-colors hover:border-[rgba(80,120,255,0.4)] sm:pr-4 ${p.published ? '' : 'opacity-60'}`}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="hidden flex-col gap-1 sm:flex">{moveButtons}</div>
+                  <div className="relative h-[60px] w-[96px] shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-black/40 sm:h-[72px] sm:w-[124px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.desktop_image} alt="" className="w-full" loading="lazy" />
+                    <span className="absolute inset-x-0 bottom-0 h-1" style={{ background: p.accent }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-[10px] tracking-[0.2em] text-[rgba(160,185,235,0.7)]">№ {String(i + 1).padStart(2, '0')}</p>
+                    <p className="mt-0.5 truncate font-display text-sm font-bold uppercase">{p.name}</p>
+                    <p className="truncate text-sm text-muted">{p.kind || '—'}</p>
+                  </div>
+                  <div className="hidden items-center gap-4 sm:flex">
+                    {publish}
+                    {actions}
+                  </div>
+                </div>
+                {/* telefon: ovládání pod náhledem, prsty se trefí */}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-3 sm:hidden">
+                  <div className="flex items-center gap-1">{moveButtons}</div>
+                  {publish}
+                  {actions}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </Card>
 
@@ -343,11 +369,24 @@ const PLAN_ORDER = [
 ] as const;
 
 const lines = (v: string) => v.split('\n').map((s) => s.trim()).filter(Boolean);
+const range = (n: number, fn: (i: number) => string) => Array.from({ length: n }, (_, i) => fn(i));
+
+/** Malý výřez webu u pole; kliknutím zvětšit. */
+function useHints() {
+  const [lightbox, setLightbox] = useState<Lightbox>(null);
+  const mini = (paths: string | string[], label: string) => {
+    const hint = hintFor(paths);
+    return hint ? <HintMini hint={hint} label={label} onOpen={() => setLightbox({ hint, label })} /> : undefined;
+  };
+  const box = lightbox ? <HintLightbox hint={lightbox.hint} label={lightbox.label} onClose={() => setLightbox(null)} /> : null;
+  return { mini, box };
+}
 
 function PricingTab({ initial }: { initial: Record<string, unknown> }) {
   const [d, setD] = useState<PricingData>(() => JSON.parse(JSON.stringify(initial)) as PricingData);
   const [dirty, setDirty] = useState(false);
   const save = useSave();
+  const { mini, box } = useHints();
   const update = (fn: (prev: PricingData) => PricingData) => {
     setD(fn);
     setDirty(true);
@@ -359,19 +398,19 @@ function PricingTab({ initial }: { initial: Record<string, unknown> }) {
   };
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-28">
       <Card title="Záhlaví sekce" subtitle="Česká verze webu. Ostatní jazyky zůstávají zatím beze změny.">
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Nadpis — bílá část"><input className={inputClass} value={d.title} onChange={(e) => setTop('title', e.target.value)} /></Field>
-          <Field label="Nadpis — modrá část"><input className={inputClass} value={d.titleAccent} onChange={(e) => setTop('titleAccent', e.target.value)} /></Field>
-          <Field label="Úvodní text" className="md:col-span-2"><textarea className={`${inputClass} min-h-[72px]`} value={d.lead} onChange={(e) => setTop('lead', e.target.value)} /></Field>
-          <Field label="Poznámka pod ceníkem"><input className={inputClass} value={d.vat} onChange={(e) => setTop('vat', e.target.value)} /></Field>
-          <Field label="Popisky na kartách" hint="„od“ · „V ceně“ · „Zvlášť“ · „Termín“">
-            <div className="grid grid-cols-4 gap-2">
-              <input className={inputClass} value={d.from} onChange={(e) => setTop('from', e.target.value)} />
-              <input className={inputClass} value={d.includes} onChange={(e) => setTop('includes', e.target.value)} />
-              <input className={inputClass} value={d.extra} onChange={(e) => setTop('extra', e.target.value)} />
-              <input className={inputClass} value={d.term} onChange={(e) => setTop('term', e.target.value)} />
+          <Field label="Nadpis — bílá část" visual={mini('pricing.title', 'Nadpis — bílá část')}><input className={inputClass} value={d.title} onChange={(e) => setTop('title', e.target.value)} /></Field>
+          <Field label="Nadpis — modrá část" visual={mini('pricing.titleAccent', 'Nadpis — modrá část')}><input className={inputClass} value={d.titleAccent} onChange={(e) => setTop('titleAccent', e.target.value)} /></Field>
+          <Field label="Úvodní text" className="md:col-span-2" visual={mini('pricing.lead', 'Úvodní text')}><textarea className={`${inputClass} min-h-[72px]`} value={d.lead} onChange={(e) => setTop('lead', e.target.value)} /></Field>
+          <Field label="Poznámka pod ceníkem" visual={mini('pricing.vat', 'Poznámka pod ceníkem')}><input className={inputClass} value={d.vat} onChange={(e) => setTop('vat', e.target.value)} /></Field>
+          <Field label="Popisky na kartách" hint="„od“ · „V ceně“ · „Zvlášť“ · „Termín“" visual={mini(['pricing.from', 'pricing.includes'], 'Popisky na kartách')}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <input className={inputClass} aria-label="od" value={d.from} onChange={(e) => setTop('from', e.target.value)} />
+              <input className={inputClass} aria-label="V ceně" value={d.includes} onChange={(e) => setTop('includes', e.target.value)} />
+              <input className={inputClass} aria-label="Zvlášť" value={d.extra} onChange={(e) => setTop('extra', e.target.value)} />
+              <input className={inputClass} aria-label="Termín" value={d.term} onChange={(e) => setTop('term', e.target.value)} />
             </div>
           </Field>
         </div>
@@ -380,19 +419,20 @@ function PricingTab({ initial }: { initial: Record<string, unknown> }) {
       {PLAN_ORDER.map(([id, num, label]) => {
         const plan = d.plans[id];
         if (!plan) return null;
+        const at = (k: string) => `pricing.plans.${id}.${k}`;
         return (
           <Card key={id} title={<><span className="mr-2 font-mono text-[11px] text-[rgba(160,185,235,0.7)]">№ {num}</span>{label}</>}>
             <div className="grid gap-5 md:grid-cols-3">
-              <Field label="Název"><input className={inputClass} value={plan.name} onChange={(e) => setPlan(id, 'name', e.target.value)} /></Field>
-              <Field label="Cena" hint="Např. „5 000 Kč“"><input className={inputClass} value={plan.price} onChange={(e) => setPlan(id, 'price', e.target.value)} /></Field>
-              <Field label="Termín"><input className={inputClass} value={plan.term} onChange={(e) => setPlan(id, 'term', e.target.value)} /></Field>
-              <Field label="Pro koho / krátký popis" className="md:col-span-3"><input className={inputClass} value={plan.tagline} onChange={(e) => setPlan(id, 'tagline', e.target.value)} /></Field>
-              <Field label="V ceně" hint="Každá položka na vlastní řádek" className="md:col-span-2">
+              <Field label="Název" visual={mini(at('name'), `${label} — název`)}><input className={inputClass} value={plan.name} onChange={(e) => setPlan(id, 'name', e.target.value)} /></Field>
+              <Field label="Cena" hint="Např. „5 000 Kč“" visual={mini(at('price'), `${label} — cena`)}><input className={inputClass} value={plan.price} onChange={(e) => setPlan(id, 'price', e.target.value)} /></Field>
+              <Field label="Termín" visual={mini(at('term'), `${label} — termín`)}><input className={inputClass} value={plan.term} onChange={(e) => setPlan(id, 'term', e.target.value)} /></Field>
+              <Field label="Pro koho / krátký popis" className="md:col-span-3" visual={mini(at('tagline'), `${label} — krátký popis`)}><input className={inputClass} value={plan.tagline} onChange={(e) => setPlan(id, 'tagline', e.target.value)} /></Field>
+              <Field label="V ceně" hint="Každá položka na vlastní řádek" className="md:col-span-2" visual={mini(range(12, (i) => at(`features.${i}`)), `${label} — v ceně`)}>
                 <textarea className={`${inputClass} min-h-[180px] leading-relaxed`} defaultValue={plan.features.join('\n')} onChange={(e) => setPlan(id, 'features', lines(e.target.value))} />
               </Field>
               <div className="space-y-5">
-                <Field label="Zvlášť (platí se navíc)"><textarea className={`${inputClass} min-h-[108px]`} value={plan.extra} onChange={(e) => setPlan(id, 'extra', e.target.value)} /></Field>
-                <Field label="Text tlačítka"><input className={inputClass} value={plan.cta} onChange={(e) => setPlan(id, 'cta', e.target.value)} /></Field>
+                <Field label="Zvlášť (platí se navíc)" visual={mini(at('extra'), `${label} — zvlášť`)}><textarea className={`${inputClass} min-h-[108px]`} value={plan.extra} onChange={(e) => setPlan(id, 'extra', e.target.value)} /></Field>
+                <Field label="Text tlačítka" visual={mini(at('cta'), `${label} — tlačítko`)}><input className={inputClass} value={plan.cta} onChange={(e) => setPlan(id, 'cta', e.target.value)} /></Field>
               </div>
             </div>
           </Card>
@@ -401,35 +441,36 @@ function PricingTab({ initial }: { initial: Record<string, unknown> }) {
 
       <Card title="Pruh „Větší projekt?“">
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Nadpis"><input className={inputClass} value={d.custom.name} onChange={(e) => setTop('custom', { ...d.custom, name: e.target.value })} /></Field>
-          <Field label="Cena (text)"><input className={inputClass} value={d.customPrice} onChange={(e) => setTop('customPrice', e.target.value)} /></Field>
-          <Field label="Popis" className="md:col-span-2"><input className={inputClass} value={d.custom.tagline} onChange={(e) => setTop('custom', { ...d.custom, tagline: e.target.value })} /></Field>
-          <Field label="Štítky" hint="Každý na vlastní řádek">
+          <Field label="Nadpis" visual={mini('pricing.custom.name', 'Větší projekt — nadpis')}><input className={inputClass} value={d.custom.name} onChange={(e) => setTop('custom', { ...d.custom, name: e.target.value })} /></Field>
+          <Field label="Cena (text)" visual={mini('pricing.customPrice', 'Větší projekt — cena')}><input className={inputClass} value={d.customPrice} onChange={(e) => setTop('customPrice', e.target.value)} /></Field>
+          <Field label="Popis" className="md:col-span-2" visual={mini('pricing.custom.tagline', 'Větší projekt — popis')}><input className={inputClass} value={d.custom.tagline} onChange={(e) => setTop('custom', { ...d.custom, tagline: e.target.value })} /></Field>
+          <Field label="Štítky" hint="Každý na vlastní řádek" visual={mini(range(8, (i) => `pricing.custom.items.${i}`), 'Větší projekt — štítky')}>
             <textarea className={`${inputClass} min-h-[110px]`} defaultValue={d.custom.items.join('\n')} onChange={(e) => setTop('custom', { ...d.custom, items: lines(e.target.value) })} />
           </Field>
-          <Field label="Text tlačítka"><input className={inputClass} value={d.customCta} onChange={(e) => setTop('customCta', e.target.value)} /></Field>
+          <Field label="Text tlačítka" visual={mini('pricing.customCta', 'Větší projekt — tlačítko')}><input className={inputClass} value={d.customCta} onChange={(e) => setTop('customCta', e.target.value)} /></Field>
         </div>
       </Card>
 
       <Card title="Otázky pod ceníkem">
-        <div className="space-y-3">
+        <div className="space-y-5">
           {d.faq.map((item, i) => (
-            <div key={i} className="grid gap-3 md:grid-cols-[1fr_2fr]">
-              <input className={inputClass} value={item.q} onChange={(e) => setTop('faq', d.faq.map((f, k) => (k === i ? { ...f, q: e.target.value } : f)))} />
-              <input className={inputClass} value={item.a} onChange={(e) => setTop('faq', d.faq.map((f, k) => (k === i ? { ...f, a: e.target.value } : f)))} />
+            <div key={i} className="grid gap-4 md:grid-cols-[1fr_1.6fr]">
+              <Field label={`Otázka ${i + 1}`} visual={mini(`pricing.faq.${i}.q`, `Otázka ${i + 1}`)}>
+                <input className={inputClass} value={item.q} onChange={(e) => setTop('faq', d.faq.map((f, k) => (k === i ? { ...f, q: e.target.value } : f)))} />
+              </Field>
+              <Field label="Odpověď" visual={mini(`pricing.faq.${i}.a`, `Odpověď ${i + 1}`)}>
+                <input className={inputClass} value={item.a} onChange={(e) => setTop('faq', d.faq.map((f, k) => (k === i ? { ...f, a: e.target.value } : f)))} />
+              </Field>
             </div>
           ))}
         </div>
       </Card>
 
-      {/* pevná lišta ukládání — vždy po ruce, i uprostřed dlouhého formuláře */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[rgba(6,9,18,0.92)] backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-end gap-4 px-5 py-3">
-          {save.state === 'idle' && dirty ? <span className="text-sm text-muted">Neuložené změny</span> : null}
-          <SaveStatus state={save.state} error={save.error} />
-          <Btn variant="primary" onClick={submit} disabled={save.busy || (!dirty && save.state !== 'error')}>Uložit ceník</Btn>
-        </div>
-      </div>
+      {box}
+
+      <SaveBar dirtyText={dirty ? 'Neuložené změny' : ''} state={save.state} error={save.error}>
+        <Btn variant="primary" onClick={submit} disabled={save.busy || (!dirty && save.state !== 'error')}>Uložit ceník</Btn>
+      </SaveBar>
     </div>
   );
 }
@@ -442,6 +483,7 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
   const [v, setV] = useState<SettingsInput>(initial);
   const [dirty, setDirty] = useState(false);
   const save = useSave();
+  const { mini, box } = useHints();
   const set = (patch: Partial<SettingsInput>) => {
     setV((prev) => ({ ...prev, ...patch }));
     setDirty(true);
@@ -449,34 +491,111 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
   const setSocial = (k: keyof SettingsInput['social'], url: string) => set({ social: { ...v.social, [k]: url } });
 
   return (
-    <div className="space-y-6">
-      <Card title="Kontaktní e-mail" subtitle="Zobrazuje se na webu a chodí na něj poptávky z formuláře." className="max-w-3xl">
-        <Field label="E-mail" hint="Bez vlastní ověřené domény v Resend doručuje formulář jen na e-mail, se kterým je účet Resend založený.">
+    <div className="max-w-3xl space-y-6 pb-28">
+      <Card title="Kontaktní e-mail" subtitle="Chodí na něj poptávky z formuláře.">
+        <Field label="E-mail" hint="Bez vlastní ověřené domény v Resend doručuje formulář jen na e-mail, se kterým je účet Resend založený." visual={mini('settings.contactEmail', 'Kontaktní e-mail')}>
           <input className={inputClass} type="email" value={v.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} />
         </Field>
       </Card>
-      <Card title="Firma" subtitle="Patička, kontaktní sekce, strukturovaná data pro Google a stránka Ochrana osobních údajů." className="max-w-3xl">
+      <Card title="Firma">
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Město"><input className={inputClass} value={v.city} onChange={(e) => set({ city: e.target.value })} /></Field>
-          <Field label="IČO" hint="8 číslic, nepovinné"><input className={inputClass} inputMode="numeric" value={v.ico} onChange={(e) => set({ ico: e.target.value })} /></Field>
-          <Field label="Právní název" className="md:col-span-2"><input className={inputClass} value={v.legalName} onChange={(e) => set({ legalName: e.target.value })} /></Field>
+          <Field label="Město" visual={mini('settings.city', 'Město')}><input className={inputClass} value={v.city} onChange={(e) => set({ city: e.target.value })} /></Field>
+          <Field label="IČO" hint="8 číslic, nepovinné" visual={mini('settings.company', 'IČO')}><input className={inputClass} inputMode="numeric" value={v.ico} onChange={(e) => set({ ico: e.target.value })} /></Field>
+          <Field label="Právní název" className="md:col-span-2" visual={mini('settings.company', 'Právní název')}><input className={inputClass} value={v.legalName} onChange={(e) => set({ legalName: e.target.value })} /></Field>
         </div>
       </Card>
-      <Card title="Sociální sítě" subtitle="Prázdný odkaz = síť se na webu nezobrazí." className="max-w-3xl">
+      <Card title="Sociální sítě" subtitle="Prázdný odkaz = síť se na webu nezobrazí.">
         <div className="grid gap-5">
-          {(['instagram', 'linkedin', 'behance'] as const).map((k) => (
-            <Field key={k} label={k === 'linkedin' ? 'LinkedIn' : k === 'behance' ? 'Behance' : 'Instagram'}>
-              <input className={inputClass} value={v.social[k]} placeholder="https://" onChange={(e) => setSocial(k, e.target.value)} />
-            </Field>
-          ))}
+          {(['instagram', 'linkedin', 'behance'] as const).map((k) => {
+            const label = k === 'linkedin' ? 'LinkedIn' : k === 'behance' ? 'Behance' : 'Instagram';
+            return (
+              <Field key={k} label={label} visual={mini('settings.social', label)}>
+                <input className={inputClass} value={v.social[k]} placeholder="https://" onChange={(e) => setSocial(k, e.target.value)} />
+              </Field>
+            );
+          })}
         </div>
       </Card>
-      <div className="flex max-w-3xl items-center justify-end gap-4">
-        {save.state === 'idle' && dirty ? <span className="text-sm text-muted">Neuložené změny</span> : null}
-        <SaveStatus state={save.state} error={save.error} />
+
+      {box}
+
+      <SaveBar dirtyText={dirty ? 'Neuložené změny' : ''} state={save.state} error={save.error}>
         <Btn variant="primary" disabled={save.busy || !dirty} onClick={async () => (await save.run(() => saveSettings(v))) && setDirty(false)}>
           Uložit
         </Btn>
+      </SaveBar>
+    </div>
+  );
+}
+
+/** Kotva sekce na webu — odkaz „Zobrazit na webu" u sekce. */
+const SECTION_ANCHOR: Record<string, string> = {
+  hero: '',
+  why: '#proc-animace',
+  process: '#proces',
+  cases: '#reference',
+  services: '#detaily',
+  contact: '#kontakt',
+  mascot: '#kontakt',
+  footer: '',
+  seo: '',
+};
+
+type Lightbox = { hint: Hint; label: string } | null;
+
+function autoRows(value: string, min = 2) {
+  return Math.min(10, Math.max(min, Math.ceil(value.length / 70) + value.split('\n').length - 1));
+}
+
+function TextField({
+  field,
+  value,
+  original,
+  onChange,
+  onShow,
+}: {
+  field: EditField;
+  value: string;
+  original: string;
+  onChange: (v: string) => void;
+  onShow: (lb: Lightbox) => void;
+}) {
+  const hint = hintFor(field.path);
+  const long = field.long || original.length > 70;
+  const changed = value !== original;
+  const id = `t-${field.path}`;
+  return (
+    <div className={`grid gap-3 py-5 first:pt-1 last:pb-1 ${hint ? 'sm:grid-cols-[minmax(0,208px)_minmax(0,1fr)] sm:gap-5' : ''}`}>
+      {hint ? (
+        <div className="max-w-[420px] sm:max-w-none">
+          <HintThumb hint={hint} label={field.label} onOpen={() => onShow({ hint, label: field.label })} />
+        </div>
+      ) : null}
+      <div className="min-w-0">
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor={id} className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[rgba(170,185,220,0.9)]">
+            {field.label}
+          </label>
+          {changed ? <span className="shrink-0 rounded-full bg-[rgba(255,197,61,0.14)] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[#ffe2a0]">Upraveno</span> : null}
+        </div>
+        <div className="mt-2">
+          {long ? (
+            <textarea id={id} rows={autoRows(value)} className={`${inputClass} resize-y leading-relaxed`} value={value} onChange={(e) => onChange(e.target.value)} />
+          ) : (
+            <input id={id} className={inputClass} value={value} placeholder={original === '' ? '(prázdné)' : undefined} onChange={(e) => onChange(e.target.value)} />
+          )}
+        </div>
+        {field.note ? <p className="mt-1.5 text-xs leading-snug text-muted">{field.note}</p> : null}
+        {changed ? (
+          <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs text-muted">
+            <span className="min-w-0 break-words">
+              Původní: <span className="text-[rgba(200,210,235,0.85)]">{original || '(prázdné)'}</span>
+            </span>
+            <button type="button" className="shrink-0 text-[#9fc0ff] transition-colors hover:text-ink" onClick={() => onChange(original)}>
+              Vrátit původní
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -485,17 +604,43 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
 function TextsTab({ defaults, overrides }: { defaults: Record<string, string>; overrides: Record<string, string> }) {
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...defaults, ...overrides }));
   const [saved, setSaved] = useState<Record<string, string>>(() => ({ ...defaults, ...overrides }));
-  const [group, setGroup] = useState(EDIT_GROUPS[0].id);
+  const [sectionId, setSectionId] = useState(EDIT_SECTIONS[0].id);
   const [query, setQuery] = useState('');
+  const [lightbox, setLightbox] = useState<Lightbox>(null);
   const save = useSave();
+  const topRef = useRef<HTMLDivElement>(null);
 
   // porovnávat bez ořezu — části nadpisů mají záměrné mezery na krajích
   const changedFromDefault = (path: string) => values[path] !== defaults[path];
   const dirtyCount = Object.keys(values).filter((p) => values[p] !== saved[p]).length;
   const q = query.trim().toLowerCase();
-  const visibleGroups = q
-    ? EDIT_GROUPS.map((g) => ({ ...g, fields: g.fields.filter((f) => f.label.toLowerCase().includes(q) || values[f.path].toLowerCase().includes(q)) })).filter((g) => g.fields.length)
-    : EDIT_GROUPS.filter((g) => g.id === group);
+
+  const sections = q
+    ? EDIT_SECTIONS.map((s) => ({
+        ...s,
+        groups: s.groups
+          .map((g) => ({ ...g, fields: g.fields.filter((f) => f.label.toLowerCase().includes(q) || values[f.path].toLowerCase().includes(q) || defaults[f.path].toLowerCase().includes(q)) }))
+          .filter((g) => g.fields.length),
+      })).filter((s) => s.groups.length)
+    : EDIT_SECTIONS.filter((s) => s.id === sectionId);
+
+  const countChanged = (s: EditSection) => s.groups.reduce((n, g) => n + g.fields.filter((f) => changedFromDefault(f.path)).length, 0);
+  const countFields = (s: EditSection) => s.groups.reduce((n, g) => n + g.fields.length, 0);
+
+  const pick = (id: string) => {
+    setQuery('');
+    setSectionId(id);
+    // na začátek obsahu (pod lištou administrace)
+    const top = topRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) window.scrollTo({ top: window.scrollY + top - 140, behavior: 'smooth' });
+  };
+
+  const jump = (groupId: string) => {
+    const el = document.getElementById(`skupina-${groupId}`);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 150, behavior: 'smooth' });
+  };
+
+  const set = (path: string, v: string) => setValues((prev) => ({ ...prev, [path]: v }));
 
   const submit = async () => {
     const changes = Object.fromEntries(Object.entries(values).filter(([p, v]) => v !== defaults[p] && v.trim()));
@@ -503,77 +648,130 @@ function TextsTab({ defaults, overrides }: { defaults: Record<string, string>; o
   };
 
   return (
-    <div className="grid gap-6 pb-24 md:grid-cols-[230px_1fr]">
-      <aside className="min-w-0 md:sticky md:top-[132px] md:self-start">
-        <input className={`${inputClass} mb-4`} placeholder="Hledat text…" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible" aria-label="Sekce webu">
-          {EDIT_GROUPS.map((g) => {
-            const changed = g.fields.filter((f) => changedFromDefault(f.path)).length;
-            const active = !q && group === g.id;
+    <div ref={topRef} className="pb-28 lg:grid lg:grid-cols-[236px_minmax(0,1fr)] lg:gap-8">
+      {/* desktop: sekce webu v pořadí shora dolů */}
+      <aside className="hidden min-w-0 lg:sticky lg:top-[124px] lg:block lg:self-start">
+        <SearchInput value={query} onChange={setQuery} />
+        <nav className="mt-4 flex flex-col gap-0.5" aria-label="Sekce webu">
+          {EDIT_SECTIONS.map((s, i) => {
+            const changed = countChanged(s);
+            const active = !q && sectionId === s.id;
             return (
               <button
-                key={g.id}
+                key={s.id}
                 type="button"
-                onClick={() => {
-                  setQuery('');
-                  setGroup(g.id);
-                }}
-                className={`flex shrink-0 items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors ${
+                onClick={() => pick(s.id)}
+                aria-current={active ? 'true' : undefined}
+                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                   active ? 'bg-[rgba(31,91,255,0.16)] text-ink shadow-[inset_0_0_0_1px_rgba(61,123,255,0.45)]' : 'text-muted hover:bg-white/[0.04] hover:text-ink'
                 }`}
               >
-                {g.title}
-                {changed ? <span className="rounded-full bg-[rgba(61,123,255,0.25)] px-1.5 text-[10px] text-[#cfe0ff]">{changed}</span> : null}
+                <span className={`w-5 shrink-0 font-mono text-[10px] ${active ? 'text-[var(--blue-bright)]' : 'text-[rgba(140,160,200,0.6)]'}`}>{String(i + 1).padStart(2, '0')}</span>
+                <span className="min-w-0 flex-1 truncate">{s.title}</span>
+                {changed ? <span className="rounded-full bg-[rgba(255,197,61,0.16)] px-1.5 text-[10px] text-[#ffe2a0]">{changed}</span> : null}
               </button>
             );
           })}
         </nav>
       </aside>
 
-      <div className="min-w-0 space-y-6">
-        {visibleGroups.length === 0 ? <p className="text-sm text-muted">Nic nenalezeno.</p> : null}
-        {visibleGroups.map((g) => (
-          <Card key={g.id} title={g.title} subtitle={g.subtitle}>
-            <div className="grid gap-5 md:grid-cols-2">
-              {g.fields.map((f) => {
-                const long = f.long || defaults[f.path].length > 70;
-                const changed = changedFromDefault(f.path);
+      {/* mobil a tablet: výběr sekce + hledání, přilepené pod lištou */}
+      <div className="sticky top-[97px] z-20 -mx-4 mb-5 border-b border-[var(--line)] bg-[rgba(4,6,11,0.94)] px-4 py-3 backdrop-blur sm:-mx-5 sm:px-5 lg:hidden">
+        <div className="flex gap-2">
+          <label className="relative min-w-0 flex-1">
+            <span className="sr-only">Sekce webu</span>
+            <select
+              value={q ? '' : sectionId}
+              onChange={(e) => pick(e.target.value)}
+              className={`${inputClass} appearance-none pr-9`}
+            >
+              {q ? <option value="">Výsledky hledání</option> : null}
+              {EDIT_SECTIONS.map((s, i) => {
+                const changed = countChanged(s);
                 return (
-                  <div key={f.path} className={long ? 'md:col-span-2' : ''}>
-                    <Field label={f.label} hint={f.hint}>
-                      {long ? (
-                        <textarea
-                          className={`${inputClass} min-h-[76px] leading-relaxed`}
-                          value={values[f.path]}
-                          onChange={(e) => setValues((prev) => ({ ...prev, [f.path]: e.target.value }))}
-                        />
-                      ) : (
-                        <input className={inputClass} value={values[f.path]} onChange={(e) => setValues((prev) => ({ ...prev, [f.path]: e.target.value }))} />
-                      )}
-                    </Field>
-                    {changed ? (
-                      <div className="mt-1.5 flex items-start justify-between gap-3 text-xs text-muted">
-                        <span className="min-w-0 truncate">Původní: {defaults[f.path]}</span>
-                        <button type="button" className="shrink-0 text-[#9fc0ff] hover:text-ink" onClick={() => setValues((prev) => ({ ...prev, [f.path]: defaults[f.path] }))}>
-                          Vrátit původní
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
+                  <option key={s.id} value={s.id}>
+                    {String(i + 1).padStart(2, '0')} · {s.title}
+                    {changed ? ` (${changed} upraveno)` : ''}
+                  </option>
                 );
               })}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[rgba(6,9,18,0.92)] backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-end gap-4 px-5 py-3">
-          {save.state === 'idle' && dirtyCount ? <span className="text-sm text-muted">Neuložené změny: {dirtyCount}</span> : null}
-          <SaveStatus state={save.state} error={save.error} />
-          <Btn variant="primary" onClick={submit} disabled={save.busy || (!dirtyCount && save.state !== 'error')}>Uložit texty</Btn>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+          </label>
+          <div className="w-[44%] max-w-[220px] shrink-0">
+            <SearchInput value={query} onChange={setQuery} compact />
+          </div>
         </div>
       </div>
+
+      <div className="min-w-0 space-y-6">
+        {sections.length === 0 ? <p className="text-sm text-muted">Nic nenalezeno.</p> : null}
+        {sections.map((s) => {
+          const changed = countChanged(s);
+          const anchor = SECTION_ANCHOR[s.id];
+          return (
+            <section key={s.id} className="space-y-5">
+              <header className="flex flex-wrap items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg font-bold uppercase leading-tight tracking-[0.04em] sm:text-xl">{s.title}</h2>
+                  <p className="mt-1 text-xs text-muted">
+                    {countFields(s)} textů{changed ? <> · <span className="text-[#ffe2a0]">{changed} upraveno</span></> : null}
+                  </p>
+                </div>
+                {anchor !== undefined && s.id !== 'seo' ? (
+                  <a href={`/cs${anchor}`} target="_blank" rel="noreferrer" className="text-xs text-[#9fc0ff] transition-colors hover:text-ink">
+                    Otevřít na webu ↗
+                  </a>
+                ) : null}
+              </header>
+
+              {s.preview === 'serp' ? (
+                <SerpPreview title={values['meta.home.title']} description={values['meta.home.description']} ogTitle={values['meta.ogTitle']} url={SITE_URL} />
+              ) : null}
+
+              {/* rychlé skoky mezi skupinami dlouhé sekce */}
+              {!q && s.groups.length > 1 ? (
+                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                  {s.groups.map((g) => {
+                    const n = g.fields.filter((f) => changedFromDefault(f.path)).length;
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => jump(g.id)}
+                        className="shrink-0 whitespace-nowrap rounded-full border border-[var(--line)] px-3.5 py-1.5 text-xs text-muted transition-colors hover:border-[rgba(80,120,255,0.55)] hover:text-ink"
+                      >
+                        {g.title}
+                        {n ? <span className="ml-1.5 text-[#ffe2a0]">{n}</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {s.groups.map((g) => (
+                <div key={g.id} id={`skupina-${g.id}`} className="scroll-mt-40">
+                  <Card title={q ? `${s.title} · ${g.title}` : g.title}>
+                    <div className="divide-y divide-[rgba(110,150,255,0.12)]">
+                      {g.fields.map((f) => (
+                        <TextField key={f.path} field={f} value={values[f.path]} original={defaults[f.path]} onChange={(v) => set(f.path, v)} onShow={setLightbox} />
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+              ))}
+            </section>
+          );
+        })}
+      </div>
+
+      {lightbox ? <HintLightbox hint={lightbox.hint} label={lightbox.label} onClose={() => setLightbox(null)} /> : null}
+
+      <SaveBar dirtyText={dirtyCount ? `Neuložené změny: ${dirtyCount}` : ''} state={save.state} error={save.error}>
+        <Btn variant="primary" onClick={submit} disabled={save.busy || (!dirtyCount && save.state !== 'error')}>
+          Uložit texty
+        </Btn>
+      </SaveBar>
     </div>
   );
 }
@@ -649,14 +847,18 @@ export function AdminApp({
     setTab(id);
     window.history.replaceState(null, '', `#${id}`);
   };
+  // na telefonu se záložky posouvají do strany — aktivní vždy do výhledu
+  useEffect(() => {
+    document.querySelector('header nav [aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [tab]);
 
   return (
     <div className="relative min-h-dvh">
       <div aria-hidden className="pointer-events-none fixed inset-0" style={{ background: 'radial-gradient(55% 40% at 50% -5%, rgba(31,91,255,0.2), transparent 70%)' }} />
       <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[rgba(4,6,11,0.86)] backdrop-blur">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 pt-4">
-          <div className="flex items-center gap-4">
-            <Logo height={22} priority />
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pt-3.5 sm:px-5 sm:pt-4">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <Logo height={20} priority />
             <span className="rounded-full border border-[var(--line)] px-2.5 py-1 font-display text-[9px] uppercase tracking-[0.2em] text-muted">Admin</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
@@ -666,14 +868,14 @@ export function AdminApp({
             </form>
           </div>
         </div>
-        <nav className="mx-auto mt-3 flex max-w-5xl gap-1 overflow-x-auto px-5" aria-label="Sekce administrace">
+        <nav className="mx-auto mt-2.5 flex max-w-6xl gap-0.5 overflow-x-auto px-2 [mask-image:linear-gradient(90deg,#000_82%,transparent)] [scrollbar-width:none] sm:mt-3 sm:gap-1 sm:px-5 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden" aria-label="Sekce administrace">
           {TABS.map(([id, label]) => (
             <button
               key={id}
               type="button"
               onClick={() => go(id)}
               aria-current={tab === id ? 'page' : undefined}
-              className={`relative shrink-0 whitespace-nowrap px-4 pb-3 pt-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
+              className={`relative shrink-0 whitespace-nowrap px-3 pb-3 pt-2 font-display text-[10px] uppercase tracking-[0.12em] transition-colors sm:px-4 sm:text-[11px] sm:tracking-[0.14em] ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
             >
               {label}
               <span
@@ -686,7 +888,7 @@ export function AdminApp({
       </header>
 
       {/* záložky zůstávají připojené — přepnutí je okamžité a rozepsané změny se neztratí */}
-      <main className="relative mx-auto max-w-5xl px-5 py-8">
+      <main className="relative mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-8">
         <div hidden={tab !== 'projects'}><ProjectsTab projects={projects} /></div>
         <div hidden={tab !== 'texts'}><TextsTab defaults={textDefaults} overrides={textOverrides} /></div>
         <div hidden={tab !== 'pricing'}><PricingTab initial={pricing} /></div>

@@ -2,9 +2,10 @@
 
 import { motion, useMotionValueEvent, useScroll, useTransform } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeroBook, HeroLink } from '@/components/ui/HeroCta';
 import { markHeroRevealed } from '@/lib/heroReveal';
+import { introSeen } from '@/lib/scrollTo';
 import { SITE_SHOT, anchorBox, coverZoom, homography, lerpQuad, publishHeroFrame, quadCenter, screenQuad, type Quad } from '@/lib/heroScreen';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useScrollFrame } from '@/lib/useScrollFrame';
@@ -57,6 +58,19 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const seg = (v: number, [a, b]: [number, number]) => clamp01((v - a) / (b - a));
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
+/**
+ * Opakovaná návštěva v téže session (obnovení stránky, návrat z jiné
+ * stránky): úvodní nástup textů hera se znovu nepřehrává — texty jsou
+ * hned na místě. Ovlivňuje jen `transition`, ne vykreslený DOM, takže
+ * hydratace sedí.
+ */
+const IntroQuick = createContext(false);
+const QUICK = { duration: 0 };
+function useIntroTransition() {
+  const quick = useContext(IntroQuick);
+  return <T,>(t: T) => (quick ? QUICK : t);
+}
+
 /** Poloha snímku v plátně stejně jako CSS `object-fit: cover`. */
 function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, cw: number, ch: number) {
   const ir = img.naturalWidth / img.naturalHeight;
@@ -106,6 +120,7 @@ function Fly({ x, y, r = 0, className = '', children }: { x: number; y: number; 
  * zalamuje stejně jako běžný text; čtečky dostanou celou větu přes sr-only.
  */
 function ScatterHeading({ parts, className }: { parts: { text: string; accent?: boolean }[]; className: string }) {
+  const tr = useIntroTransition();
   let letterIndex = 0;
   let wordIndex = 0;
   const full = parts.map((part) => part.text).join('').trim();
@@ -126,7 +141,7 @@ function ScatterHeading({ parts, className }: { parts: { text: string; accent?: 
                   className={`inline-block whitespace-nowrap ${part.accent ? 'text-[var(--blue-bright)]' : ''}`}
                   initial={{ opacity: 0, y: '40%' }}
                   animate={{ opacity: 1, y: '0%' }}
-                  transition={{ delay: 0.4 + currentWord * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  transition={tr({ delay: 0.4 + currentWord * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
                 >
                   {[...word].map((char) => {
                     const v = letterVector(letterIndex++);
@@ -165,6 +180,9 @@ export function Hero() {
   const t = useTranslations('hero');
   const locale = useLocale();
   const reduced = useReducedMotion();
+  // úvod už viděl → nástup textů bez zpoždění (lib/scrollTo: introSeen)
+  const [quick] = useState(() => typeof window !== 'undefined' && introSeen());
+  const tr = <T,>(value: T) => (quick ? QUICK : value);
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const filmRef = useRef<HTMLDivElement>(null);
@@ -564,7 +582,7 @@ export function Hero() {
   }
 
   return (
-    <>
+    <IntroQuick.Provider value={quick}>
     <MobileHero headingParts={headingParts} headingClass={headingClass} />
     <section
       id="hero"
@@ -606,13 +624,13 @@ export function Hero() {
           />
 
           <div className={BLOCK}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={tr({ delay: 0.15 })}>
               <Fly x={220} y={-90} r={8}>
                 <motion.p
                   className="eyebrow flex items-center gap-3"
                   initial={{ opacity: 0, x: 14 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3, duration: 0.6 }}
+                  transition={tr({ delay: 0.3, duration: 0.6 })}
                 >
                   <span className="inline-block h-px w-8 bg-[var(--text-muted)]" />
                   {t('eyebrow')}
@@ -629,7 +647,7 @@ export function Hero() {
                   style={{ boxShadow: '0 0 12px 2px rgba(61,123,255,0.9), 0 0 28px 6px rgba(31,91,255,0.5)' }}
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
-                  transition={{ delay: 1.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  transition={tr({ delay: 1.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
                 />
               </Fly>
 
@@ -638,7 +656,7 @@ export function Hero() {
                   className="mt-5 max-w-sm text-base leading-relaxed text-muted"
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.85, duration: 0.7 }}
+                  transition={tr({ delay: 0.85, duration: 0.7 })}
                 >
                   {t('subtitle')}
                 </motion.p>
@@ -648,7 +666,7 @@ export function Hero() {
                 className="mt-8 flex flex-col items-start gap-5"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.1, duration: 0.7 }}
+                transition={tr({ delay: 1.1, duration: 0.7 })}
               >
                 <Fly x={200} y={200} r={10}>
                   <HeroBook href="#kontakt" label={t('ctaBook')} note={t('ctaBookNote')} />
@@ -674,7 +692,7 @@ export function Hero() {
         </div>
       </div>
     </section>
-    </>
+    </IntroQuick.Provider>
   );
 }
 
@@ -686,6 +704,7 @@ export function Hero() {
  */
 function MobileHero({ headingParts, headingClass }: { headingParts: { text: string; accent?: boolean }[]; headingClass: string }) {
   const t = useTranslations('hero');
+  const tr = useIntroTransition();
   const reduced = useReducedMotion();
   const root = useRef<HTMLElement>(null);
   const bg = useRef<HTMLDivElement>(null);
@@ -745,7 +764,7 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
                       className={`inline-block whitespace-nowrap ${part.accent ? 'text-[var(--blue-bright)]' : ''}`}
                       initial={reduced ? false : { opacity: 0, y: '45%' }}
                       animate={{ opacity: 1, y: '0%' }}
-                      transition={{ delay: 0.25 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                      transition={tr({ delay: 0.25 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
                     >
                       {word}&nbsp;
                     </motion.span>
@@ -759,12 +778,12 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
             style={{ boxShadow: '0 0 12px 2px rgba(61,123,255,0.9), 0 0 28px 6px rgba(31,91,255,0.5)' }}
             initial={reduced ? false : { scaleX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ delay: 0.9, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={tr({ delay: 0.9, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
           />
           <motion.div
             initial={reduced ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.7 }}
+            transition={tr({ delay: 0.7, duration: 0.7 })}
           >
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-muted">{t('subtitle')}</p>
             <div className="mt-6 flex flex-col items-start gap-4">

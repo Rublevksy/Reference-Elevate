@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { markIntroSeen } from './scrollTo';
 
 /**
  * Signál „hero film se rozplynul a pod ním je vidět stůl služeb".
@@ -14,6 +15,8 @@ const listeners = new Set<() => void>();
 export function markHeroRevealed() {
   if (revealed) return;
   revealed = true;
+  // úvod (hero film) je za námi — při dalším načtení v téže session se nástup textů nepřehrává
+  markIntroSeen();
   listeners.forEach((listener) => listener());
   listeners.clear();
 }

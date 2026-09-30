@@ -194,6 +194,115 @@
   .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 }
 
+/* Mimo @layer: třídy nastavuje lib/scrollTo z JS, Tailwind by je jinak vyřadil. */
+/* clona navigace (lib/scrollTo): zakryje skok na vzdálenou sekci, takže se
+   choreografie přechodů při klikání v menu nepřehrává znovu */
+.nav-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 88;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(55% 45% at 50% 42%, rgba(31, 91, 255, 0.14), transparent 70%),
+    var(--bg);
+  transition: opacity 170ms cubic-bezier(0.4, 0, 1, 1);
+}
+.nav-veil[data-on] { opacity: 1; }
+.nav-veil[data-out] { transition: opacity 460ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* cíl navigace se po příjezdu krátce rozsvítí (např. karta v Ceníku) */
+[data-nav-highlight][data-arrived] {
+  animation: nav-arrive 2.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes nav-arrive {
+  0% { outline: 2px solid rgba(140, 175, 255, 0); outline-offset: 16px; filter: drop-shadow(0 0 0 rgba(61, 123, 255, 0)); }
+  22% { outline: 2px solid rgba(140, 175, 255, 0.95); outline-offset: 5px; filter: drop-shadow(0 0 26px rgba(61, 123, 255, 0.55)); }
+  70% { outline: 2px solid rgba(140, 175, 255, 0.55); outline-offset: 5px; filter: drop-shadow(0 0 18px rgba(61, 123, 255, 0.35)); }
+  100% { outline: 2px solid rgba(140, 175, 255, 0); outline-offset: 5px; filter: drop-shadow(0 0 0 rgba(61, 123, 255, 0)); }
+}
+
+/* úvodní clona (components/ui/Preloader): živé pozadí — jen transform/opacity, běží na GPU */
+.pl-seen .preloader { display: none; }
+.splash-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  will-change: transform;
+}
+.splash-glow-a {
+  width: 62vmax;
+  height: 62vmax;
+  left: -12vmax;
+  top: -18vmax;
+  background: radial-gradient(circle, rgba(31, 91, 255, 0.42), transparent 62%);
+  animation: splash-drift-a 7s ease-in-out infinite alternate;
+}
+.splash-glow-b {
+  width: 54vmax;
+  height: 54vmax;
+  right: -14vmax;
+  bottom: -20vmax;
+  background: radial-gradient(circle, rgba(0, 182, 255, 0.26), transparent 62%);
+  animation: splash-drift-b 8s ease-in-out infinite alternate;
+}
+@keyframes splash-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(14vmax, 10vmax, 0) scale(1.12); }
+}
+@keyframes splash-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to { transform: translate3d(-12vmax, -9vmax, 0) scale(0.92); }
+}
+.splash-grid {
+  position: absolute;
+  inset: -40px;
+  background-image:
+    linear-gradient(rgba(80, 120, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 120, 255, 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(60% 55% at 50% 50%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(60% 55% at 50% 50%, #000 20%, transparent 75%);
+  animation: splash-grid 6s linear infinite;
+}
+@keyframes splash-grid {
+  to { transform: translate3d(40px, 40px, 0); }
+}
+.splash-logo {
+  animation: splash-logo-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+@keyframes splash-logo-in {
+  from { clip-path: inset(0 100% 0 0); filter: blur(10px); opacity: 0.4; }
+  to { clip-path: inset(0 0 0 0); filter: blur(0); opacity: 1; }
+}
+.splash-progress {
+  animation: splash-progress 1.3s cubic-bezier(0.45, 0, 0.2, 1) 0.1s both;
+}
+@keyframes splash-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+/* světelný pruh, který jednou projede obrazovku shora dolů */
+.splash-scan {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 30vh;
+  background: linear-gradient(180deg, transparent, rgba(61, 123, 255, 0.07) 45%, rgba(160, 200, 255, 0.12) 60%, transparent);
+  transform: translate3d(0, -40vh, 0);
+  animation: splash-scan 2.4s cubic-bezier(0.45, 0, 0.2, 1) 0.2s forwards;
+}
+@keyframes splash-scan {
+  to { transform: translate3d(0, 120vh, 0); }
+}
+
+/* administrace: šipka obrazové nápovědy jemně „ťuká" směrem k místu na webu */
+.hint-arrow { animation: hint-nudge 1.4s ease-in-out infinite; }
+@keyframes hint-nudge {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(var(--nx, 0px), var(--ny, 0px), 0); }
+}
+
 /* Split-text reveal primitives used by lib/animations */
 .line-mask { overflow: hidden; display: block; }
 .line-mask > span { display: inline-block; will-change: transform; }

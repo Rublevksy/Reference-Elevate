@@ -6,7 +6,7 @@ import { usePathname } from '@/i18n/navigation';
 import { useEffect, useRef } from 'react';
 import { ScrollTrigger, gsap } from './gsap';
 import { useReducedMotion } from './useReducedMotion';
-import { jumpTo, scrollToId } from './scrollTo';
+import { arriveAtHash, jumpTo, navigateTo, resolveTarget } from './scrollTo';
 
 /**
  * Lenis + ScrollTrigger. Lenis řídí scroll, GSAP se na něj jen věší —
@@ -43,7 +43,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     };
   }, [reduced]);
 
-  // Všechny kotvy na stránce (#sekce) = okamžitý skok, bez plynulého dojezdu
+  // Všechny kotvy na stránce (#sekce) = rychlý přesun bez přehrávání přechodů (lib/scrollTo)
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -51,9 +51,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       if (!link) return;
       const href = link.getAttribute('href') ?? '';
       const hash = href.startsWith('#') ? href : href.startsWith('/#') ? href.slice(1) : '';
-      if (!hash || hash.length < 2 || !document.getElementById(hash.slice(1))) return;
+      if (!hash || hash.length < 2 || !resolveTarget(hash)) return;
       event.preventDefault();
-      scrollToId(hash);
+      navigateTo(hash.slice(1));
     };
     document.addEventListener('click', onClick);
     return () => document.removeEventListener('click', onClick);
@@ -95,9 +95,23 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       raf = requestAnimationFrame(hold);
       return () => cancelAnimationFrame(raf);
     }
-    lenisRef.current?.scrollTo(0, { immediate: true });
+    // příjezd s #kotvou (menu z jiné stránky, přesměrování ze starých adres
+    // služeb, sdílený odkaz): skok přímo na sekci pod clonou; kotva se pak
+    // z adresy smaže, ať obnovení stránky nevrací návštěvníka zpátky
+    const hash = window.location.hash;
+    let raf = 0;
+    if (hash.length > 1) {
+      raf = requestAnimationFrame(() => {
+        if (arriveAtHash(hash)) {
+          window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+        } else lenisRef.current?.scrollTo(0, { immediate: true });
+      });
+    } else lenisRef.current?.scrollTo(0, { immediate: true });
     const id = window.setTimeout(() => ScrollTrigger.refresh(), 120);
-    return () => window.clearTimeout(id);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(id);
+    };
   }, [pathname]);
 
   return <>{children}</>;

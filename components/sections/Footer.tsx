@@ -9,21 +9,18 @@ import { Logo } from '@/components/ui/Logo';
 import { serviceSlugs } from '@/content/services';
 import { site } from '@/content/site';
 import { poseSprite } from '@/content/mascot';
-import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useSiteContact } from '@/components/ContentProvider';
+import { SectionLink } from '@/components/ui/SectionLink';
+import { navigateToTop } from '@/lib/scrollTo';
 
 export function Footer() {
   const { contactEmail, city, social } = useSiteContact();
   const t = useTranslations('footer');
   const tServices = useTranslations('services.items');
   const tNav = useTranslations('nav');
-  const reduced = useReducedMotion();
 
-  const toTop = () => {
-    const lenis = window.__lenis;
-    if (lenis) lenis.scrollTo(0, { duration: 1.4 });
-    else window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
-  };
+  // nahoru bez projíždění celého webu pozpátku (lib/scrollTo)
+  const toTop = () => navigateToTop();
 
   return (
     <footer className="relative mt-24 overflow-hidden border-t border-[var(--line)] pt-20">
@@ -38,9 +35,10 @@ export function Footer() {
           <ul className="space-y-2.5">
             {serviceSlugs.map((slug) => (
               <li key={slug}>
-                <Link href={`/sluzby/${slug}`} className="text-sm text-muted transition-colors hover:text-ink">
+                {/* panel dané služby v sekci Služby (desktop: místo ve scéně, mobil: blok služby) */}
+                <SectionLink to={`sluzba-${slug}`} className="text-sm text-muted transition-colors hover:text-ink">
                   {tServices(`${slug}.card`)}
-                </Link>
+                </SectionLink>
               </li>
             ))}
           </ul>
@@ -49,9 +47,9 @@ export function Footer() {
         <nav aria-label={t('studio')}>
           <h2 className="eyebrow mb-4">{t('studio')}</h2>
           <ul className="space-y-2.5 text-sm text-muted">
-            <li><a href="#proces" className="transition-colors hover:text-ink">{tNav('process')}</a></li>
-            <li><a href="#reference" className="transition-colors hover:text-ink">{tNav('references')}</a></li>
-            <li><a href="#cenik" className="transition-colors hover:text-ink">{tNav('pricing')}</a></li>
+            <li><SectionLink to="proces" className="transition-colors hover:text-ink">{tNav('process')}</SectionLink></li>
+            <li><SectionLink to="reference" className="transition-colors hover:text-ink">{tNav('references')}</SectionLink></li>
+            <li><SectionLink to="cenik" className="transition-colors hover:text-ink">{tNav('pricing')}</SectionLink></li>
             <li>
               <Link href="/ochrana-osobnich-udaju" className="transition-colors hover:text-ink">
                 {t('privacy')}
