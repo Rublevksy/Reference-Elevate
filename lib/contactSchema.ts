@@ -15,14 +15,16 @@ export const CONTACT_OPTIONS = {
   colors: 8,
   budgets: 6,
   timelines: 4,
-  channels: 3,
+  channels: 4,
 } as const;
 
 /** contact.starts[1] = „starý web" → chceme jeho adresu */
 export const START_OLD_SITE = 1;
 /** contact.niches[7] = „jiný obor" → upřesnění je nejdůležitější */
 export const NICHE_OTHER = 7;
-export const CHANNEL = { email: 0, phone: 1, telegram: 2 } as const;
+/** indexy do contact.channels (WhatsApp přibyl jako 4. — pořadí na webu určuje CHANNEL_ORDER) */
+export const CHANNEL = { email: 0, phone: 1, telegram: 2, whatsapp: 3 } as const;
+export const CHANNEL_ORDER = [CHANNEL.email, CHANNEL.whatsapp, CHANNEL.phone, CHANNEL.telegram];
 export const MAX_REFS = 4;
 
 /** Odstíny k contact.colors (stejné pořadí). */
@@ -38,6 +40,7 @@ export type ContactMessages = {
   name: string;
   email: string;
   phone: string;
+  whatsapp: string;
   telegram: string;
   message: string;
   site: string;
@@ -55,6 +58,7 @@ export const serverMessages: ContactMessages = {
   name: 'Enter your name.',
   email: 'Check the e-mail format.',
   phone: 'Enter a phone number.',
+  whatsapp: 'Enter a WhatsApp number.',
   telegram: 'Enter a Telegram username.',
   message: 'The message is too long.',
   site: 'The address is too long.',
@@ -95,6 +99,8 @@ export const makeContactSchema = (m: ContactMessages) =>
     message: text(2000, m.message),
     consent: z.literal(true, { message: m.consent }),
     locale: z.string().max(5).optional(),
+    /** token Cloudflare Turnstile (ochrana proti robotům) */
+    captcha: z.string().max(4096).optional(),
     /**
      * Honeypot — skryté pole, které vyplní jen robot.
      * Schválně ho neodmítáme validací: API se tváří, že je vše v pořádku,
@@ -106,16 +112,20 @@ export const makeContactSchema = (m: ContactMessages) =>
 export const contactSchema = makeContactSchema(serverMessages);
 export type ContactInput = z.infer<typeof contactSchema>;
 
-type Conditional = 'currentSite' | 'phone' | 'telegram';
+type ConditionalField = 'currentSite' | 'phone' | 'telegram';
+/** pole + klíč hlášky (WhatsApp používá pole telefonu, ale vlastní hlášku) */
+export type Conditional = { field: ConditionalField; message: 'currentSite' | 'phone' | 'whatsapp' | 'telegram' };
 
 /**
- * Pole povinná jen podle jiné odpovědi (starý web → adresa, telefon →
- * číslo…). Kontroluje je formulář před dalším krokem i server.
+ * Pole povinná jen podle jiné odpovědi (starý web → adresa, telefon nebo
+ * WhatsApp → číslo, Telegram → jméno). Kontroluje je formulář i server.
  */
 export function conditionalIssues(v: Partial<Pick<ContactInput, 'start' | 'currentSite' | 'channel' | 'phone' | 'telegram'>>): Conditional[] {
   const out: Conditional[] = [];
-  if (v.start === START_OLD_SITE && !(v.currentSite ?? '').trim()) out.push('currentSite');
-  if (v.channel === CHANNEL.phone && (v.phone ?? '').replace(/\D/g, '').length < 6) out.push('phone');
-  if (v.channel === CHANNEL.telegram && (v.telegram ?? '').replace(/^@/, '').trim().length < 3) out.push('telegram');
+  const phoneOk = (v.phone ?? '').replace(/\D/g, '').length >= 6;
+  if (v.start === START_OLD_SITE && !(v.currentSite ?? '').trim()) out.push({ field: 'currentSite', message: 'currentSite' });
+  if (v.channel === CHANNEL.phone && !phoneOk) out.push({ field: 'phone', message: 'phone' });
+  if (v.channel === CHANNEL.whatsapp && !phoneOk) out.push({ field: 'phone', message: 'whatsapp' });
+  if (v.channel === CHANNEL.telegram && (v.telegram ?? '').replace(/^@/, '').trim().length < 3) out.push({ field: 'telegram', message: 'telegram' });
   return out;
 }

@@ -493,10 +493,12 @@
     "channels": [
       "E-mail",
       "Phone",
-      "Telegram"
+      "Telegram",
+      "WhatsApp"
     ],
     "phoneLabel": "Phone",
     "phonePlaceholder": "+420 777 123 456",
+    "whatsappLabel": "WhatsApp",
     "telegramLabel": "Telegram",
     "telegramPlaceholder": "@username",
     "messageLabel": "Anything else we should know?",
@@ -567,7 +569,8 @@
       "channels": [
         "E-mail is the safe bet. We'll send a clear proposal with the price.",
         "We'll call on a weekday. It takes about fifteen minutes.",
-        "Telegram? We'll message you there — we reply fast."
+        "Telegram? We'll message you there — we reply fast.",
+        "WhatsApp is the quickest. We'll send the proposal there, price included."
       ]
     },
     "consent": "I agree to the processing of my personal data for the purpose of handling this enquiry.",
@@ -591,7 +594,10 @@
       "budget": "Pick a range — “Not sure yet” is fine too.",
       "timeline": "Pick when you need it.",
       "phone": "Add a phone number so we can call you.",
-      "telegram": "Add your Telegram username."
+      "telegram": "Add your Telegram username.",
+      "whatsapp": "Add the number you use for WhatsApp.",
+      "captcha": "The spam check didn't pass. Please reload the page and try again.",
+      "captchaWait": "One moment — we're checking you're not a robot. Try again in a few seconds."
     }
   },
   "footer": {
@@ -658,7 +664,7 @@
       },
       {
         "title": "2. What data we process",
-        "body": "We process the data you fill in yourself in the enquiry form: name, email, optionally phone, the address of your current website and the message text. Plus the technical record of the sender's IP address, used solely to protect the form from abuse."
+        "body": "We process the data you enter in the enquiry form yourself: your name, e-mail and, optionally, phone, WhatsApp or Telegram, information about the project (type, industry, starting point, budget, timing, links to websites you like) and your message. We also process the sender's IP address, solely to protect the form against abuse."
       },
       {
         "title": "3. Why we process it",
@@ -670,7 +676,7 @@
       },
       {
         "title": "5. Who we share it with",
-        "body": "Emails are delivered by Resend (Resend, Inc.). The site is hosted on Vercel. If analytics is enabled, we use the cookieless tool Plausible. We never sell data or pass it on for third-party marketing."
+        "body": "Enquiries are stored in a Supabase database (Supabase, Inc.) that only the site administrator can access. E-mails are delivered by Resend (Resend, Inc.). The form is protected against bots by Cloudflare Turnstile (Cloudflare, Inc.), which checks technical browser data on submission — with no advertising cookies. The website is hosted on Vercel. If analytics is enabled, we use the cookieless tool Plausible. We do not sell any data or share it with third parties for marketing purposes."
       },
       {
         "title": "6. Cookies",

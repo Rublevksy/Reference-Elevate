@@ -10,6 +10,7 @@ import type { ProjectRow } from '@/lib/content/projects';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/supabase/requireAdmin';
 import { supabaseServer } from '@/lib/supabase/server';
+import { resolveSocial, type SocialInput } from '@/lib/social';
 import { INQUIRY_PREFIX, readInquiries, type Inquiry, type InquiryStatus } from '@/lib/content/inquiries';
 export type { Inquiry, InquiryStatus } from '@/lib/content/inquiries';
 
@@ -179,7 +180,8 @@ export type SettingsInput = {
   city: string;
   legalName: string;
   ico: string;
-  social: { instagram: string; linkedin: string; behance: string };
+  /** sítě a messengery v pořadí, jak se ukážou na webu */
+  social: SocialInput[];
 };
 
 export async function saveSettings(input: SettingsInput): Promise<Result> {
@@ -189,13 +191,14 @@ export async function saveSettings(input: SettingsInput): Promise<Result> {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'Neplatný e-mail.' };
     const ico = input.ico.replace(/\s+/g, '');
     if (ico && !/^\d{8}$/.test(ico)) return { ok: false, error: 'IČO má 8 číslic.' };
-    const social: Record<string, string> = {};
-    for (const [k, v] of Object.entries(input.social)) {
-      const url = v.trim();
-      if (url && !/^https?:\/\//.test(url)) return { ok: false, error: `Odkaz ${k} musí začínat https://` };
-      social[k] = url;
+    const social: SocialInput[] = [];
+    for (const item of input.social.slice(0, 16)) {
+      if (!item.label.trim() && !item.value.trim()) continue;
+      const r = resolveSocial(item);
+      if (!r.ok) return { ok: false, error: r.error };
+      social.push({ label: item.label.trim().slice(0, 40), value: item.value.trim().slice(0, 300) });
     }
-    const data = { contact_email: email, city: input.city.trim(), legal_name: input.legalName.trim(), ico, social };
+    const data = { contact_email: email, city: input.city.trim(), legal_name: input.legalName.trim(), ico, social_links: social };
     const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'settings', data });
     if (error) throw error;
     publish();

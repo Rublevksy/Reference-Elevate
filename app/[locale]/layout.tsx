@@ -19,7 +19,8 @@ import { getProjects, getSettings, getSiteStatus } from '@/lib/content/server';
 import { MaintenancePreview, MaintenanceScreen } from '@/components/ui/MaintenanceScreen';
 
 /**
- * Cyrilici tahá jen ru/uk — pro cs/en by to byla čtvrt megabajtu navíc.
+ * Cyrilici tahá jen ru/uk — pro cs/en by to byla čtvrt megabajtu navíc
+ * (latinka se přednačítá, cyrilice ne).
  * Rukopisné Caveat se používá až v jedné sekci, proto bez preloadu.
  */
 const displayLatin = Unbounded({
@@ -27,7 +28,8 @@ const displayLatin = Unbounded({
   variable: '--font-display',
   display: 'swap',
   weight: ['600', '700'],
-  preload: false,
+  // nadpis úvodní obrazovky je největší prvek stránky (LCP) — písmo hned
+  preload: true,
 });
 
 const displayCyrillic = Unbounded({
@@ -126,7 +128,7 @@ export default async function LocaleLayout({
       postalCode: site.address.postalCode,
       addressCountry: site.address.country,
     },
-    sameAs: settings.social.map((s) => s.href),
+    sameAs: settings.social.filter((s) => s.kind === 'social').map((s) => s.href),
   };
 
   // obrazovka údržby střídá i ruštinu a ukrajinštinu → písmo s cyrilicí

@@ -36,7 +36,7 @@ const STYLES = ['Minimalistický', 'Výrazný', 'Prémiový', 'Hravý', 'Technic
 const COLORS = ['Modrá', 'Černá', 'Bílá', 'Zelená', 'Červená', 'Oranžová', 'Fialová', 'Zlatá'];
 const BUDGETS = ['do 10 000', '10–30 000', '30–60 000', '60–120 000', 'nad 120 000', 'Zatím nevím'];
 const TIMELINES = ['Co nejdřív', 'Do měsíce', 'Do tří měsíců', 'Nespěchá'];
-const CHANNELS = ['E-mail', 'Telefon', 'Telegram'];
+const CHANNELS = ['E-mail', 'Telefon', 'Telegram', 'WhatsApp'];
 const STEP_NAMES = ['Projekt', 'Výchozí stav', 'Vzhled', 'Rozpočet', 'Kontakt'];
 
 export const EDIT_SECTIONS: EditSection[] = [
@@ -225,6 +225,7 @@ export const EDIT_SECTIONS: EditSection[] = [
           f('contact.channelLabel', 'Popisek — jak se ozvat'),
           ...options('contact.channels', CHANNELS),
           f('contact.phoneLabel', 'Popisek — telefon'),
+          f('contact.whatsappLabel', 'Popisek — WhatsApp'),
           f('contact.telegramLabel', 'Popisek — Telegram'),
           f('contact.messageLabel', 'Popisek — zpráva'),
           f('contact.messagePlaceholder', 'Nápověda v poli zpráva'),

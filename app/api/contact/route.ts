@@ -76,6 +76,21 @@ export async function POST(request: Request) {
 
   const data = parsed.data;
 
+  // Cloudflare Turnstile: s nastaveným tajným klíčem musí token projít ověřením
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (secret) {
+    let human = false;
+    try {
+      const body = new URLSearchParams({ secret, response: data.captcha ?? '', remoteip: ip });
+      const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
+      const out = (await res.json()) as { success?: boolean; action?: string };
+      human = Boolean(out.success) && (!out.action || out.action === 'contact');
+    } catch (error) {
+      console.error('[contact] ověření Turnstile selhalo', error);
+    }
+    if (!human) return NextResponse.json({ ok: false, code: 'captcha' }, { status: 403 });
+  }
+
   // Honeypot vyplněn → tváříme se, že je vše v pořádku, ale nic neodesíláme.
   if (data.website) {
     return NextResponse.json({ ok: true });
@@ -102,7 +117,11 @@ export async function POST(request: Request) {
   const refs = (data.refs ?? []).map((r) => r.trim()).filter(Boolean);
   const channel = one(c.channels, data.channel);
   const reach =
-    data.channel === CHANNEL.phone ? `${channel}: ${data.phone}` : data.channel === CHANNEL.telegram ? `${channel}: ${data.telegram}` : channel;
+    data.channel === CHANNEL.phone || data.channel === CHANNEL.whatsapp
+      ? `${channel}: ${data.phone}`
+      : data.channel === CHANNEL.telegram
+        ? `${channel}: ${data.telegram}`
+        : channel;
 
   const sections: Section[] = [
     {

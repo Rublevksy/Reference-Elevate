@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarDays, Check, Lightbulb, Loader2, Mail, MapPin, Phone, Plus, RefreshCw, Send, Sparkles, X } from 'lucide-react';
+import { BookOpen, CalendarDays, Check, FileText, Image as ImageIcon, Loader2, Mail, MapPin, PenTool, Phone, Plus, Sparkles, Type, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import { SpeechBubble } from '@/components/mascot/SpeechBubble';
 import type { Pose } from '@/content/mascot';
 import {
   CHANNEL,
+  CHANNEL_ORDER,
   COLOR_SWATCHES,
   MAX_REFS,
   NICHE_OTHER,
@@ -25,6 +26,8 @@ import {
 } from '@/lib/contactSchema';
 import { site } from '@/content/site';
 import { useSiteContact } from '@/components/ContentProvider';
+import { SocialIcon } from '@/components/ui/SocialIcon';
+import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/ui/Turnstile';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 /* Pět kroků kvalifikačního formuláře — která pole který krok kontroluje. */
@@ -44,8 +47,40 @@ const UNSURE = { needs: 6, styles: 5, budgets: 5 } as const;
 
 type Reactions = Record<'needs' | 'niches' | 'starts' | 'styles' | 'budgets' | 'timelines' | 'channels', string[]>;
 
-const START_ICONS = [Sparkles, RefreshCw, Lightbulb];
-const CHANNEL_ICONS = [Mail, Phone, Send];
+/** ikony podkladů: logo, texty, fotky, grafický manuál */
+const ASSET_ICONS = [PenTool, Type, ImageIcon, BookOpen];
+
+/**
+ * Liniové ilustrace k volbám „odkud začínáme" — neonová kresba místo
+ * obecné ikony: prázdné plátno, starý web s obnovou, nápad.
+ */
+const START_ART: ReactNode[] = [
+  <svg key="0" viewBox="0 0 72 44" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="6" y="5" width="46" height="34" rx="5" strokeDasharray="3.5 3.5" opacity="0.55" />
+    <path d="M29 15v14M22 22h14" />
+    <path d="M60 8v6M57 11h6M63 26v4M61 28h4" opacity="0.8" />
+  </svg>,
+  <svg key="1" viewBox="0 0 72 44" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="5" width="44" height="34" rx="4" opacity="0.6" />
+    <path d="M4 12h44" opacity="0.6" />
+    <path d="M10 19h18M10 25h12M10 31h16" opacity="0.45" />
+    <path d="M66 18a10 10 0 1 0-2.6 10.2" />
+    <path d="M66 10v8h-8" />
+  </svg>,
+  <svg key="2" viewBox="0 0 72 44" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M36 9a11 11 0 0 0-6.5 19.9c1.3 1 2 2.2 2 3.6V34h9v-1.5c0-1.4.7-2.6 2-3.6A11 11 0 0 0 36 9Z" />
+    <path d="M32 38h8" />
+    <path d="M36 20v6M33 23h6" opacity="0.7" />
+    <path d="M18 18h-5M59 18h-5M22 7l-3.5-3.5M50 7l3.5-3.5" opacity="0.6" />
+  </svg>,
+];
+/** ikona kanálu podle indexu v contact.channels (e-mail, telefon, Telegram, WhatsApp) */
+function ChannelIcon({ index, className }: { index: number; className: string }) {
+  if (index === CHANNEL.whatsapp) return <SocialIcon brand="whatsapp" className={className} />;
+  if (index === CHANNEL.telegram) return <SocialIcon brand="telegram" className={className} />;
+  const Icon = index === CHANNEL.phone ? Phone : Mail;
+  return <Icon className={className} aria-hidden />;
+}
 
 /** Miniatura stylu — malý abstraktní náhled místo slovního popisu. */
 const STYLE_PREVIEWS: ReactNode[] = [
@@ -128,14 +163,6 @@ function Group({ label, hint, optional, error, children, htmlFor }: { label: str
   );
 }
 
-function Tick() {
-  return (
-    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--blue-bright)] text-white shadow-[0_0_10px_rgba(61,123,255,0.9)]">
-      <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
-    </span>
-  );
-}
-
 export function Contact() {
   const { contactEmail, city, social } = useSiteContact();
   const t = useTranslations('contact');
@@ -147,6 +174,7 @@ export function Contact() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const [serverError, setServerError] = useState<string | null>(null);
   const [said, setSaid] = useState<{ text: string; pose: Pose } | null>(null);
+  const [captcha, setCaptcha] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
   const nicheDetailRef = useRef<HTMLInputElement | null>(null);
 
@@ -177,6 +205,7 @@ export function Contact() {
         name: t('errors.name'),
         email: t('errors.email'),
         phone: t('errors.phone'),
+        whatsapp: t('errors.whatsapp'),
         telegram: t('errors.telegram'),
         message: t('errors.message'),
         site: t('errors.site'),
@@ -255,8 +284,8 @@ export function Contact() {
   /** Kontrola jednoho kroku: schéma + pole povinná podle jiné odpovědi. */
   const validateStep = async (s: number) => {
     const ok = await trigger(STEP_FIELDS[s]);
-    const conditional = conditionalIssues(getValues()).filter((name) => STEP_FIELDS[s].includes(name));
-    conditional.forEach((name) => setError(name, { message: t(`errors.${name}`) }));
+    const conditional = conditionalIssues(getValues()).filter((c) => STEP_FIELDS[s].includes(c.field));
+    conditional.forEach((c) => setError(c.field, { message: t(`errors.${c.message}`) }));
     return ok && conditional.length === 0;
   };
 
@@ -293,7 +322,11 @@ export function Contact() {
   const onSubmit = async (values: ContactInput) => {
     const conditional = conditionalIssues(values);
     if (conditional.length) {
-      conditional.forEach((name) => setError(name, { message: t(`errors.${name}`) }));
+      conditional.forEach((c) => setError(c.field, { message: t(`errors.${c.message}`) }));
+      return;
+    }
+    if (TURNSTILE_SITE_KEY && !captcha) {
+      setServerError(t('errors.captchaWait'));
       return;
     }
     setStatus('sending');
@@ -302,12 +335,12 @@ export function Contact() {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, refs: values.refs.filter((r) => r.trim()), locale }),
+        body: JSON.stringify({ ...values, refs: values.refs.filter((r) => r.trim()), locale, captcha }),
       });
       const data = (await response.json()) as { ok?: boolean; code?: string; to?: string };
       if (!response.ok || !data.ok) {
         const code = data.code ?? 'generic';
-        const key = ['rate', 'server', 'send'].includes(code) ? code : 'generic';
+        const key = ['rate', 'server', 'send', 'captcha'].includes(code) ? code : 'generic';
         throw new Error(key === 'send' ? `${t('errors.send')} ${data.to ?? contactEmail}` : t(`errors.${key}`));
       }
       setStatus('done');
@@ -319,7 +352,7 @@ export function Contact() {
 
   // neplatné odeslání: ukázat i chyby polí povinných podle jiné odpovědi (telefon…)
   const onInvalid = () => {
-    conditionalIssues(getValues()).forEach((name) => setError(name, { message: t(`errors.${name}`) }));
+    conditionalIssues(getValues()).forEach((c) => setError(c.field, { message: t(`errors.${c.message}`) }));
   };
 
   // Enter v textovém poli = další krok (ne odeslání rozpracovaného formuláře)
@@ -399,38 +432,56 @@ export function Contact() {
                 </motion.div>
               ) : (
                 <motion.form key="form" onSubmit={handleSubmit(onSubmit, onInvalid)} onKeyDown={onKeyDown} initial={{ opacity: 0 }} animate={{ opacity: 1 }} noValidate>
-                  {/* průběh: pět pojmenovaných úseků, hotové jdou rozkliknout */}
-                  <div className="mb-5">
-                    <div className="flex items-baseline justify-between gap-4 text-[11px] uppercase tracking-[0.18em] text-muted">
+                  {/* průběh: neonová kolejnice s uzly (jako sekce Proces), hotové kroky jdou rozkliknout */}
+                  <div className="mb-6">
+                    <div className="flex items-baseline justify-between gap-4 font-display text-[10px] uppercase tracking-[0.2em] text-muted">
                       <span>
-                        {t('stepLabel')} <span className="text-ink">{step + 1}</span> / {steps.length}
+                        {t('stepLabel')} <span className="text-ink">{String(step + 1).padStart(2, '0')}</span> / {String(steps.length).padStart(2, '0')}
                       </span>
-                      <span className="truncate text-[var(--blue-bright)] sm:hidden">{steps[step]}</span>
+                      <span className="truncate text-[#9fc0ff] sm:hidden">{steps[step]}</span>
                     </div>
-                    <ol className="mt-3 grid grid-cols-5 gap-1.5">
+                    <ol className="relative mt-4 grid grid-cols-5">
+                      {/* kolejnice: podklad, náplň s kometou */}
+                      <span aria-hidden className="pointer-events-none absolute left-[10%] right-[10%] top-[17px] h-[2px] rounded-full bg-[rgba(110,150,255,0.16)]" />
+                      <span aria-hidden className="pointer-events-none absolute left-[10%] right-[10%] top-[17px] h-[2px]">
+                        <motion.span
+                          className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,var(--blue),#5fa8ff)] shadow-[0_0_10px_rgba(61,123,255,0.9)]"
+                          initial={false}
+                          animate={{ width: `${(step / (steps.length - 1)) * 100}%` }}
+                          transition={{ duration: reduced ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-[#dbe8ff] shadow-[0_0_12px_4px_rgba(61,123,255,0.9)]" />
+                        </motion.span>
+                      </span>
                       {steps.map((label, i) => {
                         const reachable = i <= maxStep || i === step + 1;
+                        const done = i < step;
+                        const current = i === step;
                         return (
-                          <li key={label}>
+                          <li key={label} className="relative flex justify-center">
                             <button
                               type="button"
                               onClick={() => void goStep(i)}
                               disabled={!reachable}
-                              aria-current={i === step ? 'step' : undefined}
+                              aria-current={current ? 'step' : undefined}
                               aria-label={`${t('stepLabel')} ${i + 1}: ${label}`}
-                              className="group block w-full text-left disabled:cursor-default"
+                              className="group flex flex-col items-center disabled:cursor-default"
                             >
-                              <span className="block h-1 overflow-hidden rounded-full bg-white/[0.07]">
-                                <motion.span
-                                  className="block h-full rounded-full bg-[linear-gradient(90deg,var(--blue),var(--blue-bright))]"
-                                  initial={false}
-                                  animate={{ width: i <= step ? '100%' : '0%', opacity: i === step ? 1 : 0.75 }}
-                                  transition={{ duration: reduced ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-                                />
+                              <span
+                                className={`relative grid h-9 w-9 place-items-center rounded-full border font-display text-[10px] transition-[background,border-color,box-shadow,color] duration-500 ${
+                                  current
+                                    ? 'border-[#8fb2ff] bg-[radial-gradient(circle_at_50%_35%,#2a4fb8,#0c1638)] text-white shadow-[0_0_0_4px_rgba(31,91,255,0.16),0_0_22px_rgba(61,123,255,0.75)]'
+                                    : done
+                                      ? 'border-transparent bg-[linear-gradient(135deg,var(--blue),var(--blue-bright))] text-white shadow-[0_0_12px_rgba(31,91,255,0.55)]'
+                                      : 'border-[rgba(110,150,255,0.25)] bg-[#0b1227] text-muted group-enabled:group-hover:border-[rgba(150,185,255,0.6)] group-enabled:group-hover:text-ink'
+                                }`}
+                              >
+                                {current && !reduced ? <span aria-hidden className="rail-pulse absolute inset-0 rounded-full" /> : null}
+                                {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : String(i + 1).padStart(2, '0')}
                               </span>
                               <span
-                                className={`mt-2 hidden truncate text-[10px] uppercase tracking-[0.14em] transition-colors sm:block ${
-                                  i === step ? 'text-ink' : i <= maxStep ? 'text-muted group-hover:text-ink' : 'text-muted/50'
+                                className={`mt-2 hidden max-w-full truncate text-[10px] uppercase tracking-[0.12em] transition-colors sm:block ${
+                                  current ? 'text-ink' : done ? 'text-[#9fc0ff] group-hover:text-ink' : 'text-muted/60'
                                 }`}
                               >
                                 {label}
@@ -545,26 +596,25 @@ export function Contact() {
                       {step === 1 ? (
                         <div className="mt-5 space-y-5">
                           <Group label={t('startLabel')} error={errors.start?.message}>
-                            <div className="grid gap-2 sm:grid-cols-3">
+                            <div className="grid gap-2.5 sm:grid-cols-3">
                               {starts.map((item, i) => {
-                                const Icon = START_ICONS[i] ?? Sparkles;
                                 const on = v.start === i;
                                 return (
                                   <button
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className="neon-tile sm:flex-col sm:items-start sm:gap-3"
+                                    className="option-card group"
                                     onClick={() => {
                                       choose('start', i);
                                       react('starts', i);
                                     }}
                                   >
-                                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors ${on ? 'border-[var(--blue-bright)] text-[var(--blue-bright)]' : 'border-[var(--line)] text-muted'}`}>
-                                      <Icon className="h-[18px] w-[18px]" aria-hidden />
+                                    <span className="option-art" aria-hidden>
+                                      {START_ART[i]}
                                     </span>
-                                    <span className="leading-snug">{item}</span>
-                                    {on ? <span className="absolute right-3 top-3"><Tick /></span> : null}
+                                    <span className="relative min-w-0 flex-1 text-[13.5px] leading-snug">{item}</span>
+                                    <span className="option-radio" aria-hidden />
                                   </button>
                                 );
                               })}
@@ -589,13 +639,18 @@ export function Contact() {
                           </AnimatePresence>
 
                           <Group label={t('assetsLabel')} optional={t('optional')}>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                               {assets.map((item, i) => {
                                 const on = v.assets.includes(i);
+                                const Icon = ASSET_ICONS[i] ?? FileText;
                                 return (
-                                  <Chip key={item} on={on} multi onClick={() => toggle('assets', i)}>
-                                    {item}
-                                  </Chip>
+                                  <button key={item} type="button" aria-pressed={on} className="asset-tile group" onClick={() => toggle('assets', i)}>
+                                    <span className="asset-check" aria-hidden>
+                                      <Check className="h-2.5 w-2.5" strokeWidth={4} />
+                                    </span>
+                                    <Icon className="asset-icon h-5 w-5" aria-hidden />
+                                    <span className="text-[12.5px] leading-tight">{item}</span>
+                                  </button>
                                 );
                               })}
                             </div>
@@ -773,9 +828,10 @@ export function Contact() {
                           </div>
 
                           <Group label={t('channelLabel')}>
-                            <div className="grid grid-cols-3 gap-2">
-                              {channels.map((item, i) => {
-                                const Icon = CHANNEL_ICONS[i] ?? Mail;
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                              {CHANNEL_ORDER.map((i) => {
+                                const item = channels[i];
+                                if (!item) return null;
                                 const on = v.channel === i;
                                 return (
                                   <button
@@ -788,7 +844,7 @@ export function Contact() {
                                       react('channels', i);
                                     }}
                                   >
-                                    <Icon className={`h-[18px] w-[18px] ${on ? 'text-[var(--blue-bright)]' : ''}`} aria-hidden />
+                                    <ChannelIcon index={i} className={`h-[18px] w-[18px] ${on ? 'text-[var(--blue-bright)]' : ''}`} />
                                     {item}
                                   </button>
                                 );
@@ -797,9 +853,9 @@ export function Contact() {
                           </Group>
 
                           <AnimatePresence initial={false} mode="wait">
-                            {v.channel === CHANNEL.phone ? (
+                            {v.channel === CHANNEL.phone || v.channel === CHANNEL.whatsapp ? (
                               <motion.div key="phone" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: reduced ? 0 : 0.25 }}>
-                                <Group label={`${t('phoneLabel')} *`} htmlFor="phone" error={errors.phone?.message}>
+                                <Group label={`${v.channel === CHANNEL.whatsapp ? t('whatsappLabel') : t('phoneLabel')} *`} htmlFor="phone" error={errors.phone?.message}>
                                   <input id="phone" type="tel" autoComplete="tel" placeholder={t('phonePlaceholder')} className={field} {...register('phone', { onChange: () => clearErrors('phone') })} />
                                 </Group>
                               </motion.div>
@@ -851,6 +907,11 @@ export function Contact() {
                             </span>
                           </label>
                           {errors.consent ? <p className="text-xs text-red-400">{errors.consent.message}</p> : null}
+                          {/* ochrana proti robotům — běžně neviditelná, ověření běží na pozadí */}
+                          <Turnstile language={locale} onToken={(token) => {
+                            setCaptcha(token);
+                            if (token) setServerError(null);
+                          }} />
                         </div>
                       ) : null}
                     </motion.fieldset>
@@ -913,6 +974,22 @@ export function Contact() {
                   </a>
                 </li>
               ) : null}
+              {/* messengery z administrace (WhatsApp, Telegram…) */}
+              {social
+                .filter((item) => item.kind === 'messenger')
+                .map((item) => (
+                  <li key={item.href}>
+                    <a href={item.href} target="_blank" rel="noreferrer noopener" className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
+                        <SocialIcon brand={item.brand} className="h-4 w-4" />
+                      </span>
+                      <span>
+                        {item.label}
+                        {item.display ? <span className="ml-2 text-ink/85">{item.display}</span> : null}
+                      </span>
+                    </a>
+                  </li>
+                ))}
               <li className="flex items-center gap-3 text-muted">
                 <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
                   <MapPin className="h-4 w-4" aria-hidden />
@@ -921,20 +998,25 @@ export function Contact() {
               </li>
             </ul>
 
-            <ul className="flex flex-wrap gap-2">
-              {social.map((item) => (
-                <li key={item.label}>
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="inline-block rounded-full border border-[var(--line)] px-4 py-2 text-xs uppercase tracking-wider text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {social.some((item) => item.kind === 'social') ? (
+              <ul className="flex flex-wrap gap-2">
+                {social
+                  .filter((item) => item.kind === 'social')
+                  .map((item) => (
+                    <li key={item.href}>
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3.5 py-2 text-xs uppercase tracking-wider text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
+                      >
+                        <SocialIcon brand={item.brand} className="h-3.5 w-3.5" />
+                        {item.label}
+                      </a>
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
           </aside>
         </div>
       </div>

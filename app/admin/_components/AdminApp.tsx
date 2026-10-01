@@ -29,6 +29,8 @@ import { Btn, Card, Field, inputClass, SaveBar, SaveStatus, SearchInput, useSave
 import { EDIT_SECTIONS, type EditField, type EditSection } from '@/lib/content/editable';
 import { HintLightbox, HintMini, HintThumb, SerpPreview, hintFor, type Hint } from './hints';
 import { site } from '@/content/site';
+import { PLATFORMS, detectPlatform, resolveSocial, type SocialInput } from '@/lib/social';
+import { SocialIcon } from '@/components/ui/SocialIcon';
 
 const SITE_URL = site.url;
 
@@ -485,6 +487,125 @@ function PricingTab({ initial }: { initial: Record<string, unknown> }) {
 /*  Kontakt a účet                                                     */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Sítě a messengery (dynamický seznam)                               */
+/* ------------------------------------------------------------------ */
+
+const QUICK_SOCIALS = ['WhatsApp', 'Instagram', 'Facebook', 'TikTok', 'LinkedIn', 'YouTube', 'Telegram', 'Behance'];
+
+function SocialEditor({ items, onChange, visual }: { items: SocialInput[]; onChange: (items: SocialInput[]) => void; visual?: React.ReactNode }) {
+  const update = (i: number, patch: Partial<SocialInput>) => onChange(items.map((x, k) => (k === i ? { ...x, ...patch } : x)));
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  const add = (label = '') => onChange([...items, { label, value: '' }]);
+  const used = new Set(items.map((x) => detectPlatform(x.label, x.value)?.id));
+
+  return (
+    <Card
+      title="Sociální sítě a messengery"
+      subtitle="Na webu se ukážou v kontaktech a v patičce v tomto pořadí. Messengery (WhatsApp, Telegram, Viber) jako kontakt s číslem, ostatní jako odkazy s ikonou."
+      actions={visual}
+    >
+      {items.length === 0 ? (
+        <p className="mb-4 rounded-xl border border-dashed border-[var(--line)] px-4 py-5 text-center text-sm text-muted">Zatím žádná síť — web je nezobrazuje. Přidejte první níže.</p>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((item, i) => {
+            const platform = detectPlatform(item.label, item.value);
+            const check = item.label.trim() || item.value.trim() ? resolveSocial(item) : null;
+            const placeholder = platform?.id === 'whatsapp' || platform?.id === 'viber' ? '+420 777 123 456' : platform?.id === 'telegram' ? '@uzivatel nebo +420…' : 'https://…';
+            return (
+              <li key={i} className="rounded-2xl border border-[rgba(110,150,255,0.18)] bg-white/[0.02] p-3 transition-colors focus-within:border-[rgba(97,150,255,0.55)]">
+                <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-2.5 sm:grid-cols-[40px_minmax(0,0.8fr)_minmax(0,1.4fr)_auto] sm:gap-3">
+                  <span
+                    className={`grid h-10 w-10 place-items-center rounded-xl border transition-colors ${
+                      platform ? 'border-[rgba(97,150,255,0.6)] bg-[rgba(31,91,255,0.14)] text-[#cfe0ff] shadow-[0_0_14px_rgba(31,91,255,0.35)]' : 'border-[var(--line)] text-muted'
+                    }`}
+                    title={platform?.name ?? 'Neznámá platforma'}
+                  >
+                    <SocialIcon brand={platform?.id ?? null} className="h-[18px] w-[18px]" />
+                  </span>
+                  <input
+                    className={inputClass}
+                    list="social-names"
+                    aria-label="Název sítě"
+                    placeholder="Název (např. WhatsApp)"
+                    value={item.label}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                  />
+                  <input
+                    className={`${inputClass} col-span-3 row-start-2 sm:col-span-1 sm:row-start-auto`}
+                    aria-label="Odkaz nebo číslo"
+                    placeholder={placeholder}
+                    value={item.value}
+                    inputMode={platform?.kind === 'messenger' ? 'tel' : 'url'}
+                    onChange={(e) => update(i, { value: e.target.value })}
+                  />
+                  <div className="col-start-3 row-start-1 flex items-center gap-0.5 sm:col-start-auto sm:row-start-auto">
+                    <button type="button" aria-label="Posunout výš" disabled={i === 0} onClick={() => move(i, -1)} className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25">↑</button>
+                    <button type="button" aria-label="Posunout níž" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-ink disabled:opacity-25">↓</button>
+                    <button
+                      type="button"
+                      aria-label="Odebrat"
+                      onClick={() => onChange(items.filter((_, k) => k !== i))}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-[#ffb3be] hover:bg-[rgba(255,90,110,0.12)]"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                {check ? (
+                  <p className={`mt-2 truncate pl-1 text-xs ${check.ok ? 'text-muted' : 'text-[#ffb3be]'}`}>
+                    {check.ok ? (
+                      <>
+                        {check.link.kind === 'messenger' ? 'Kontakt' : 'Odkaz'}:{' '}
+                        <a href={check.link.href} target="_blank" rel="noreferrer" className="text-[#9fc0ff] hover:text-ink">
+                          {check.link.href.replace(/^https?:\/\//, '')}
+                        </a>
+                      </>
+                    ) : (
+                      check.error
+                    )}
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <datalist id="social-names">
+        {PLATFORMS.map((p) => (
+          <option key={p.id} value={p.name} />
+        ))}
+      </datalist>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Btn size="sm" variant="primary" onClick={() => add()}>
+          + Přidat sociální síť
+        </Btn>
+        {QUICK_SOCIALS.filter((name) => !used.has(detectPlatform(name)?.id)).map((name) => {
+          const platform = detectPlatform(name);
+          return (
+            <button
+              key={name}
+              type="button"
+              onClick={() => add(name)}
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--line)] px-3 text-xs text-muted transition-colors hover:border-[rgba(97,150,255,0.55)] hover:text-ink"
+            >
+              <SocialIcon brand={platform?.id ?? null} className="h-3.5 w-3.5" />
+              {name}
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 function CompanyTab({ initial }: { initial: SettingsInput }) {
   const [v, setV] = useState<SettingsInput>(initial);
   const [dirty, setDirty] = useState(false);
@@ -494,7 +615,6 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
     setV((prev) => ({ ...prev, ...patch }));
     setDirty(true);
   };
-  const setSocial = (k: keyof SettingsInput['social'], url: string) => set({ social: { ...v.social, [k]: url } });
 
   return (
     <div className="max-w-3xl space-y-6 pb-28">
@@ -510,18 +630,7 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
           <Field label="Právní název" className="md:col-span-2" visual={mini('settings.company', 'Právní název')}><input className={inputClass} value={v.legalName} onChange={(e) => set({ legalName: e.target.value })} /></Field>
         </div>
       </Card>
-      <Card title="Sociální sítě" subtitle="Prázdný odkaz = síť se na webu nezobrazí.">
-        <div className="grid gap-5">
-          {(['instagram', 'linkedin', 'behance'] as const).map((k) => {
-            const label = k === 'linkedin' ? 'LinkedIn' : k === 'behance' ? 'Behance' : 'Instagram';
-            return (
-              <Field key={k} label={label} visual={mini('settings.social', label)}>
-                <input className={inputClass} value={v.social[k]} placeholder="https://" onChange={(e) => setSocial(k, e.target.value)} />
-              </Field>
-            );
-          })}
-        </div>
-      </Card>
+      <SocialEditor items={v.social} onChange={(social) => set({ social })} visual={mini('settings.social', 'Sítě a messengery na webu')} />
 
       {box}
 
@@ -906,6 +1015,12 @@ function InquiryDetail({
         <a href={`mailto:${item.email}?subject=${encodeURIComponent('Re: poptávka ELEVATE')}`} className="inline-flex h-9 items-center rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-white shadow-[0_0_18px_var(--blue-glow)]">
           Odpovědět e-mailem
         </a>
+        {item.reach.startsWith('WhatsApp') && tel ? (
+          <a href={`https://wa.me/${tel.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-btn border border-[rgba(61,220,151,0.45)] bg-[rgba(61,220,151,0.08)] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-[#9ff0c9] hover:border-[rgba(61,220,151,0.8)]">
+            <SocialIcon brand="whatsapp" className="h-3.5 w-3.5" />
+            Napsat na WhatsApp
+          </a>
+        ) : null}
         {tel ? (
           <a href={`tel:${tel}`} className="inline-flex h-9 items-center rounded-btn border border-[var(--line)] bg-white/[0.04] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-ink hover:border-[rgba(80,120,255,0.55)]">
             Zavolat

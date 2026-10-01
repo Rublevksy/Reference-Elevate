@@ -759,15 +759,15 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
                 .map((word) => {
                   const i = wordIndex++;
                   return (
-                    <motion.span
+                    // nástup v CSS: běží od prvního vykreslení (nadpis je největší prvek
+                    // stránky — nečeká na skripty), při první návštěvě až po úvodní cloně
+                    <span
                       key={`${partIndex}-${i}`}
-                      className={`inline-block whitespace-nowrap ${part.accent ? 'text-[var(--blue-bright)]' : ''}`}
-                      initial={reduced ? false : { opacity: 0, y: '45%' }}
-                      animate={{ opacity: 1, y: '0%' }}
-                      transition={tr({ delay: 0.25 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
+                      className={`hero-word inline-block whitespace-nowrap ${part.accent ? 'text-[var(--blue-bright)]' : ''}`}
+                      style={{ '--i': i } as React.CSSProperties}
                     >
                       {word}&nbsp;
-                    </motion.span>
+                    </span>
                   );
                 }),
             )}

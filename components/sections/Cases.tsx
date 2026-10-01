@@ -139,7 +139,7 @@ function DeviceScreen({
           src={src}
           alt=""
           aria-hidden
-          loading="eager"
+          loading="lazy"
           decoding="async"
           className="absolute inset-x-0 top-0 w-full max-w-none will-change-transform"
         />
@@ -318,15 +318,31 @@ export function Cases() {
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] });
 
   // screenshoty všech projektů předem stáhnout a dekódovat — při přepnutí projektu
-  // pak obrazovka nezčerná na dobu dekódování velkého obrázku
+  // pak obrazovka nezčerná na dobu dekódování velkého obrázku. Až když se sekce
+  // blíží (2 obrazovky předem): na mobilu jde o ~2 MB, které by jinak při
+  // načtení stránky soupeřily s písmem a skripty úvodní obrazovky.
   useEffect(() => {
-    const imgs = cases.flatMap((item) => [item.desktopImage, item.mobileImage].map((src) => {
-      const img = new window.Image();
-      img.src = src;
-      img.decode?.().catch(() => undefined);
-      return img;
-    }));
-    return () => imgs.forEach((img) => (img.src = ''));
+    const node = section.current;
+    if (!node) return;
+    let imgs: HTMLImageElement[] = [];
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        imgs = cases.flatMap((item) => [item.desktopImage, item.mobileImage].map((src) => {
+          const img = new window.Image();
+          img.src = src;
+          img.decode?.().catch(() => undefined);
+          return img;
+        }));
+      },
+      { rootMargin: '200% 0px' },
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      imgs.forEach((img) => (img.src = ''));
+    };
   }, [cases]);
 
   useMotionValueEvent(scrollYProgress, 'change', (p) => {

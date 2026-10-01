@@ -3,19 +3,21 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { FALLBACK_PROJECTS, type Project } from '@/lib/content/projects';
 import { site } from '@/content/site';
+import type { SocialLink } from '@/lib/social';
 
 export type ContentValue = {
   projects: Project[];
   contactEmail: string;
   city: string;
-  social: { label: string; href: string }[];
+  /** sítě a messengery z administrace (WhatsApp, Instagram…) */
+  social: SocialLink[];
 };
 
 const ContentContext = createContext<ContentValue>({
   projects: FALLBACK_PROJECTS,
   contactEmail: site.email,
   city: site.city,
-  social: [...site.social],
+  social: [],
 });
 
 /** Obsah z databáze (projekty, kontakt, sítě) pro klientské sekce. */

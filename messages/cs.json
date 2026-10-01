@@ -493,10 +493,12 @@
     "channels": [
       "E-mail",
       "Telefon",
-      "Telegram"
+      "Telegram",
+      "WhatsApp"
     ],
     "phoneLabel": "Telefon",
     "phonePlaceholder": "+420 777 123 456",
+    "whatsappLabel": "WhatsApp",
     "telegramLabel": "Telegram",
     "telegramPlaceholder": "@uzivatel",
     "messageLabel": "Ještě něco, co bychom měli vědět?",
@@ -567,7 +569,8 @@
       "channels": [
         "E-mail je jistota. Návrh pošleme přehledně i s cenou.",
         "Zavoláme v pracovní dny. Hovor zabere asi čtvrt hodiny.",
-        "Telegram? Napíšeme tam, odpovídáme rychle."
+        "Telegram? Napíšeme tam, odpovídáme rychle.",
+        "WhatsApp je nejrychlejší. Napíšeme vám tam návrh i s cenou."
       ]
     },
     "consent": "Souhlasím se zpracováním osobních údajů za účelem vyřízení poptávky.",
@@ -591,7 +594,10 @@
       "budget": "Vyberte rozpětí — klidně i „Zatím nevím“.",
       "timeline": "Vyberte, kdy to potřebujete.",
       "phone": "Doplňte telefon, ať vám můžeme zavolat.",
-      "telegram": "Doplňte uživatelské jméno na Telegramu."
+      "telegram": "Doplňte uživatelské jméno na Telegramu.",
+      "whatsapp": "Doplňte číslo, na kterém máte WhatsApp.",
+      "captcha": "Ověření proti spamu se nepovedlo. Obnovte prosím stránku a zkuste to znovu.",
+      "captchaWait": "Ještě chvilku — ověřujeme, že nejste robot. Zkuste to za pár sekund."
     }
   },
   "footer": {
@@ -658,7 +664,7 @@
       },
       {
         "title": "2. Jaké údaje zpracováváme",
-        "body": "Zpracováváme údaje, které nám sami vyplníte v poptávkovém formuláři: jméno, e-mail, případně telefon, adresu stávajícího webu a text zprávy. Dále technický údaj o IP adrese odesílatele, který slouží výhradně k ochraně formuláře před zneužitím."
+        "body": "Zpracováváme údaje, které nám sami vyplníte v poptávkovém formuláři: jméno, e-mail, případně telefon, WhatsApp nebo Telegram, informace o projektu (typ, obor, výchozí stav, rozpočet, termín, odkazy na weby, které se vám líbí) a text zprávy. Dále technický údaj o IP adrese odesílatele, který slouží výhradně k ochraně formuláře před zneužitím."
       },
       {
         "title": "3. Proč údaje zpracováváme",
@@ -670,7 +676,7 @@
       },
       {
         "title": "5. Komu je předáváme",
-        "body": "E-maily doručuje služba Resend (Resend, Inc.). Web je hostovaný na platformě Vercel. Pokud je zapnutá analytika, používáme cookieless nástroj Plausible. Žádné údaje neprodáváme ani nepředáváme pro marketingové účely třetích stran."
+        "body": "Poptávky ukládáme v databázi služby Supabase (Supabase, Inc.), kam má přístup jen správce webu. E-maily doručuje služba Resend (Resend, Inc.). Formulář chrání před roboty služba Cloudflare Turnstile (Cloudflare, Inc.), která při odeslání ověřuje technické údaje prohlížeče — bez cookies pro reklamu. Web je hostovaný na platformě Vercel. Pokud je zapnutá analytika, používáme cookieless nástroj Plausible. Žádné údaje neprodáváme ani nepředáváme pro marketingové účely třetích stran."
       },
       {
         "title": "6. Cookies",

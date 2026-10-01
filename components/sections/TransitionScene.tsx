@@ -849,7 +849,7 @@ function NodeBurstToCases({ renderRef }: SceneProps) {
           style={{ zIndex: 3 - i }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.desktopImage} alt="" className="absolute inset-x-0 top-0 w-full max-w-none" />
+          <img src={item.desktopImage} alt="" loading="lazy" decoding="async" className="absolute inset-x-0 top-0 w-full max-w-none" />
           <div ref={(el) => { labels.current[i] = el; }} className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-3 pt-10">
             <span className="font-display text-sm font-bold uppercase text-ink">{label(item.slug, item.name)}</span>
           </div>

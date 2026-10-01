@@ -379,48 +379,63 @@
    "w": 1440,
    "h": 900
   },
-  "76-maskot-channels": {
-   "src": "/admin-hints/76-maskot-channels.webp",
+  "76-formular-5": {
+   "src": "/admin-hints/76-formular-5.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "77-maskot-channels": {
+   "src": "/admin-hints/77-maskot-channels.webp",
    "w": 411,
    "h": 276
   },
-  "77-formular-5": {
-   "src": "/admin-hints/77-formular-5.webp",
+  "78-formular-5": {
+   "src": "/admin-hints/78-formular-5.webp",
    "w": 1440,
    "h": 900
   },
-  "78-maskot-channels": {
-   "src": "/admin-hints/78-maskot-channels.webp",
+  "79-maskot-channels": {
+   "src": "/admin-hints/79-maskot-channels.webp",
    "w": 411,
    "h": 276
   },
-  "79-formular-5": {
-   "src": "/admin-hints/79-formular-5.webp",
+  "80-formular-5": {
+   "src": "/admin-hints/80-formular-5.webp",
    "w": 1440,
    "h": 900
   },
-  "80-maskot-channels": {
-   "src": "/admin-hints/80-maskot-channels.webp",
+  "81-maskot-channels": {
+   "src": "/admin-hints/81-maskot-channels.webp",
    "w": 411,
    "h": 276
   },
-  "81-formular-hotovo": {
-   "src": "/admin-hints/81-formular-hotovo.webp",
+  "82-formular-5": {
+   "src": "/admin-hints/82-formular-5.webp",
    "w": 1440,
    "h": 900
   },
-  "82-kontakt-firma": {
-   "src": "/admin-hints/82-kontakt-firma.webp",
+  "83-maskot-channels": {
+   "src": "/admin-hints/83-maskot-channels.webp",
+   "w": 411,
+   "h": 276
+  },
+  "84-formular-hotovo": {
+   "src": "/admin-hints/84-formular-hotovo.webp",
    "w": 1440,
    "h": 900
   },
-  "83-paticka": {
-   "src": "/admin-hints/83-paticka.webp",
+  "85-kontakt-firma": {
+   "src": "/admin-hints/85-kontakt-firma.webp",
    "w": 1440,
    "h": 900
   },
-  "84-ochrana-udaju": {
-   "src": "/admin-hints/84-ochrana-udaju.webp",
+  "86-paticka": {
+   "src": "/admin-hints/86-paticka.webp",
+   "w": 1440,
+   "h": 900
+  },
+  "87-ochrana-udaju": {
+   "src": "/admin-hints/87-ochrana-udaju.webp",
    "w": 1440,
    "h": 900
   }
@@ -2049,53 +2064,53 @@
   "contact.steps.0": {
    "shot": "31-kontakt",
    "box": [
-    169,
-    430,
-    130,
-    27
+    211,
+    433,
+    50,
+    59
    ]
   },
   "contact.steps.1": {
    "shot": "31-kontakt",
    "box": [
-    305,
-    430,
-    130,
-    27
+    331,
+    433,
+    81,
+    59
    ]
   },
   "contact.steps.2": {
    "shot": "31-kontakt",
    "box": [
-    441,
-    430,
-    130,
-    27
+    485,
+    433,
+    44,
+    59
    ]
   },
   "contact.steps.3": {
    "shot": "31-kontakt",
    "box": [
-    578,
-    430,
-    130,
-    27
+    611,
+    433,
+    61,
+    59
    ]
   },
   "contact.steps.4": {
    "shot": "31-kontakt",
    "box": [
-    714,
-    430,
-    130,
-    27
+    751,
+    433,
+    52,
+    59
    ]
   },
   "contact.questions.0": {
    "shot": "31-kontakt",
    "box": [
     169,
-    480,
+    519,
     340,
     22
    ]
@@ -2104,7 +2119,7 @@
    "shot": "31-kontakt",
    "box": [
     169,
-    527,
+    566,
     120,
     13
    ]
@@ -2113,7 +2128,7 @@
    "shot": "31-kontakt",
    "box": [
     696,
-    525,
+    564,
     148,
     15
    ]
@@ -2122,7 +2137,7 @@
    "shot": "31-kontakt",
    "box": [
     201,
-    559,
+    597,
     27,
     18
    ]
@@ -2131,7 +2146,7 @@
    "shot": "31-kontakt",
    "box": [
     281,
-    559,
+    597,
     43,
     18
    ]
@@ -2140,7 +2155,7 @@
    "shot": "31-kontakt",
    "box": [
     378,
-    559,
+    597,
     24,
     18
    ]
@@ -2149,7 +2164,7 @@
    "shot": "31-kontakt",
    "box": [
     456,
-    559,
+    597,
     83,
     18
    ]
@@ -2158,7 +2173,7 @@
    "shot": "31-kontakt",
    "box": [
     593,
-    559,
+    597,
     50,
     18
    ]
@@ -2167,7 +2182,7 @@
    "shot": "31-kontakt",
    "box": [
     697,
-    559,
+    597,
     89,
     18
    ]
@@ -2176,7 +2191,7 @@
    "shot": "31-kontakt",
    "box": [
     201,
-    600,
+    639,
     109,
     18
    ]
@@ -2185,7 +2200,7 @@
    "shot": "31-kontakt",
    "box": [
     169,
-    648,
+    687,
     139,
     13
    ]
@@ -2194,7 +2209,7 @@
    "shot": "31-kontakt",
    "box": [
     197,
-    680,
+    718,
     100,
     18
    ]
@@ -2203,7 +2218,7 @@
    "shot": "31-kontakt",
    "box": [
     347,
-    680,
+    718,
     65,
     18
    ]
@@ -2212,7 +2227,7 @@
    "shot": "31-kontakt",
    "box": [
     462,
-    680,
+    718,
     81,
     18
    ]
@@ -2221,7 +2236,7 @@
    "shot": "31-kontakt",
    "box": [
     593,
-    680,
+    718,
     112,
     18
    ]
@@ -2230,7 +2245,7 @@
    "shot": "31-kontakt",
    "box": [
     197,
-    721,
+    760,
     127,
     18
    ]
@@ -2239,7 +2254,7 @@
    "shot": "31-kontakt",
    "box": [
     373,
-    721,
+    760,
     136,
     18
    ]
@@ -2248,7 +2263,7 @@
    "shot": "31-kontakt",
    "box": [
     560,
-    721,
+    760,
     108,
     18
    ]
@@ -2257,7 +2272,7 @@
    "shot": "31-kontakt",
    "box": [
     718,
-    721,
+    760,
     54,
     18
    ]
@@ -2266,7 +2281,7 @@
    "shot": "31-kontakt",
    "box": [
     169,
-    769,
+    808,
     109,
     17
    ]
@@ -2284,7 +2299,7 @@
    "shot": "31-kontakt",
    "box": [
     169,
-    794,
+    833,
     675,
     42
    ]
@@ -2302,7 +2317,7 @@
    "shot": "33-formular-1",
    "box": [
     184,
-    285,
+    323,
     86,
     17
    ]
@@ -2311,7 +2326,7 @@
    "shot": "33-formular-1",
    "box": [
     674,
-    667,
+    706,
     118,
     15
    ]
@@ -2455,7 +2470,7 @@
    "shot": "49-formular-2",
    "box": [
     169,
-    203,
+    242,
     225,
     22
    ]
@@ -2464,7 +2479,7 @@
    "shot": "49-formular-2",
    "box": [
     169,
-    249,
+    288,
     107,
     13
    ]
@@ -2472,8 +2487,8 @@
   "contact.starts.0": {
    "shot": "49-formular-2",
    "box": [
-    184,
-    338,
+    185,
+    380,
     133,
     18
    ]
@@ -2481,8 +2496,8 @@
   "contact.starts.1": {
    "shot": "49-formular-2",
    "box": [
-    411,
-    338,
+    414,
+    380,
     152,
     37
    ]
@@ -2490,8 +2505,8 @@
   "contact.starts.2": {
    "shot": "49-formular-2",
    "box": [
-    639,
-    338,
+    642,
+    380,
     99,
     18
    ]
@@ -2500,7 +2515,7 @@
    "shot": "49-formular-2",
    "box": [
     169,
-    409,
+    466,
     216,
     13
    ]
@@ -2508,44 +2523,44 @@
   "contact.assets.0": {
    "shot": "49-formular-2",
    "box": [
-    201,
-    441,
-    30,
-    18
+    183,
+    532,
+    29,
+    17
    ]
   },
   "contact.assets.1": {
    "shot": "49-formular-2",
    "box": [
-    284,
-    441,
-    33,
-    18
+    354,
+    532,
+    32,
+    17
    ]
   },
   "contact.assets.2": {
    "shot": "49-formular-2",
    "box": [
-    371,
-    441,
-    33,
-    18
+    524,
+    532,
+    31,
+    17
    ]
   },
   "contact.assets.3": {
    "shot": "49-formular-2",
    "box": [
-    457,
-    441,
-    96,
-    18
+    695,
+    532,
+    92,
+    17
    ]
   },
   "contact.back": {
    "shot": "49-formular-2",
    "box": [
     186,
-    524,
+    618,
     31,
     19
    ]
@@ -2581,7 +2596,7 @@
    "shot": "53-formular-2",
    "box": [
     169,
-    408,
+    465,
     232,
     13
    ]
@@ -2590,7 +2605,7 @@
    "shot": "53-formular-2",
    "box": [
     169,
-    433,
+    490,
     675,
     42
    ]
@@ -2608,7 +2623,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    203,
+    242,
     305,
     22
    ]
@@ -2617,7 +2632,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    275,
+    313,
     675,
     42
    ]
@@ -2626,7 +2641,7 @@
    "shot": "55-formular-3",
    "box": [
     526,
-    248,
+    287,
     318,
     15
    ]
@@ -2635,7 +2650,7 @@
    "shot": "55-formular-3",
    "box": [
     191,
-    328,
+    366,
     145,
     17
    ]
@@ -2644,7 +2659,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    372,
+    410,
     41,
     13
    ]
@@ -2653,7 +2668,7 @@
    "shot": "55-formular-3",
    "box": [
     252,
-    407,
+    445,
     85,
     36
    ]
@@ -2662,7 +2677,7 @@
    "shot": "55-formular-3",
    "box": [
     479,
-    416,
+    454,
     110,
     18
    ]
@@ -2671,7 +2686,7 @@
    "shot": "55-formular-3",
    "box": [
     707,
-    407,
+    445,
     65,
     36
    ]
@@ -2680,7 +2695,7 @@
    "shot": "55-formular-3",
    "box": [
     252,
-    482,
+    520,
     94,
     18
    ]
@@ -2689,7 +2704,7 @@
    "shot": "55-formular-3",
    "box": [
     479,
-    482,
+    520,
     110,
     18
    ]
@@ -2698,7 +2713,7 @@
    "shot": "55-formular-3",
    "box": [
     707,
-    482,
+    520,
     90,
     18
    ]
@@ -2707,7 +2722,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    619,
+    658,
     675,
     42
    ]
@@ -2716,7 +2731,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    275,
+    313,
     675,
     42
    ]
@@ -2725,7 +2740,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    567,
+    606,
     40,
     40
    ]
@@ -2734,7 +2749,7 @@
    "shot": "55-formular-3",
    "box": [
     219,
-    567,
+    606,
     40,
     40
    ]
@@ -2743,7 +2758,7 @@
    "shot": "55-formular-3",
    "box": [
     269,
-    567,
+    606,
     40,
     40
    ]
@@ -2752,7 +2767,7 @@
    "shot": "55-formular-3",
    "box": [
     319,
-    567,
+    606,
     40,
     40
    ]
@@ -2761,7 +2776,7 @@
    "shot": "55-formular-3",
    "box": [
     369,
-    567,
+    606,
     40,
     40
    ]
@@ -2770,7 +2785,7 @@
    "shot": "55-formular-3",
    "box": [
     419,
-    567,
+    606,
     40,
     40
    ]
@@ -2779,7 +2794,7 @@
    "shot": "55-formular-3",
    "box": [
     469,
-    567,
+    606,
     40,
     40
    ]
@@ -2788,7 +2803,7 @@
    "shot": "55-formular-3",
    "box": [
     519,
-    567,
+    606,
     40,
     40
    ]
@@ -2797,7 +2812,7 @@
    "shot": "55-formular-3",
    "box": [
     169,
-    619,
+    658,
     675,
     42
    ]
@@ -2869,7 +2884,7 @@
    "shot": "63-formular-4",
    "box": [
     169,
-    203,
+    242,
     238,
     22
    ]
@@ -2878,7 +2893,7 @@
    "shot": "63-formular-4",
    "box": [
     169,
-    250,
+    289,
     174,
     13
    ]
@@ -2887,7 +2902,7 @@
    "shot": "63-formular-4",
    "box": [
     439,
-    248,
+    287,
     405,
     15
    ]
@@ -2896,7 +2911,7 @@
    "shot": "63-formular-4",
    "box": [
     226,
-    288,
+    326,
     105,
     15
    ]
@@ -2905,7 +2920,7 @@
    "shot": "63-formular-4",
    "box": [
     451,
-    288,
+    326,
     112,
     15
    ]
@@ -2914,7 +2929,7 @@
    "shot": "63-formular-4",
    "box": [
     676,
-    288,
+    326,
     116,
     15
    ]
@@ -2923,7 +2938,7 @@
    "shot": "63-formular-4",
    "box": [
     218,
-    338,
+    377,
     122,
     15
    ]
@@ -2932,7 +2947,7 @@
    "shot": "63-formular-4",
    "box": [
     444,
-    338,
+    377,
     126,
     15
    ]
@@ -2941,7 +2956,7 @@
    "shot": "63-formular-4",
    "box": [
     685,
-    338,
+    377,
     99,
     15
    ]
@@ -2950,7 +2965,7 @@
    "shot": "63-formular-4",
    "box": [
     169,
-    388,
+    427,
     185,
     13
    ]
@@ -2959,7 +2974,7 @@
    "shot": "63-formular-4",
    "box": [
     197,
-    420,
+    459,
     60,
     18
    ]
@@ -2968,7 +2983,7 @@
    "shot": "63-formular-4",
    "box": [
     307,
-    420,
+    459,
     62,
     18
    ]
@@ -2977,7 +2992,7 @@
    "shot": "63-formular-4",
    "box": [
     419,
-    420,
+    459,
     78,
     18
    ]
@@ -2986,7 +3001,7 @@
    "shot": "63-formular-4",
    "box": [
     547,
-    420,
+    459,
     61,
     18
    ]
@@ -2995,7 +3010,7 @@
    "shot": "63-formular-4",
    "box": [
     169,
-    469,
+    507,
     120,
     13
    ]
@@ -3004,7 +3019,7 @@
    "shot": "63-formular-4",
    "box": [
     589,
-    467,
+    505,
     255,
     15
    ]
@@ -3112,7 +3127,7 @@
    "shot": "75-formular-5",
    "box": [
     169,
-    203,
+    242,
     328,
     22
    ]
@@ -3121,7 +3136,7 @@
    "shot": "75-formular-5",
    "box": [
     169,
-    249,
+    288,
     58,
     13
    ]
@@ -3130,7 +3145,7 @@
    "shot": "75-formular-5",
    "box": [
     517,
-    249,
+    288,
     56,
     13
    ]
@@ -3139,7 +3154,7 @@
    "shot": "75-formular-5",
    "box": [
     169,
-    333,
+    371,
     217,
     13
    ]
@@ -3147,17 +3162,26 @@
   "contact.channels.0": {
    "shot": "75-formular-5",
    "box": [
-    261,
-    392,
+    233,
+    430,
     36,
+    17
+   ]
+  },
+  "contact.channels.3": {
+   "shot": "75-formular-5",
+   "box": [
+    391,
+    430,
+    60,
     17
    ]
   },
   "contact.channels.1": {
    "shot": "75-formular-5",
    "box": [
-    485,
-    392,
+    570,
+    430,
     43,
     17
    ]
@@ -3165,8 +3189,8 @@
   "contact.channels.2": {
    "shot": "75-formular-5",
    "box": [
-    708,
-    392,
+    736,
+    430,
     53,
     17
    ]
@@ -3175,7 +3199,7 @@
    "shot": "75-formular-5",
    "box": [
     169,
-    438,
+    476,
     315,
     13
    ]
@@ -3184,7 +3208,7 @@
    "shot": "75-formular-5",
    "box": [
     186,
-    584,
+    622,
     60,
     15
    ]
@@ -3193,31 +3217,49 @@
    "shot": "75-formular-5",
    "box": [
     197,
-    768,
+    807,
     391,
     17
-   ]
-  },
-  "contact.submit": {
-   "shot": "75-formular-5",
-   "box": [
-    615,
-    845,
-    177,
-    15
    ]
   },
   "contact.messagePlaceholder": {
    "shot": "75-formular-5",
    "box": [
     169,
-    463,
+    501,
     675,
     82
    ]
   },
+  "contact.submit": {
+   "shot": "76-formular-5",
+   "box": [
+    615,
+    812,
+    177,
+    15
+   ]
+  },
+  "contact.reactions.channels.3": {
+   "shot": "77-maskot-channels",
+   "box": [
+    192,
+    156,
+    158,
+    51
+   ]
+  },
+  "contact.whatsappLabel": {
+   "shot": "78-formular-5",
+   "box": [
+    169,
+    475,
+    89,
+    13
+   ]
+  },
   "contact.reactions.channels.1": {
-   "shot": "76-maskot-channels",
+   "shot": "79-maskot-channels",
    "box": [
     192,
     173,
@@ -3226,16 +3268,16 @@
    ]
   },
   "contact.phoneLabel": {
-   "shot": "77-formular-5",
+   "shot": "80-formular-5",
    "box": [
     169,
-    437,
+    475,
     73,
     13
    ]
   },
   "contact.reactions.channels.2": {
-   "shot": "78-maskot-channels",
+   "shot": "81-maskot-channels",
    "box": [
     192,
     173,
@@ -3244,16 +3286,16 @@
    ]
   },
   "contact.telegramLabel": {
-   "shot": "79-formular-5",
+   "shot": "82-formular-5",
    "box": [
     169,
-    437,
+    475,
     88,
     13
    ]
   },
   "contact.reactions.channels.0": {
-   "shot": "80-maskot-channels",
+   "shot": "83-maskot-channels",
    "box": [
     192,
     173,
@@ -3262,7 +3304,7 @@
    ]
   },
   "contact.successTitle": {
-   "shot": "81-formular-hotovo",
+   "shot": "84-formular-hotovo",
    "box": [
     311,
     338,
@@ -3271,7 +3313,7 @@
    ]
   },
   "contact.successText": {
-   "shot": "81-formular-hotovo",
+   "shot": "84-formular-hotovo",
    "box": [
     292,
     381,
@@ -3280,7 +3322,7 @@
    ]
   },
   "contact.successLink": {
-   "shot": "81-formular-hotovo",
+   "shot": "84-formular-hotovo",
    "box": [
     519,
     401,
@@ -3289,7 +3331,7 @@
    ]
   },
   "mascot.success": {
-   "shot": "81-formular-hotovo",
+   "shot": "84-formular-hotovo",
    "box": [
     1089,
     261,
@@ -3298,7 +3340,7 @@
    ]
   },
   "settings.contactEmail": {
-   "shot": "82-kontakt-firma",
+   "shot": "85-kontakt-firma",
    "box": [
     905,
     388,
@@ -3307,7 +3349,7 @@
    ]
   },
   "settings.city": {
-   "shot": "82-kontakt-firma",
+   "shot": "85-kontakt-firma",
    "box": [
     905,
     444,
@@ -3316,16 +3358,16 @@
    ]
   },
   "settings.social": {
-   "shot": "82-kontakt-firma",
+   "shot": "85-kontakt-firma",
    "box": [
     905,
-    516,
+    388,
     395,
-    34
+    96
    ]
   },
   "footer.tagline": {
-   "shot": "83-paticka",
+   "shot": "86-paticka",
    "box": [
     140,
     436,
@@ -3334,7 +3376,7 @@
    ]
   },
   "footer.rights": {
-   "shot": "83-paticka",
+   "shot": "86-paticka",
    "box": [
     235,
     709,
@@ -3343,7 +3385,7 @@
    ]
   },
   "settings.company": {
-   "shot": "84-ochrana-udaju",
+   "shot": "87-ochrana-udaju",
    "box": [
     376,
     360,

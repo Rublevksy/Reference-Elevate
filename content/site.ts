@@ -22,11 +22,11 @@ export const site = {
     country: 'CZ',
   },
   ico: '', // PLACEHOLDER
-  social: [
-    { label: 'Instagram', href: 'https://instagram.com/' }, // PLACEHOLDER
-    { label: 'LinkedIn', href: 'https://linkedin.com/' }, // PLACEHOLDER
-    { label: 'Behance', href: 'https://behance.net/' }, // PLACEHOLDER
-  ],
+  /**
+   * Sociální sítě a messengery se zadávají v administraci (Kontakt a firma),
+   * dokud tam nic není, web žádné neukazuje — žádné zástupné odkazy „do nikam".
+   */
+  social: [] as { label: string; value: string }[],
   /**
    * The rigged mascot.glb is optional. Drop it into /public/models/mascot.glb
    * and flip this to true — every <Mascot /> instance upgrades itself,

@@ -340,7 +340,8 @@ await next();
 // krok 5
 await bubble('maskot-napoveda');
 await formState('formular-5');
-for (const i of [1, 2, 0]) {
+// WhatsApp (3), telefon (1), Telegram (2), nakonec zpět e-mail (0)
+for (const i of [3, 1, 2, 0]) {
   await click(cs.contact.channels[i]);
   await bubble('maskot-channels');
   await formState('formular-5');
@@ -376,7 +377,8 @@ await scrollTo((await formTop()) - 96, 900);
 await captureElements('kontakt-firma', {
   'settings.contactEmail': `document.querySelector('#kontakt aside a[href^="mailto:"]')`,
   'settings.city': `[...document.querySelectorAll('#kontakt aside li')].find((li) => !li.querySelector('a'))`,
-  'settings.social': `document.querySelector('#kontakt aside ul:last-of-type')`,
+  // sítě a messengery se zobrazují v kontaktech (messengery) a pod nimi (odkazy)
+  'settings.social': `document.querySelector('#kontakt aside ul')`,
 });
 
 /* ------------------------------ patička ------------------------------ */

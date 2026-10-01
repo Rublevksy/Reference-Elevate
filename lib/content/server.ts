@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { site } from '@/content/site';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, supabaseConfigured } from '@/lib/supabase/env';
 import { FALLBACK_PROJECTS, projectFromRow, type Project, type ProjectRow } from './projects';
+import { resolveSocials, type SocialInput, type SocialLink } from '@/lib/social';
 
 /** Značka cache — administrace ji po uložení zneplatní (web se přegeneruje). */
 export const CONTENT_TAG = 'content';
@@ -57,7 +58,6 @@ export const getBlock = unstable_cache(
   { tags: [CONTENT_TAG], revalidate: 3600 },
 );
 
-export type SocialLink = { label: string; href: string };
 export type SiteSettings = {
   contactEmail: string;
   city: string;
@@ -65,6 +65,7 @@ export type SiteSettings = {
   ico: string;
   social: SocialLink[];
 };
+export type { SocialLink };
 
 const str = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim() : fallback);
 
@@ -72,17 +73,28 @@ const str = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim()
 export async function getSettings(): Promise<SiteSettings> {
   const b = (await getBlock('settings')) ?? {};
   const email = str(b.contact_email, site.email);
-  const socials = (b.social ?? {}) as Record<string, unknown>;
   return {
     contactEmail: email.includes('@') ? email : site.email,
     city: str(b.city, site.city),
     legalName: str(b.legal_name, site.legalName),
     ico: str(b.ico, site.ico),
-    // prázdný odkaz = síť se na webu neukáže
-    social: site.social
-      .map((s) => ({ label: s.label, href: typeof socials[s.label.toLowerCase()] === 'string' ? (socials[s.label.toLowerCase()] as string).trim() : s.href }))
-      .filter((s) => s.href),
+    // sítě a messengery z administrace; neplatné / prázdné se vynechají
+    social: resolveSocials(readSocialInputs(b)),
   };
+}
+
+/** Uložené sítě: nový tvar (pole) i starší objekt {instagram: url, …}. */
+export function readSocialInputs(b: Record<string, unknown>): SocialInput[] {
+  if (Array.isArray(b.social_links)) {
+    return (b.social_links as unknown[])
+      .filter((x): x is { label: string; value: string } => Boolean(x) && typeof (x as SocialInput).label === 'string' && typeof (x as SocialInput).value === 'string')
+      .map((x) => ({ label: x.label, value: x.value }));
+  }
+  const legacy = (b.social ?? {}) as Record<string, unknown>;
+  const names: Record<string, string> = { instagram: 'Instagram', linkedin: 'LinkedIn', behance: 'Behance' };
+  return Object.entries(legacy)
+    .filter(([, v]) => typeof v === 'string' && v.trim() && !/^https?:\/\/(www\.)?(instagram\.com|linkedin\.com|behance\.net)\/?$/.test(v.trim()))
+    .map(([k, v]) => ({ label: names[k] ?? k, value: String(v) }));
 }
 
 /**

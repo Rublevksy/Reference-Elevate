@@ -10,6 +10,10 @@ import { useReducedMotion } from '@/lib/useReducedMotion';
 const FULL_H = 300;
 const WAIST_H = 460;
 const WAIST_VISIBLE = 0.56;
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** Co průvodce nesmí zakrýt (a klik na to nesmí „spolknout"). */
+const AVOID = 'main a, main button, main input, main textarea, main select, main h2, main h3, main p, main [data-card], main [data-land="price-card"]';
 
 /**
  * Průvodce — velká postava v rohu, pro každou sekci vlastní „záběr":
@@ -62,6 +66,71 @@ export function MascotGuide() {
     };
   }, []);
 
+  // velikost podle výšky okna — na nízkém notebooku menší postava
+  const [vh, setVh] = useState(900);
+  useEffect(() => {
+    const update = () => setVh(window.innerHeight);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  /*
+   * Uhnutí: když by postava zakryla tlačítko, odkaz nebo text sekce, schová
+   * se za okraj obrazovky a vrátí se, až je místo volné. Kontrola po skrolu
+   * (nejvýš ~8× za sekundu), návrat se zpožděním, ať průvodce nebliká.
+   */
+  const [dodge, setDodge] = useState(false);
+  const dodgeRef = useRef(false);
+  const boxRef = useRef({ left: 0, top: 0, right: 0, bottom: 0 });
+  useEffect(() => {
+    let raf = 0;
+    let last = 0;
+    let back: number | null = null;
+    const test = () => {
+      raf = 0;
+      last = performance.now();
+      const b = boxRef.current;
+      if (b.right <= b.left) return;
+      // drobná tolerance: dotyk okrajem nevadí
+      const pad = 10;
+      const hit = [...document.querySelectorAll<HTMLElement>(AVOID)].some((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2 || r.bottom < b.top + pad || r.top > b.bottom - pad) return false;
+        return r.right > b.left + pad && r.left < b.right - pad;
+      });
+      if (hit) {
+        if (back) window.clearTimeout(back);
+        back = null;
+        if (!dodgeRef.current) {
+          dodgeRef.current = true;
+          setDodge(true);
+        }
+      } else if (dodgeRef.current && !back) {
+        back = window.setTimeout(() => {
+          back = null;
+          dodgeRef.current = false;
+          setDodge(false);
+        }, 450);
+      }
+    };
+    const schedule = () => {
+      if (raf) return;
+      const wait = Math.max(0, 120 - (performance.now() - last));
+      raf = window.setTimeout(() => requestAnimationFrame(test), wait) as unknown as number;
+    };
+    schedule();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    const id = window.setInterval(schedule, 700);
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      window.clearInterval(id);
+      if (back) window.clearTimeout(back);
+    };
+  }, []);
+
   const { scrollY } = useScroll();
   const velocity = useSpring(useVelocity(scrollY), { stiffness: 120, damping: 22 });
   const lean = useTransform(velocity, [-3000, 0, 3000], [-6, 0, 6], { clamp: true });
@@ -78,12 +147,26 @@ export function MascotGuide() {
   };
 
   const shot: MascotShot | undefined = cue?.shot;
-  const visible = Boolean(cue && !cue.hidden && shot) && !closed && heroDone;
+  // na velmi nízkém okně (pod 640 px) se průvodce nevejde vedle obsahu vůbec
+  const visible = Boolean(cue && !cue.hidden && shot) && !closed && heroDone && !dodge && vh >= 640;
   const pose: Pose = wave ? 'wave' : (cue?.pose ?? 'idle');
   const waist = shot?.framing === 'waist';
-  const figureH = waist ? WAIST_H : FULL_H;
-  const boxH = waist ? Math.round(WAIST_H * WAIST_VISIBLE) : FULL_H;
+  const fullH = Math.round(clamp(vh * 0.31, 200, FULL_H));
+  const waistH = Math.round(clamp(vh * 0.5, 320, WAIST_H));
+  const figureH = waist ? waistH : fullH;
+  const boxH = waist ? Math.round(waistH * WAIST_VISIBLE) : fullH;
+  const boxW = Math.round(figureH * 0.62);
   const side = shot?.side ?? 'right';
+  // místo, které by postava zabrala (pro kontrolu uhnutí), i když je zrovna schovaná
+  useEffect(() => {
+    const vw = window.innerWidth;
+    boxRef.current =
+      cue && !cue.hidden && shot
+        ? side === 'left'
+          ? { left: 16, right: 16 + boxW, top: vh - boxH, bottom: vh }
+          : { left: vw - 16 - boxW, right: vw - 16, top: vh - boxH, bottom: vh }
+        : { left: 0, top: 0, right: 0, bottom: 0 };
+  }, [cue, shot, side, boxW, boxH, vh]);
 
   return (
     <div className={`pointer-events-none fixed bottom-0 z-[95] hidden md:block ${side === 'left' ? 'left-4' : 'right-4'}`}>
@@ -106,7 +189,7 @@ export function MascotGuide() {
               style={reduced ? undefined : { rotate: lean, y: sink }}
             >
               {/* do pasu: vyšší postava, spodek schovaný za okrajem obrazovky */}
-              <div className="relative overflow-hidden" style={{ height: boxH, width: Math.round(figureH * 0.62) }}>
+              <div className="relative overflow-hidden" style={{ height: boxH, width: boxW }}>
                 <div className="absolute inset-x-0 top-0" style={{ height: figureH, transform: `perspective(900px) rotateY(${shot.turn}deg)`, transformOrigin: '50% 100%' }}>
                   <Mascot pose={pose} height={figureH} flip={Boolean(shot.flip)} followCursor />
                 </div>

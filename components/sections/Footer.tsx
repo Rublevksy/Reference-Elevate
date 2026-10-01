@@ -11,10 +11,13 @@ import { site } from '@/content/site';
 import { poseSprite } from '@/content/mascot';
 import { useSiteContact } from '@/components/ContentProvider';
 import { SectionLink } from '@/components/ui/SectionLink';
+import { SocialIcon } from '@/components/ui/SocialIcon';
 import { navigateToTop } from '@/lib/scrollTo';
 
 export function Footer() {
   const { contactEmail, city, social } = useSiteContact();
+  const messengers = social.filter((x) => x.kind === 'messenger');
+  const socials = social.filter((x) => x.kind === 'social');
   const t = useTranslations('footer');
   const tServices = useTranslations('services.items');
   const tNav = useTranslations('nav');
@@ -63,22 +66,36 @@ export function Footer() {
           <ul className="space-y-2.5 text-sm text-muted">
             <li><a href={`mailto:${contactEmail}`} className="transition-colors hover:text-ink">{contactEmail}</a></li>
             {site.phone ? <li><a href={`tel:${site.phoneHref}`} className="transition-colors hover:text-ink">{site.phone}</a></li> : null}
-            <li>{city}</li>
-          </ul>
-          <ul className="mt-5 flex flex-wrap gap-2">
-            {social.map((item) => (
-              <li key={item.label}>
-                <a
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-block rounded-full border border-[var(--line)] px-4 py-2 text-xs uppercase tracking-wider text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
-                >
+            {/* messengery (WhatsApp…) z administrace — kontakt s číslem */}
+            {messengers.map((item) => (
+              <li key={item.href}>
+                <a href={item.href} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 transition-colors hover:text-ink">
+                  <SocialIcon brand={item.brand} className="h-3.5 w-3.5 text-[var(--blue-bright)]" />
                   {item.label}
+                  {item.display ? <span className="text-ink/80">{item.display}</span> : null}
                 </a>
               </li>
             ))}
+            <li>{city}</li>
           </ul>
+          {socials.length ? (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {socials.map((item) => (
+                <li key={item.href}>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    aria-label={item.label}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3.5 py-2 text-xs uppercase tracking-wider text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
+                  >
+                    <SocialIcon brand={item.brand} className="h-3.5 w-3.5" />
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
 
