@@ -273,3 +273,4 @@ reference/        původní podklady od zadavatele (nenasazuje se)
 
 Vercel: naimportovat repozitář, doplnit env proměnné, nasadit.
 `npm run build` musí projít bez chyb — je to zároveň typecheck i lint.
+ 
