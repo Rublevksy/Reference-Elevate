@@ -101,7 +101,18 @@ export function readSocialInputs(b: Record<string, unknown>): SocialInput[] {
  * Režim údržby (administrace → „Technické práce"). Samostatný blok, aby ho
  * uložení kontaktů nikdy nepřepsalo. Když databáze neodpovídá, web běží.
  */
-export async function getSiteStatus(): Promise<{ maintenance: boolean }> {
-  const b = await getBlock('site_status');
-  return { maintenance: b?.maintenance === true };
-}
+export const getSiteStatus = unstable_cache(
+  async (): Promise<{ maintenance: boolean }> => {
+    if (!supabaseConfigured) return { maintenance: false };
+    try {
+      const { data, error } = await serverClient().from('content_blocks').select('data').eq('key', 'site_status').maybeSingle();
+      if (error || !data) return { maintenance: false };
+      return { maintenance: (data.data as Record<string, unknown>).maintenance === true };
+    } catch {
+      return { maintenance: false };
+    }
+  },
+  ['site-status'],
+  // krátká platnost: i bez zásahu administrace se stav údržby srovná do minuty
+  { tags: [CONTENT_TAG], revalidate: 60 },
+);

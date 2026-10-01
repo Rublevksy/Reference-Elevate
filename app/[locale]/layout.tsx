@@ -90,7 +90,8 @@ export async function generateMetadata({
       images: [{ url: `/${locale}/opengraph-image`, width: 1200, height: 630, alt: site.name }],
     },
     twitter: { card: 'summary_large_image', title: t('ogTitle'), description: t('home.description') },
-    robots: maintenance ? { index: false, follow: false } : { index: true, follow: true },
+    // produkce = index, follow; noindex jen při údržbě a na preview nasazeních Vercelu
+    robots: maintenance || process.env.VERCEL_ENV === 'preview' ? { index: false, follow: false } : { index: true, follow: true },
   };
 }
 

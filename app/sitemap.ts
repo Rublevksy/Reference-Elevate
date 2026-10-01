@@ -9,6 +9,7 @@ const alternates = (path: string) => ({
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
+  // stránka Ochrana osobních údajů má noindex, takže v mapě webu není
   return locales.flatMap((locale) => [
     {
       url: `${site.url}/${locale}`,
@@ -16,13 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 1,
       alternates: alternates(''),
-    },
-    {
-      url: `${site.url}/${locale}/ochrana-osobnich-udaju`,
-      lastModified: now,
-      changeFrequency: 'yearly' as const,
-      priority: 0.2,
-      alternates: alternates('/ochrana-osobnich-udaju'),
     },
   ]);
 }
