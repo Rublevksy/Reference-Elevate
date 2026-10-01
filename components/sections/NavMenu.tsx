@@ -181,30 +181,13 @@ export function NavMenuPanel({ kind, onNavigate }: { kind: MenuKind; onNavigate:
   );
 }
 
-/** Mobilní menu: pod hlavní položkou řádek rychlých odkazů (služby, kroky, balíčky). */
-export function MobileSubLinks({ kind, onNavigate }: { kind: MenuKind; onNavigate: () => void }) {
+/** Odkazy podmenu pro mobilní menu (služby, kroky procesu, balíčky s cenou). */
+export function useMenuLinks(kind: MenuKind): { to: string; label: string; aside?: string }[] {
   const tItems = useTranslations('services.items');
   const tProcess = useTranslations('process');
   const tPricing = useTranslations('pricing');
-  const links: { to: string; label: string }[] =
-    kind === 'detaily'
-      ? services.map((s) => ({ to: `sluzba-${s.slug}`, label: tItems(`${s.slug}.card`) }))
-      : kind === 'proces'
-        ? (tProcess.raw('steps') as { title: string }[]).map((step, i) => ({ to: `krok-${i + 1}`, label: `${processSteps[i] ?? i + 1} ${step.title}` }))
-        : plans.map((p) => ({ to: `cena-${p.id}`, label: `${tPricing(`plans.${p.id}.name`)} · ${tPricing(`plans.${p.id}.price`)}` }));
-  return (
-    <ul className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {links.map((link) => (
-        <li key={link.to} className="shrink-0">
-          <SectionLink
-            to={link.to}
-            onNavigate={onNavigate}
-            className="block whitespace-nowrap rounded-full border border-[rgba(110,150,255,0.28)] bg-[rgba(31,91,255,0.06)] px-3.5 py-2 text-xs text-[rgba(200,212,240,0.9)] transition-colors active:border-[var(--blue-bright)] active:bg-[rgba(31,91,255,0.2)]"
-          >
-            {link.label}
-          </SectionLink>
-        </li>
-      ))}
-    </ul>
-  );
+  if (kind === 'detaily') return services.map((s) => ({ to: `sluzba-${s.slug}`, label: tItems(`${s.slug}.card`), aside: s.num }));
+  if (kind === 'proces')
+    return (tProcess.raw('steps') as { title: string }[]).map((step, i) => ({ to: `krok-${i + 1}`, label: step.title, aside: processSteps[i] }));
+  return plans.map((p) => ({ to: `cena-${p.id}`, label: tPricing(`plans.${p.id}.name`), aside: tPricing(`plans.${p.id}.price`) }));
 }

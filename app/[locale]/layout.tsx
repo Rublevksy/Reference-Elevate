@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 import { routing, locales, htmlLang, type Locale } from '@/i18n/routing';
 import { site } from '@/content/site';
+import { plans } from '@/content/pricing';
 import { Backdrop } from '@/components/ui/Backdrop';
 import { Cursor } from '@/components/ui/Cursor';
 import { Preloader } from '@/components/ui/Preloader';
@@ -114,22 +115,68 @@ export default async function LocaleLayout({
   const t = await getTranslations({ locale, namespace: 'a11y' });
 
   const [projects, settings, status] = await Promise.all([getProjects(), getSettings(), getSiteStatus()]);
+  // Schema.org pro Google: firma (služby s cenami „od" z Ceníku) + web.
+  // Adresa jen město z administrace — bez vymyšleného PSČ či ulice.
+  const [tMeta, tPricing] = await Promise.all([
+    getTranslations({ locale, namespace: 'meta' }),
+    getTranslations({ locale, namespace: 'pricing' }),
+  ]);
+  const price = (v: string) => Number(v.replace(/[^\d]/g, '')) || undefined;
+  const businessId = `${site.url}/#business`;
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'ProfessionalService',
-    name: site.name,
-    url: `${site.url}/${locale}`,
-    email: settings.contactEmail,
-    ...(site.phone ? { telephone: site.phone } : {}),
-    areaServed: 'CZ',
-    priceRange: '$$',
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: settings.city,
-      postalCode: site.address.postalCode,
-      addressCountry: site.address.country,
-    },
-    sameAs: settings.social.filter((s) => s.kind === 'social').map((s) => s.href),
+    '@graph': [
+      {
+        '@type': 'ProfessionalService',
+        '@id': businessId,
+        name: site.name,
+        description: tMeta('home.description'),
+        url: `${site.url}/${locale}`,
+        logo: `${site.url}/brand/icon-512.png`,
+        image: `${site.url}/${locale}/opengraph-image`,
+        email: settings.contactEmail,
+        ...(site.phone ? { telephone: site.phone } : {}),
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: settings.city,
+          addressRegion: 'Hlavní město Praha',
+          addressCountry: site.address.country,
+        },
+        areaServed: [
+          { '@type': 'City', name: 'Praha' },
+          { '@type': 'Country', name: 'Česko' },
+        ],
+        knowsLanguage: ['cs', 'en', 'ru', 'uk'],
+        priceRange: '2 000–15 000+ Kč',
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: tPricing('title'),
+          itemListElement: plans.map((plan) => ({
+            '@type': 'Offer',
+            itemOffered: {
+              '@type': 'Service',
+              name: tPricing(`plans.${plan.id}.name`),
+              description: tPricing(`plans.${plan.id}.tagline`),
+              areaServed: { '@type': 'City', name: 'Praha' },
+            },
+            priceSpecification: {
+              '@type': 'PriceSpecification',
+              minPrice: price(tPricing(`plans.${plan.id}.price`)),
+              priceCurrency: 'CZK',
+            },
+          })),
+        },
+        sameAs: settings.social.filter((s) => s.kind === 'social').map((s) => s.href),
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${site.url}/#website`,
+        url: site.url,
+        name: site.name,
+        inLanguage: htmlLang[locale as Locale],
+        publisher: { '@id': businessId },
+      },
+    ],
   };
 
   // obrazovka údržby střídá i ruštinu a ukrajinštinu → písmo s cyrilicí

@@ -256,7 +256,9 @@
         "name": "BioDent",
         "kind": "Dental clinic, Prague 2"
       }
-    }
+    },
+    "altDesktop": "{name} website ({kind}) — shown on a laptop",
+    "altMobile": "{name} website ({kind}) — mobile version"
   },
   "pricing": {
     "eyebrow": "Pricing",
@@ -638,17 +640,19 @@
   },
   "meta": {
     "home": {
-      "title": "ELEVATE — digital studio from Prague | Websites, e-shops, apps",
-      "description": "We build modern websites, e-shops and apps that combine design, performance and results. Custom animated websites from Prague."
+      "title": "Website & E-shop Development in Prague | ELEVATE",
+      "description": "Custom websites and e-shops built in Prague. SEO optimisation, logo and design, web apps. Websites from CZK 5,000, e-shops from CZK 15,000."
     },
-    "ogTitle": "ELEVATE — digital solutions that move your business forward",
+    "ogTitle": "ELEVATE — websites, e-shops and SEO from Prague that bring in customers",
     "keywords": [
-      "web design prague",
-      "animated websites",
+      "website development Prague",
+      "custom web design",
       "custom e-shop",
-      "SEO prague",
-      "web design",
-      "app development"
+      "e-commerce website",
+      "SEO Prague",
+      "web design Prague",
+      "logo design",
+      "web applications"
     ]
   },
   "privacy": {

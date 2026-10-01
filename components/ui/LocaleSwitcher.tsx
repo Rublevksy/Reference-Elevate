@@ -5,20 +5,45 @@ import { Globe } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { locales, localeNames, type Locale } from '@/i18n/routing';
+import { LOCALE_COOKIE, locales, localeNames, type Locale } from '@/i18n/routing';
+
+/** Výslovná volba jazyka — pamatuje se rok (úvodní adresa „/" ji pak použije). */
+export function rememberLocale(next: Locale) {
+  document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+}
 
 /**
  * Pilulka s kódem jazyka, která se po kliknutí rozbalí do panelu.
  * Není to select ani klasický dropdown — je to jeden prvek, který
  * mění tvar (Framer layout), takže přechod působí jako jedna věc.
  */
-export function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
+/** Změna jazyka bez skoku stránky — sdílí přepínač v liště i mobilní menu. */
+export function useLocaleChange() {
   const locale = useLocale() as Locale;
-  const t = useTranslations('nav');
   const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
+  const change = (next: Locale) => {
+    if (next === locale) return;
+    rememberLocale(next);
+    // bez efektů: jen výměna textů; pozici scrollu si nová stránka vezme ze sessionStorage
+    // (layout jazyka se přemontuje a SmoothScroll by jinak skočil nahoru)
+    try {
+      sessionStorage.setItem('elevate:keep-scroll', String(Math.round(window.scrollY)));
+    } catch {
+      /* soukromé okno — nevadí */
+    }
+    startTransition(() => {
+      router.replace(pathname, { locale: next, scroll: false });
+    });
+  };
+  return { locale, change };
+}
+
+export function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations('nav');
+  const { locale, change: changeLocale } = useLocaleChange();
+  const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,18 +64,7 @@ export function LocaleSwitcher({ compact = false }: { compact?: boolean }) {
 
   const change = (next: Locale) => {
     setOpen(false);
-    if (next === locale) return;
-
-    // bez efektů: jen výměna textů; pozici scrollu si nová stránka vezme ze sessionStorage
-    // (layout jazyka se přemontuje a SmoothScroll by jinak skočil nahoru)
-    try {
-      sessionStorage.setItem('elevate:keep-scroll', String(Math.round(window.scrollY)));
-    } catch {
-      /* soukromé okno — nevadí */
-    }
-    startTransition(() => {
-      router.replace(pathname, { locale: next, scroll: false });
-    });
+    changeLocale(next);
   };
 
   return (

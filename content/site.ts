@@ -8,7 +8,7 @@ export const site = {
   tagline: 'Digitální studio z Prahy',
   description:
     'Tvoříme moderní weby, e-shopy a aplikace, které spojují design, výkon a výsledky. Animované weby na míru z Prahy.',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.elevate-studio.cz',
+  url: (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.elevateit.cz').replace(/\/$/, ''),
   locale: 'cs_CZ',
   city: 'Praha',
   email: 'elevateitcz@gmail.com',

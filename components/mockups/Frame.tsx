@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 export function BrowserFrame({
   children,
   className = '',
-  label = 'elevate-studio.cz',
+  label = 'elevateit.cz',
 }: {
   children: ReactNode;
   className?: string;

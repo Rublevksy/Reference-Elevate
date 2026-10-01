@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Menu } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
@@ -10,9 +10,8 @@ import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { navState, navigateToTop } from '@/lib/scrollTo';
 import { SectionLink } from '@/components/ui/SectionLink';
-import { MobileSubLinks, NavMenuPanel, type MenuKind } from './NavMenu';
-import { site } from '@/content/site';
-import { useContactEmail } from '@/components/ContentProvider';
+import { NavMenuPanel, type MenuKind } from './NavMenu';
+import { MobileMenu } from './MobileMenu';
 
 /** Položky s podmenu (hover / focus) — ostatní vedou rovnou na sekci. */
 const MENUS: readonly string[] = ['detaily', 'proces', 'cenik'];
@@ -48,7 +47,6 @@ function RollLabel({ label, active }: { label: string; active: boolean }) {
 }
 
 export function Navbar() {
-  const contactEmail = useContactEmail();
   const t = useTranslations('nav');
   const tA11y = useTranslations('a11y');
   const reduced = useReducedMotion();
@@ -137,10 +135,7 @@ export function Navbar() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  const closeMobile = useCallback(() => setOpen(false), []);
 
   return (
     <>
@@ -288,78 +283,8 @@ export function Navbar() {
         </motion.nav>
       </motion.header>
 
-      {/* mobilní fullscreen menu */}
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            className="fixed inset-0 z-[110] overflow-y-auto overscroll-contain bg-[var(--bg)] pb-10 lg:hidden"
-            data-lenis-prevent
-            initial={{ clipPath: 'circle(0% at 92% 5%)' }}
-            animate={{ clipPath: 'circle(145% at 92% 5%)' }}
-            exit={{ clipPath: 'circle(0% at 92% 5%)' }}
-            transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
-          >
-            <div className="flex h-[72px] items-center justify-between px-5">
-              <Logo height={18} />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="grid h-10 w-10 place-items-center rounded-full border border-[var(--line)] text-ink"
-                aria-label={t('closeMenu')}
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-
-            <nav className="mt-6 flex flex-col px-5" aria-label={tA11y('mobileNav')}>
-              {ITEMS.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.14 + index * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="border-b border-[var(--line)]"
-                >
-                  <SectionLink
-                    to={item.id}
-                    instant={item.id === 'kontakt'}
-                    onNavigate={onNavigate(item.id)}
-                    className="block py-4 font-display text-[28px] uppercase leading-none tracking-tight text-ink"
-                  >
-                    {t(item.key)}
-                  </SectionLink>
-                  {MENUS.includes(item.id) ? <MobileSubLinks kind={item.id as MenuKind} onNavigate={onNavigate(item.id)} /> : null}
-                </motion.div>
-              ))}
-            </nav>
-
-            <motion.div
-              className="mt-9 px-5"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <SectionLink
-                to="kontakt"
-                instant
-                onNavigate={onNavigate('kontakt')}
-                className="flex w-full items-center justify-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-6 py-4 font-display text-[12px] uppercase tracking-[0.12em] text-white shadow-glow"
-              >
-                {t('cta')}
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </SectionLink>
-
-              <div className="mt-8 flex items-center justify-between">
-                <LocaleSwitcher compact />
-                <div className="text-right text-xs text-muted">
-                  <a href={`mailto:${contactEmail}`} className="block hover:text-ink">{contactEmail}</a>
-                  {site.phone ? <a href={`tel:${site.phoneHref}`} className="block hover:text-ink">{site.phone}</a> : null}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {/* mobilní menu (vlastní komponenta: sloupec řádků, jazyk, hlavní akce) */}
+      <MobileMenu open={open} onClose={closeMobile} items={ITEMS} menus={MENUS} active={active} onNavigate={onNavigate} />
     </>
   );
 }

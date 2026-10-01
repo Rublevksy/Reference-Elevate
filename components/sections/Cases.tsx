@@ -96,7 +96,9 @@ function DeviceScreen({
   hovered,
   glare,
   wipeDelay = 0,
+  alt,
 }: {
+  alt: string;
   src: string;
   ratio: number;
   active: boolean;
@@ -137,8 +139,7 @@ function DeviceScreen({
         <img
           ref={imgRef}
           src={src}
-          alt=""
-          aria-hidden
+          alt={alt}
           loading="lazy"
           decoding="async"
           className="absolute inset-x-0 top-0 w-full max-w-none will-change-transform"
@@ -180,7 +181,10 @@ function DeviceComposition({
   active,
   progress,
   segments = 1,
+  label,
 }: {
+  /** „název (obor)" projektu pro popisky obrázků */
+  label: { name: string; kind: string };
   project: Project;
   accent: string;
   active: boolean;
@@ -190,6 +194,7 @@ function DeviceComposition({
   segments?: number;
 }) {
   const reduced = useReducedMotion();
+  const tCases = useTranslations('cases');
   const [hovered, setHovered] = useState(false);
   // Screenshot se začne posouvat až po otevření sekce (progress > 0), ne už
   // při načtení stránky — jinak by při předání z přechodu byl odscrollovaný.
@@ -271,7 +276,7 @@ function DeviceComposition({
       <div ref={laptopDepth} data-land="cases-laptop" className="relative min-w-0 flex-[4.2]">
         <motion.div style={reduced ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}>
           <MacbookFrame className="drop-shadow-[0_50px_90px_-30px_rgba(0,0,0,0.9)]">
-            <DeviceScreen src={project.desktopImage} ratio={project.desktopRatio} active={running} hovered={hovered} glare={glareLaptop} />
+            <DeviceScreen alt={tCases('altDesktop', label)} src={project.desktopImage} ratio={project.desktopRatio} active={running} hovered={hovered} glare={glareLaptop} />
           </MacbookFrame>
         </motion.div>
       </div>
@@ -280,7 +285,7 @@ function DeviceComposition({
         <motion.div style={reduced ? undefined : { rotateX, rotateY: rotateYPhone, transformStyle: 'preserve-3d' }}>
           <PhoneFrame className="!w-full drop-shadow-[0_30px_50px_-18px_rgba(0,0,0,0.95)]">
             <div data-land="cases-phone" className="relative aspect-[390/844] overflow-hidden">
-              <DeviceScreen src={project.mobileImage} ratio={project.mobileRatio} active={running} hovered={hovered} glare={glarePhone} wipeDelay={0.1} />
+              <DeviceScreen alt={tCases('altMobile', label)} src={project.mobileImage} ratio={project.mobileRatio} active={running} hovered={hovered} glare={glarePhone} wipeDelay={0.1} />
             </div>
           </PhoneFrame>
         </motion.div>
@@ -463,6 +468,7 @@ export function Cases() {
               </div>
 
               <DeviceComposition
+                label={text(cases[index])}
                 project={cases[index]}
                 accent={accent}
                 progress={scrollYProgress}
@@ -522,6 +528,7 @@ function MobileCase({
 
       <div className="mt-6">
         <DeviceComposition
+          label={text(item)}
           project={item}
           accent={item.accent}
           active={inView}

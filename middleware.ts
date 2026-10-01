@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr';
-import { routing } from './i18n/routing';
+import { LOCALE_COOKIE, locales, routing } from './i18n/routing';
 import { serviceSlugs } from './content/services';
 
 const intl = createMiddleware(routing);
@@ -47,6 +47,14 @@ export default async function middleware(request: NextRequest) {
     target.search = '';
     target.hash = slug && (serviceSlugs as readonly string[]).includes(slug) ? `sluzba-${slug}` : 'sluzby';
     return NextResponse.redirect(target, 308);
+  }
+  // úvodní adresa bez jazyka: čeština, pokud si návštěvník dřív sám nevybral jiný jazyk
+  if (pathname === '/') {
+    const chosen = request.cookies.get(LOCALE_COOKIE)?.value;
+    const locale = chosen && (locales as readonly string[]).includes(chosen) ? chosen : routing.defaultLocale;
+    const target = request.nextUrl.clone();
+    target.pathname = `/${locale}`;
+    return NextResponse.redirect(target, 307);
   }
   return intl(request);
 }

@@ -16,7 +16,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/ochrana-osobnich-udaju` },
+    alternates: {
+      canonical: `/${locale}/ochrana-osobnich-udaju`,
+      languages: {
+        ...Object.fromEntries(locales.map((l) => [l, `${site.url}/${l}/ochrana-osobnich-udaju`])),
+        'x-default': `${site.url}/cs/ochrana-osobnich-udaju`,
+      },
+    },
     robots: { index: false, follow: true },
   };
 }

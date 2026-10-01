@@ -256,7 +256,9 @@
         "name": "BioDent",
         "kind": "Stomatologická klinika, Praha 2"
       }
-    }
+    },
+    "altDesktop": "Web {name} ({kind}) — ukázka na notebooku",
+    "altMobile": "Web {name} ({kind}) — mobilní verze"
   },
   "pricing": {
     "eyebrow": "Ceník",
@@ -638,17 +640,20 @@
   },
   "meta": {
     "home": {
-      "title": "ELEVATE — digitální studio z Prahy | Weby, e-shopy, aplikace",
-      "description": "Tvoříme moderní weby, e-shopy a aplikace, které spojují design, výkon a výsledky. Animované weby na míru z Prahy."
+      "title": "Tvorba webových stránek a e-shopů Praha | ELEVATE",
+      "description": "Tvorba webových stránek a e-shopů na míru v Praze. SEO optimalizace, logo a design, webové aplikace. Web od 5 000 Kč, e-shop od 15 000 Kč."
     },
-    "ogTitle": "ELEVATE — digitální řešení, která posouvají vaše podnikání",
+    "ogTitle": "ELEVATE — weby, e-shopy a SEO z Prahy, které přivádějí zákazníky",
     "keywords": [
-      "tvorba webů Praha",
-      "animované weby",
+      "tvorba webových stránek Praha",
+      "tvorba webu na míru",
       "e-shop na míru",
-      "SEO Praha",
-      "webdesign",
-      "vývoj aplikací"
+      "tvorba e-shopu",
+      "SEO optimalizace Praha",
+      "webdesign Praha",
+      "tvorba loga",
+      "webové aplikace",
+      "animované weby"
     ]
   },
   "privacy": {
