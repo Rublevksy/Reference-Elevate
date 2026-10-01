@@ -31,7 +31,7 @@ export const getProjects = unstable_cache(
   { tags: [CONTENT_TAG], revalidate: 3600 },
 );
 
-export type BlockKey = 'pricing_cs' | 'settings' | 'messages_cs';
+export type BlockKey = 'pricing_cs' | 'settings' | 'messages_cs' | 'site_status';
 
 /**
  * Bloky obsahu čte server přes service role (jen na serveru) — nové bloky
@@ -83,4 +83,13 @@ export async function getSettings(): Promise<SiteSettings> {
       .map((s) => ({ label: s.label, href: typeof socials[s.label.toLowerCase()] === 'string' ? (socials[s.label.toLowerCase()] as string).trim() : s.href }))
       .filter((s) => s.href),
   };
+}
+
+/**
+ * Režim údržby (administrace → „Technické práce"). Samostatný blok, aby ho
+ * uložení kontaktů nikdy nepřepsalo. Když databáze neodpovídá, web běží.
+ */
+export async function getSiteStatus(): Promise<{ maintenance: boolean }> {
+  const b = await getBlock('site_status');
+  return { maintenance: b?.maintenance === true };
 }

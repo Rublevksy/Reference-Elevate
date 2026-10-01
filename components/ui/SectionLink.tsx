@@ -11,15 +11,16 @@ import { coverPage, navigateTo } from '@/lib/scrollTo';
  */
 export function SectionLink({
   to,
+  instant = false,
   onNavigate,
   onClick,
   ...rest
-}: Omit<ComponentProps<typeof Link>, 'href'> & { to: string; onNavigate?: () => void }) {
+}: Omit<ComponentProps<typeof Link>, 'href'> & { to: string; instant?: boolean; onNavigate?: () => void }) {
   const handle = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     onNavigate?.();
-    if (navigateTo(to)) event.preventDefault();
+    if (navigateTo(to, { instant })) event.preventDefault();
     else coverPage();
   };
   return <Link href={`/#${to}`} onClick={handle} {...rest} />;

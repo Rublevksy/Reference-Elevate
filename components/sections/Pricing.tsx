@@ -202,7 +202,7 @@ export function Pricing() {
   };
 
   return (
-    <section id="cenik" className="relative overflow-hidden py-24 md:py-32" aria-labelledby="cenik-title">
+    <section id="cenik" className="relative overflow-hidden py-24 md:pb-[calc(8rem+24vh)] md:pt-32" aria-labelledby="cenik-title">
       {/* linie horizontu, zpoza které karty vystupují */}
       <div
         aria-hidden
@@ -254,6 +254,9 @@ export function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-10%' }}
           transition={{ duration: reduced ? 0 : 0.8, ease: [0.16, 1, 0.3, 1] }}
+          id="cena-na-miru"
+          data-nav-offset={-34}
+          data-nav-highlight
           className="glass mt-6 flex flex-wrap items-center justify-between gap-6 rounded-card p-7"
         >
           <div>

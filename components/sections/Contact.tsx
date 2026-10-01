@@ -90,40 +90,47 @@ const STYLE_PREVIEWS: ReactNode[] = [
   </span>,
 ];
 
-const chipClass = (selected: boolean) =>
-  `inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-[color,background-color,border-color,box-shadow] duration-300 ${
-    selected
-      ? 'border-[var(--blue-bright)] bg-[rgba(31,91,255,0.18)] text-ink shadow-glow'
-      : 'border-[var(--line)] text-muted hover:border-[rgba(80,120,255,0.45)] hover:text-ink'
-  }`;
-
-const tileClass = (selected: boolean) =>
-  `relative flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm transition-[color,background-color,border-color,box-shadow] duration-300 ${
-    selected
-      ? 'border-[var(--blue-bright)] bg-[rgba(31,91,255,0.14)] text-ink shadow-[0_0_26px_rgba(31,91,255,0.28)]'
-      : 'border-[var(--line)] bg-white/[0.02] text-muted hover:border-[rgba(80,120,255,0.45)] hover:text-ink'
-  }`;
+/*
+ * Vizuální jazyk formuláře = jazyk webu: volby nejsou „pilulky z UI kitu",
+ * ale neonové štítky — gradientní rám jako u karet služeb, kontrolka (LED),
+ * která se při výběru rozsvítí, přejezd světla při najetí. Styly v globals.css
+ * (.neon-chip, .neon-tile, .neon-led).
+ */
+function Chip({ on, multi = false, onClick, children }: { on: boolean; multi?: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" aria-pressed={on} onClick={onClick} className="neon-chip">
+      <span aria-hidden className={`neon-led ${multi ? 'neon-led-box' : ''}`}>
+        {multi && on ? <Check className="h-2 w-2" strokeWidth={4} /> : null}
+      </span>
+      <span>{children}</span>
+    </button>
+  );
+}
 
 const field =
-  'w-full rounded-xl border border-[var(--line)] bg-white/[0.03] px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-[rgba(61,123,255,0.6)]';
+  'w-full rounded-lg border border-[rgba(110,150,255,0.2)] bg-[rgba(5,9,22,0.6)] px-3.5 py-2.5 text-sm text-ink outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-muted/60 hover:border-[rgba(110,150,255,0.36)] focus:border-[rgba(97,150,255,0.8)] focus:shadow-[0_0_0_3px_rgba(31,91,255,0.14),0_0_22px_-8px_rgba(61,123,255,0.8)]';
 
+/** Skupina otázky: popisek ve fontu webu, nápověda na stejném řádku (šetří místo). */
 function Group({ label, hint, optional, error, children, htmlFor }: { label: string; hint?: string; optional?: string; error?: string; children: ReactNode; htmlFor?: string }) {
   const Title = htmlFor ? 'label' : 'p';
   return (
     <div>
-      <Title {...(htmlFor ? { htmlFor } : {})} className="block text-sm font-semibold text-ink">
-        {label} {optional ? <span className="font-normal text-muted">({optional})</span> : null}
-      </Title>
-      {hint ? <p className="mt-1 text-xs leading-relaxed text-muted">{hint}</p> : null}
-      <div className="mt-3">{children}</div>
-      {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <Title {...(htmlFor ? { htmlFor } : {})} className="font-display text-[10.5px] uppercase tracking-[0.16em] text-[#c6d4f6]">
+          {label}
+          {optional ? <span className="ml-2 font-sans text-[11px] normal-case tracking-normal text-muted/80">{optional}</span> : null}
+        </Title>
+        {hint ? <p className="text-[11.5px] leading-snug text-muted">{hint}</p> : null}
+      </div>
+      <div className="mt-2.5">{children}</div>
+      {error ? <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[#ff8a9a]"><span className="h-1 w-1 rounded-full bg-[#ff5a6e] shadow-[0_0_6px_#ff5a6e]" />{error}</p> : null}
     </div>
   );
 }
 
 function Tick() {
   return (
-    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--blue-bright)] text-white">
+    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--blue-bright)] text-white shadow-[0_0_10px_rgba(61,123,255,0.9)]">
       <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
     </span>
   );
@@ -358,8 +365,15 @@ export function Contact() {
           <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted md:text-base">{t('lead')}</p>
         </div>
 
-        <div className="mt-12 grid gap-10 lg:mt-14 lg:grid-cols-[1.3fr_0.7fr]">
-          <div ref={cardRef} className="glass relative overflow-hidden rounded-card p-5 sm:p-7 md:p-9">
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:gap-8">
+          <div ref={cardRef} className="glass relative overflow-hidden rounded-card p-4 sm:p-6 md:p-7">
+            {/* tečkovaná neonová linka a záře nahoře — stejný motiv jako karty webu */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-8 top-0 h-[3px]"
+              style={{ background: 'radial-gradient(circle, #cfe0ff 0 1px, rgba(97,150,255,0.8) 1.3px, transparent 1.9px) 0 50% / 9px 3px repeat-x' }}
+            />
+            <span aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-40 w-2/3 -translate-x-1/2 rounded-full bg-[rgba(31,91,255,0.12)] blur-3xl" />
             <AnimatePresence mode="wait">
               {status === 'done' ? (
                 <motion.div
@@ -386,7 +400,7 @@ export function Contact() {
               ) : (
                 <motion.form key="form" onSubmit={handleSubmit(onSubmit, onInvalid)} onKeyDown={onKeyDown} initial={{ opacity: 0 }} animate={{ opacity: 1 }} noValidate>
                   {/* průběh: pět pojmenovaných úseků, hotové jdou rozkliknout */}
-                  <div className="mb-7">
+                  <div className="mb-5">
                     <div className="flex items-baseline justify-between gap-4 text-[11px] uppercase tracking-[0.18em] text-muted">
                       <span>
                         {t('stepLabel')} <span className="text-ink">{step + 1}</span> / {steps.length}
@@ -448,12 +462,12 @@ export function Contact() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -24 }}
                       transition={{ duration: reduced ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-                      className="min-h-[330px] min-w-0"
+                      className="min-w-0"
                     >
-                      <legend className="font-display text-lg font-bold uppercase leading-tight md:text-xl">{questions[step]}</legend>
+                      <legend className="font-display text-base font-bold uppercase leading-tight md:text-lg">{questions[step]}</legend>
 
                       {step === 0 ? (
-                        <div className="mt-6 space-y-7">
+                        <div className="mt-5 space-y-5">
                           <Group label={t('needsLabel')} hint={t('needsHint')} error={errors.needs?.message}>
                             {v.plan ? (
                               <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[rgba(61,123,255,0.45)] bg-[rgba(31,91,255,0.1)] py-1.5 pl-3.5 pr-1.5 text-xs text-ink">
@@ -468,35 +482,31 @@ export function Contact() {
                                 </button>
                               </p>
                             ) : null}
-                            <div className="flex flex-wrap gap-2.5">
+                            <div className="flex flex-wrap gap-2">
                               {needs.map((item, i) => {
                                 const on = v.needs.includes(i);
                                 return (
-                                  <button
+                                  <Chip
                                     key={item}
-                                    type="button"
-                                    aria-pressed={on}
-                                    className={chipClass(on)}
+                                    on={on}
+                                    multi
                                     onClick={() => {
                                       if (toggle('needs', i)) react('needs', i, i === UNSURE.needs);
                                     }}
                                   >
-                                    {on ? <Tick /> : null}
                                     {item}
-                                  </button>
+                                  </Chip>
                                 );
                               })}
                             </div>
                           </Group>
 
                           <Group label={t('nicheLabel')} error={errors.niche?.message}>
-                            <div className="flex flex-wrap gap-2.5">
+                            <div className="flex flex-wrap gap-2">
                               {niches.map((item, i) => (
-                                <button
+                                <Chip
                                   key={item}
-                                  type="button"
-                                  aria-pressed={v.niche === i}
-                                  className={chipClass(v.niche === i)}
+                                  on={v.niche === i}
                                   onClick={() => {
                                     choose('niche', i);
                                     react('niches', i, i === NICHE_OTHER);
@@ -504,7 +514,7 @@ export function Contact() {
                                   }}
                                 >
                                   {item}
-                                </button>
+                                </Chip>
                               ))}
                             </div>
                             <div className="mt-4">
@@ -533,9 +543,9 @@ export function Contact() {
                       ) : null}
 
                       {step === 1 ? (
-                        <div className="mt-6 space-y-7">
+                        <div className="mt-5 space-y-5">
                           <Group label={t('startLabel')} error={errors.start?.message}>
-                            <div className="grid gap-2.5 sm:grid-cols-3">
+                            <div className="grid gap-2 sm:grid-cols-3">
                               {starts.map((item, i) => {
                                 const Icon = START_ICONS[i] ?? Sparkles;
                                 const on = v.start === i;
@@ -544,7 +554,7 @@ export function Contact() {
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className={`${tileClass(on)} sm:flex-col sm:items-start sm:gap-4 sm:py-4`}
+                                    className="neon-tile sm:flex-col sm:items-start sm:gap-3"
                                     onClick={() => {
                                       choose('start', i);
                                       react('starts', i);
@@ -579,14 +589,13 @@ export function Contact() {
                           </AnimatePresence>
 
                           <Group label={t('assetsLabel')} optional={t('optional')}>
-                            <div className="flex flex-wrap gap-2.5">
+                            <div className="flex flex-wrap gap-2">
                               {assets.map((item, i) => {
                                 const on = v.assets.includes(i);
                                 return (
-                                  <button key={item} type="button" aria-pressed={on} className={chipClass(on)} onClick={() => toggle('assets', i)}>
-                                    {on ? <Tick /> : null}
+                                  <Chip key={item} on={on} multi onClick={() => toggle('assets', i)}>
                                     {item}
-                                  </button>
+                                  </Chip>
                                 );
                               })}
                             </div>
@@ -595,7 +604,7 @@ export function Contact() {
                       ) : null}
 
                       {step === 2 ? (
-                        <div className="mt-6 space-y-7">
+                        <div className="mt-5 space-y-5">
                           <Group label={t('refsLabel')} hint={t('refsHint')} optional={t('optional')} error={errors.refs?.message}>
                             <div className="space-y-2.5">
                               {refs.map((value, i) => (
@@ -639,7 +648,7 @@ export function Contact() {
                           </Group>
 
                           <Group label={t('styleLabel')} optional={t('optional')}>
-                            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                               {styles.map((item, i) => {
                                 const on = v.style === i;
                                 return (
@@ -647,7 +656,7 @@ export function Contact() {
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className={`${tileClass(on)} !px-3 !py-3`}
+                                    className="neon-tile !py-2.5"
                                     onClick={() => {
                                       choose('style', on ? -1 : i);
                                       if (!on) react('styles', i, i === UNSURE.styles);
@@ -702,9 +711,9 @@ export function Contact() {
                       ) : null}
 
                       {step === 3 ? (
-                        <div className="mt-6 space-y-7">
+                        <div className="mt-5 space-y-5">
                           <Group label={t('budgetLabel')} hint={t('budgetHint')} error={errors.budget?.message}>
-                            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                               {budgets.map((item, i) => {
                                 const on = v.budget === i;
                                 const unsure = i === UNSURE.budgets;
@@ -713,7 +722,7 @@ export function Contact() {
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className={`${tileClass(on)} justify-center !py-3.5 text-center font-display text-[13px] tracking-[0.02em] ${unsure && !on ? 'border-dashed' : ''}`}
+                                    className={`neon-tile justify-center whitespace-nowrap !px-2 !py-3 text-center font-display !text-[11.5px] tracking-[0.02em] sm:!text-[12.5px] ${unsure ? 'neon-tile-soft' : ''}`}
                                     onClick={() => {
                                       choose('budget', i);
                                       react('budgets', i, unsure);
@@ -727,20 +736,18 @@ export function Contact() {
                           </Group>
 
                           <Group label={t('timelineLabel')} error={errors.timeline?.message}>
-                            <div className="flex flex-wrap gap-2.5">
+                            <div className="flex flex-wrap gap-2">
                               {timelines.map((item, i) => (
-                                <button
+                                <Chip
                                   key={item}
-                                  type="button"
-                                  aria-pressed={v.timeline === i}
-                                  className={chipClass(v.timeline === i)}
+                                  on={v.timeline === i}
                                   onClick={() => {
                                     choose('timeline', i);
                                     react('timelines', i);
                                   }}
                                 >
                                   {item}
-                                </button>
+                                </Chip>
                               ))}
                             </div>
                           </Group>
@@ -755,7 +762,7 @@ export function Contact() {
                       ) : null}
 
                       {step === 4 ? (
-                        <div className="mt-6 space-y-6">
+                        <div className="mt-5 space-y-4">
                           <div className="grid gap-5 sm:grid-cols-2">
                             <Group label={`${t('nameLabel')} *`} htmlFor="name" error={errors.name?.message}>
                               <input id="name" autoComplete="name" aria-invalid={Boolean(errors.name)} className={field} {...register('name')} />
@@ -766,7 +773,7 @@ export function Contact() {
                           </div>
 
                           <Group label={t('channelLabel')}>
-                            <div className="grid grid-cols-3 gap-2.5">
+                            <div className="grid grid-cols-3 gap-2">
                               {channels.map((item, i) => {
                                 const Icon = CHANNEL_ICONS[i] ?? Mail;
                                 const on = v.channel === i;
@@ -775,7 +782,7 @@ export function Contact() {
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className={`${tileClass(on)} flex-col !gap-2 !px-2 !py-3 text-center text-[13px]`}
+                                    className="neon-tile flex-col !gap-1.5 !px-2 !py-2.5 text-center !text-[12.5px]"
                                     onClick={() => {
                                       choose('channel', i);
                                       react('channels', i);
@@ -851,7 +858,7 @@ export function Contact() {
 
                   {serverError ? <p role="alert" className="mt-4 text-sm text-red-400">{serverError}</p> : null}
 
-                  <div className="mt-8 flex items-center justify-between gap-4">
+                  <div className="mt-6 flex items-center justify-between gap-4 border-t border-[rgba(110,150,255,0.12)] pt-5">
                     <button
                       type="button"
                       onClick={() => void goStep(step - 1)}
@@ -862,9 +869,9 @@ export function Contact() {
                     </button>
 
                     {step < last ? (
-                      <Button onClick={() => void goStep(step + 1)}>{t('next')}</Button>
+                      <Button onClick={() => void goStep(step + 1)} className="!px-6 !py-3 !text-[12px]">{t('next')}</Button>
                     ) : (
-                      <Button type="submit" disabled={status === 'sending'}>
+                      <Button type="submit" disabled={status === 'sending'} className="!px-6 !py-3 !text-[12px]">
                         {status === 'sending' ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

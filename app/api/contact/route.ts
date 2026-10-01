@@ -4,6 +4,8 @@ import cs from '@/messages/cs.json';
 import { CHANNEL, START_OLD_SITE, conditionalIssues, contactSchema } from '@/lib/contactSchema';
 import { getBlock, getSettings } from '@/lib/content/server';
 import { applyTextOverrides } from '@/lib/content/editable';
+import { saveInquiry } from '@/lib/content/inquiries';
+import { site } from '@/content/site';
 
 export const runtime = 'nodejs';
 
@@ -77,6 +79,11 @@ export async function POST(request: Request) {
   // Honeypot vyplněn → tváříme se, že je vše v pořádku, ale nic neodesíláme.
   if (data.website) {
     return NextResponse.json({ ok: true });
+  }
+  // jen vývoj: snímkování nápověd pro administraci (scripts/capture-admin-hints.mjs)
+  // formulář odesílá naostro — takovou poptávku neukládat ani neposílat
+  if (process.env.NODE_ENV === 'development' && request.headers.get('cookie')?.includes('elevate-annotate=1')) {
+    return NextResponse.json({ ok: true, delivered: false, stored: false });
   }
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -164,17 +171,36 @@ export async function POST(request: Request) {
       </table>`,
         )
         .join('')}
-      <p style="margin-top:22px;font-size:12px;color:#8a93a8">IP: ${escapeHtml(ip)}</p>
+      <p style="margin-top:22px;font-size:12px;color:#8a93a8">Poptávka je uložená i v administraci: <a href="${site.url}/admin#inquiries" style="color:#7da6ff">${site.url.replace(/^https?:\/\//, '')}/admin</a> · IP: ${escapeHtml(ip)}</p>
     </div>`;
 
   const text = sections
     .map((section) => `${section.title.toUpperCase()}\n${section.rows.map(([label, value]) => `${label}: ${value || '—'}`).join('\n')}`)
     .join('\n\n');
 
+  // 1) uložit do administrace (záložka Poptávky) — nezávisle na e-mailu
+  let stored = false;
+  try {
+    await saveInquiry({
+      created_at: new Date().toISOString(),
+      status: 'new',
+      name: data.name,
+      email: data.email,
+      reach,
+      locale: data.locale || 'cs',
+      headline: [list(c.needs, data.needs), one(c.niches, data.niche)].filter(Boolean).join(' · '),
+      budget: one(c.budgets, data.budget),
+      sections: sections.map((section) => ({ title: section.title, rows: section.rows.filter(([, value]) => value).map(([label, value]) => [label, value] as [string, string]) })),
+    });
+    stored = true;
+  } catch (error) {
+    console.error('[contact] uložení poptávky selhalo', error);
+  }
+
   if (!apiKey) {
     // Bez klíče poptávku aspoň zalogujeme, ať se na vývoji nic neztratí.
-    console.warn('[contact] RESEND_API_KEY není nastavený — poptávka jen zalogována.\n' + text);
-    return NextResponse.json({ ok: true, delivered: false });
+    console.warn(`[contact] RESEND_API_KEY není nastavený — poptávka ${stored ? 'uložena v administraci' : 'jen zalogována'}.\n` + text);
+    return NextResponse.json({ ok: true, delivered: false, stored });
   }
 
   try {
@@ -190,9 +216,11 @@ export async function POST(request: Request) {
     });
 
     if (error) throw new Error(error.message);
-    return NextResponse.json({ ok: true, delivered: true });
+    return NextResponse.json({ ok: true, delivered: true, stored });
   } catch (error) {
     console.error('[contact] odeslání selhalo', error);
+    // poptávka je v administraci → pro návštěvníka je odeslaná
+    if (stored) return NextResponse.json({ ok: true, delivered: false, stored });
     return NextResponse.json({ ok: false, code: 'send', to }, { status: 502 });
   }
 }

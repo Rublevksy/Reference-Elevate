@@ -16,8 +16,10 @@
  */
 
 const INTRO_KEY = 'elevate:intro-seen';
-const VEIL_IN_MS = 170;
-const VEIL_OUT_MS = 460;
+const VEIL_IN_MS = 140;
+const VEIL_OUT_MS = 400;
+/** okamžitý přechod (Kontakt): bez zatmívání, jen krátké rozsvícení na místě */
+const VEIL_FAST_OUT_MS = 240;
 
 /** Stav navigace — Navbar podle něj po skoku neschovává lištu. */
 export const navState = { until: 0 };
@@ -123,20 +125,25 @@ export function coverPage(instant = false) {
   navState.until = performance.now() + 1600;
 }
 
-function uncover() {
+function uncover(fast = false) {
   const v = getVeil();
+  if (fast) v.setAttribute('data-fast', '');
+  else v.removeAttribute('data-fast');
   v.setAttribute('data-out', '');
   v.removeAttribute('data-on');
   window.setTimeout(() => {
-    if (!v.hasAttribute('data-on')) v.removeAttribute('data-out');
-  }, VEIL_OUT_MS + 40);
+    if (!v.hasAttribute('data-on')) {
+      v.removeAttribute('data-out');
+      v.removeAttribute('data-fast');
+    }
+  }, (fast ? VEIL_FAST_OUT_MS : VEIL_OUT_MS) + 40);
 }
 
-/** Pod clonou skočit na cíl a clonu rozpustit. */
-function veilJump(el: HTMLElement | null, measure: () => number, alreadyCovered = false) {
+/** Pod clonou skočit na cíl a clonu rozpustit (`instant` = bez zatmívání, okamžitý střih). */
+function veilJump(el: HTMLElement | null, measure: () => number, instant = false) {
   const my = ++token;
   window.__lenis?.stop();
-  if (!alreadyCovered) coverPage();
+  coverPage(instant);
   window.setTimeout(
     () => {
       if (my !== token) return;
@@ -144,11 +151,11 @@ function veilJump(el: HTMLElement | null, measure: () => number, alreadyCovered 
       settle(measure, () => {
         if (my !== token) return;
         navState.until = performance.now() + 500;
-        uncover();
+        uncover(instant);
         arrive(el);
       });
     },
-    alreadyCovered ? 0 : VEIL_IN_MS + 40,
+    instant ? 0 : VEIL_IN_MS + 30,
   );
 }
 
@@ -156,7 +163,7 @@ function veilJump(el: HTMLElement | null, measure: () => number, alreadyCovered 
  * Přejít na sekci (id bez #). Vrací false, když cíl na stránce není —
  * pak má volající nechat proběhnout běžnou navigaci na úvodní stránku.
  */
-export function navigateTo(id: string) {
+export function navigateTo(id: string, { instant = false }: { instant?: boolean } = {}) {
   const el = resolveTarget(id);
   if (!el) return false;
   markIntroSeen();
@@ -167,6 +174,11 @@ export function navigateTo(id: string) {
   if (reducedMotion()) {
     jumpTo(top);
     arrive(el);
+    return true;
+  }
+  if (instant) {
+    if (distance > 2) veilJump(el, () => targetTop(el), true);
+    else arrive(el);
     return true;
   }
   if (distance < window.innerHeight * 0.9) {

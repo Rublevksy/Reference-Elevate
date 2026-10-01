@@ -10,7 +10,9 @@
     "closeMenu": "Close menu",
     "language": "Language",
     "home": "Home",
-    "allServices": "All services"
+    "allServices": "All services",
+    "allSteps": "The whole process",
+    "allPlans": "Full pricing"
   },
   "hero": {
     "eyebrow": "Digital studio from Prague",

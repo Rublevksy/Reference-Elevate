@@ -206,10 +206,11 @@
   background:
     radial-gradient(55% 45% at 50% 42%, rgba(31, 91, 255, 0.14), transparent 70%),
     var(--bg);
-  transition: opacity 170ms cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity 140ms cubic-bezier(0.4, 0, 1, 1);
 }
 .nav-veil[data-on] { opacity: 1; }
-.nav-veil[data-out] { transition: opacity 460ms cubic-bezier(0.16, 1, 0.3, 1); }
+.nav-veil[data-out] { transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1); }
+.nav-veil[data-out][data-fast] { transition-duration: 240ms; }
 
 /* cíl navigace se po příjezdu krátce rozsvítí (např. karta v Ceníku) */
 [data-nav-highlight][data-arrived] {
@@ -301,6 +302,122 @@
 @keyframes hint-nudge {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(var(--nx, 0px), var(--ny, 0px), 0); }
+}
+
+/* Kontaktní formulář: neonové štítky a dlaždice místo obecných „pilulek".
+   Gradientní rám (padding-box / border-box) jako u karet služeb, kontrolka,
+   která se při výběru rozsvítí, a přejezd světla při najetí myší. */
+.neon-chip,
+.neon-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid transparent;
+  color: rgba(198, 208, 232, 0.84);
+  /* výplň musí být neprůhledná, jinak gradient rámu prosvítá celou plochou */
+  background:
+    linear-gradient(180deg, #121b36, #0b1227) padding-box,
+    linear-gradient(135deg, rgba(120, 156, 255, 0.34), rgba(120, 156, 255, 0.1)) border-box;
+  transition:
+    color 0.25s ease,
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.neon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem 0.5rem 0.7rem;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.neon-tile {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+/* přejezd světla */
+.neon-chip::after,
+.neon-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent 30%, rgba(150, 188, 255, 0.2) 50%, transparent 70%);
+  transform: translateX(-130%);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .neon-chip:hover,
+  .neon-tile:hover {
+    color: #f2f5ff;
+    transform: translateY(-1px);
+    background:
+      linear-gradient(180deg, #15224a, #0c1530) padding-box,
+      linear-gradient(135deg, rgba(150, 185, 255, 0.66), rgba(61, 123, 255, 0.2)) border-box;
+    box-shadow: 0 10px 24px -16px rgba(31, 91, 255, 0.85);
+  }
+  .neon-chip:hover::after,
+  .neon-tile:hover::after { transform: translateX(130%); }
+  .neon-chip:hover .neon-led { background: #7da6ff; box-shadow: 0 0 6px rgba(125, 166, 255, 0.8); }
+}
+.neon-chip:active,
+.neon-tile:active { transform: scale(0.975); }
+.neon-chip[aria-pressed='true'],
+.neon-tile[aria-pressed='true'] {
+  color: #fff;
+  background:
+    linear-gradient(165deg, #1b3577, #0c1638) padding-box,
+    linear-gradient(120deg, #8fb2ff, #1f5bff 50%, #00c2ff) border-box;
+  box-shadow: 0 0 24px -6px rgba(31, 91, 255, 0.75), inset 0 0 14px rgba(61, 123, 255, 0.22);
+}
+.neon-tile-soft:not([aria-pressed='true']) {
+  background:
+    linear-gradient(180deg, #0f172e, #0a1024) padding-box,
+    repeating-linear-gradient(90deg, rgba(120, 156, 255, 0.45) 0 6px, transparent 6px 11px) border-box;
+}
+/* kontrolka: kulatá = jedna volba, čtverec = víc voleb */
+.neon-led {
+  display: grid;
+  place-items: center;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgba(138, 147, 168, 0.4);
+  color: #0b1433;
+  transition: background 0.25s ease, box-shadow 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+.neon-led-box { width: 11px; height: 11px; border-radius: 3px; background: transparent; box-shadow: inset 0 0 0 1px rgba(150, 175, 230, 0.55); }
+.neon-chip[aria-pressed='true'] .neon-led {
+  background: #dbe8ff;
+  box-shadow: 0 0 6px 2px rgba(61, 123, 255, 0.95);
+}
+.neon-chip[aria-pressed='true'] .neon-led-box { background: #dbe8ff; }
+
+/* přeliv světla po logu (úvodní clona, obrazovka údržby) — maska ve tvaru loga */
+.logo-shimmer {
+  -webkit-mask: url('/brand/logo-elevate.png') center / 100% 100% no-repeat;
+  mask: url('/brand/logo-elevate.png') center / 100% 100% no-repeat;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, rgba(160, 205, 255, 0.6) 54%, transparent 64%);
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  animation: logo-shimmer 3s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+.logo-shimmer-delayed { animation-delay: 0.75s; animation-duration: 2.2s; }
+@keyframes logo-shimmer {
+  0% { background-position: 140% 0; }
+  55%, 100% { background-position: -40% 0; }
 }
 
 /* Split-text reveal primitives used by lib/animations */

@@ -10,6 +10,8 @@ import type { ProjectRow } from '@/lib/content/projects';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/supabase/requireAdmin';
 import { supabaseServer } from '@/lib/supabase/server';
+import { INQUIRY_PREFIX, readInquiries, type Inquiry, type InquiryStatus } from '@/lib/content/inquiries';
+export type { Inquiry, InquiryStatus } from '@/lib/content/inquiries';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -244,4 +246,64 @@ export async function signOut() {
   const supabase = await supabaseServer();
   await supabase.auth.signOut();
   redirect('/admin/login');
+}
+
+/* ------------------------------------------------------------------ */
+/*  Režim údržby                                                       */
+/* ------------------------------------------------------------------ */
+
+export async function setMaintenance(on: boolean): Promise<Result> {
+  try {
+    const admin = await requireAdmin();
+    const data = { maintenance: on, changed_at: new Date().toISOString(), by: admin.email };
+    const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'site_status', data });
+    if (error) throw error;
+    publish();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Poptávky z formuláře                                               */
+/* ------------------------------------------------------------------ */
+
+/** Poslední poptávky (nejnovější první) — jen pro přihlášeného správce. */
+export async function listInquiries(): Promise<{ ok: true; items: Inquiry[] } | { ok: false; error: string }> {
+  try {
+    await requireAdmin();
+    return { ok: true, items: await readInquiries() };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function setInquiryStatus(id: string, status: InquiryStatus, note?: string): Promise<Result> {
+  try {
+    await requireAdmin();
+    if (!id.startsWith(INQUIRY_PREFIX) || !['new', 'progress', 'done'].includes(status)) return { ok: false, error: 'Neplatná poptávka.' };
+    const db = supabaseAdmin();
+    const { data, error } = await db.from('content_blocks').select('data').eq('key', id).maybeSingle();
+    if (error) throw error;
+    if (!data) return { ok: false, error: 'Poptávka už neexistuje.' };
+    const next = { ...(data.data as Record<string, unknown>), status, ...(note !== undefined ? { note: note.slice(0, 2000) } : {}) };
+    const { error: upErr } = await db.from('content_blocks').update({ data: next }).eq('key', id);
+    if (upErr) throw upErr;
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteInquiry(id: string): Promise<Result> {
+  try {
+    await requireAdmin();
+    if (!id.startsWith(INQUIRY_PREFIX)) return { ok: false, error: 'Neplatná poptávka.' };
+    const { error } = await supabaseAdmin().from('content_blocks').delete().eq('key', id);
+    if (error) throw error;
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
 }

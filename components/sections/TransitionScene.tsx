@@ -61,7 +61,29 @@ function size(el: HTMLElement | null | undefined, w: number, h: number) {
 
 /** Box prvku: střed vůči středu viewportu + rozměry (+ natočení/měřítko u zdrojů). */
 type Box = { x: number; y: number; w: number; h: number };
-type SBox = Box & { r: number; sx: number; sy: number; el: HTMLElement };
+/** u zdrojů i živý úhel překlopení karty (rotateY vnitřní vrstvy) — žádné skoky 0/180° */
+type SBox = Box & { r: number; sx: number; sy: number; ry: number; el: HTMLElement };
+
+/** rotateY z matice vnitřní překlápěcí vrstvy (0 = rub, 180 = líc). */
+function flipAngle(el: HTMLElement) {
+  const inner = el.firstElementChild as HTMLElement | null;
+  if (!inner) return 0;
+  const tr = getComputedStyle(inner).transform;
+  if (!tr || tr === 'none') return 0;
+  const m = new DOMMatrixReadOnly(tr);
+  return Math.abs((Math.atan2(-m.m13, m.m11) * 180) / Math.PI);
+}
+
+/**
+ * Setrvačnost přechodu: vlastní animace (q) nedrží scroll „natvrdo", ale
+ * dobíhá ho jako tlumená pružina. Při rychlém kolečku/touchpadu (Lenis pak
+ * posune stránku o stovky px za snímek) se karty nepřeskakují, ale plynule
+ * dojedou; zpoždění je shora omezené, a na začátku/konci (kde scéna navazuje
+ * na skutečné sekce) se q srovná se scrollem přesně.
+ */
+const SMOOTH_TAU = 110;
+const SMOOTH_MAX_LAG = 0.07;
+const SMOOTH_SNAP = 0.25;
 
 /** Pozice prvku v dokumentu bez transformací (vstupní animace cíle ji nerozhodí). */
 function docBox(el: HTMLElement) {
@@ -169,6 +191,10 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
   const renderRef = useRef<Render | null>(null);
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] });
   const landCache = useRef<{ at: number; boxes: Map<string, Box[]> }>({ at: 0, boxes: new Map() });
+  /** zdroje zmrazené v okamžiku odlepení — po něm se už neměří layout */
+  const srcCache = useRef(new Map<string, SBox[]>());
+  const smooth = useRef({ q: 0, target: 0, t: 0, raf: 0, hand: 0, ready: false });
+  const frameCtx = useRef<Omit<Frame, 'q'> | null>(null);
 
   const land = useCallback((selector: string) => {
     const cache = landCache.current;
@@ -195,6 +221,32 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     return boxes;
   }, []);
 
+  /** Vykreslit scénu s vyhlazeným q; běží po snímcích, dokud q nedožene scroll. */
+  const tick = useCallback((now: number) => {
+    const sm = smooth.current;
+    sm.raf = 0;
+    const ctx = frameCtx.current;
+    if (!ctx) return;
+    const dt = sm.t ? Math.min(64, now - sm.t) : 16;
+    sm.t = now;
+    const diff = sm.target - sm.q;
+    // skok (navigace, obnova pozice), předání další sekci nebo začátek → přesně podle scrollu
+    if (!sm.ready || Math.abs(diff) > SMOOTH_SNAP || sm.hand > 0) {
+      sm.q = sm.target;
+    } else {
+      // u krajů (navázání na skutečné sekce) se povolené zpoždění plynule stáhne k nule
+      const lag = SMOOTH_MAX_LAG * Math.max(0, Math.min(1, sm.target / 0.12, (1 - sm.target) / 0.12));
+      sm.q += diff * (1 - Math.exp(-dt / SMOOTH_TAU));
+      if (sm.target - sm.q > lag) sm.q = sm.target - lag;
+      if (sm.q - sm.target > lag) sm.q = sm.target + lag;
+      if (Math.abs(sm.target - sm.q) < 0.0004) sm.q = sm.target;
+    }
+    sm.ready = true;
+    renderRef.current?.({ ...ctx, q: sm.q });
+    if (sm.q !== sm.target) sm.raf = requestAnimationFrame(tick);
+    else sm.t = 0;
+  }, []);
+
   const run = useCallback(() => {
     const own = section.current;
     if (!own) return;
@@ -212,11 +264,16 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     const range = own.offsetHeight - vh;
     const top = docBox(own).y;
     const shift = Math.max(0, window.scrollY - (top + DETACH * range));
+    if (shift === 0) srcCache.current.clear();
 
     /** Zdroje: živé obdélníky prvků předchozí sekce; po odlepení zmrazené v poloze v bodě DETACH. */
     const src = (selector: string): SBox[] => {
       if (!prev) return [];
-      return [...prev.querySelectorAll<HTMLElement>(selector)]
+      const cached = srcCache.current.get(selector);
+      if (cached) return cached;
+      const scroll = window.scrollY;
+      const at = Math.max(0, scroll - (top + DETACH * range));
+      const boxes = [...prev.querySelectorAll<HTMLElement>(selector)]
         .filter((el) => el.offsetWidth > 0)
         .map((el) => {
           const rect = el.getBoundingClientRect();
@@ -226,20 +283,22 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
           const sy = Math.hypot(m.c, m.d);
           return {
             x: rect.left + rect.width / 2 - vw / 2,
-            y: rect.top + rect.height / 2 + shift - vh / 2,
+            y: rect.top + rect.height / 2 + at - vh / 2,
             w: el.offsetWidth * sx,
             h: el.offsetHeight * sy,
             r: (Math.atan2(m.b, m.a) * 180) / Math.PI,
             sx,
             sy,
+            ry: flipAngle(el),
             el,
           };
         });
+      if (at > 0) srcCache.current.set(selector, boxes);
+      return boxes;
     };
 
     const remaining = (1 - p) * range;
     const q = seg(p, DETACH, Math.min(ANIM_END, 1 - (HANDOFF + 40) / range));
-    renderRef.current?.({ p, q, vw, vh, land, src, ly: HANDOFF });
 
     // šev s předchozí sekcí: klony se objeví na originálech, sekce odjede a zhasne
     prev?.style.setProperty('--seam-out', (1 - ease(seg(p, 0.015, DETACH))).toFixed(3));
@@ -248,7 +307,13 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     if (carrier.current) carrier.current.style.transform = `translate3d(0, ${(-HANDOFF * hand).toFixed(1)}px, 0)`;
     next?.style.setProperty('--seam-in', ease(hand).toFixed(3));
     fade(stage.current, seg(p, 0, 0.015) * (1 - ease(hand)));
-  }, [scrollYProgress, land]);
+
+    frameCtx.current = { p, vw, vh, land, src, ly: HANDOFF };
+    const sm = smooth.current;
+    sm.target = q;
+    sm.hand = hand;
+    if (!sm.raf) sm.raf = requestAnimationFrame(tick);
+  }, [scrollYProgress, land, tick]);
 
   useMotionValueEvent(scrollYProgress, 'change', run);
   useEffect(() => {
@@ -260,8 +325,11 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     };
     window.addEventListener('resize', onResize);
     const own = section.current;
+    const sm = smooth.current;
     return () => {
       cancelAnimationFrame(id);
+      cancelAnimationFrame(sm.raf);
+      sm.raf = 0;
       window.removeEventListener('resize', onResize);
       (own?.previousElementSibling as HTMLElement | null)?.style.removeProperty('--seam-out');
       (own?.nextElementSibling as HTMLElement | null)?.style.removeProperty('--seam-in');
@@ -343,7 +411,8 @@ function DealToPanel({ renderRef }: SceneProps) {
     const S = src('[data-src-card]');
     const fanT = ease(seg(q, 0, 0.18));
     const gather = ease(seg(q, 0.2, 0.34));
-    const away = easeIn(seg(q, 0.2, 0.36));
+    // odlet ostatních karet: delší úsek a kratší dráha → na rychlém kolečku se karty nepřeskakují
+    const away = easeIn(seg(q, 0.19, 0.42));
     const turn1 = easeIn(seg(q, 0.36, 0.47));
     const turn2 = easeOut(seg(q, 0.47, 0.58));
 
@@ -351,7 +420,7 @@ function DealToPanel({ renderRef }: SceneProps) {
       const off = i - 2;
       const s0 = S[i];
       const from = s0
-        ? { x: s0.x, y: s0.y, r: s0.r, sx: s0.sx, sy: s0.sy, ry: s0.el.dataset.active === 'true' ? 180 : 0 }
+        ? { x: s0.x, y: s0.y, r: s0.r, sx: s0.sx, sy: s0.sy, ry: s0.ry }
         : { x: off * 160, y: vh * 0.2, r: off * 7, sx: 1, sy: 1, ry: 0 };
       const fan = { x: off * spread, y: Math.abs(off) * 22 - 20, r: off * 9 };
       let x = lerp(from.x, fan.x, fanT);
@@ -372,10 +441,10 @@ function DealToPanel({ renderRef }: SceneProps) {
         o = turn1 >= 1 ? 0 : 1;
       } else {
         const dir = off === 0 ? 0.25 : Math.sign(off);
-        x += dir * vw * 0.75 * away;
-        y += (i % 2 === 0 ? -1 : 1) * vh * 0.55 * away;
-        r += off * 45 * away;
-        o = 1 - seg(q, 0.28, 0.36);
+        x += dir * vw * 0.62 * away;
+        y += (i % 2 === 0 ? -1 : 1) * vh * 0.46 * away;
+        r += off * 40 * away;
+        o = 1 - seg(q, 0.27, 0.4);
       }
       tf(cards.current[i], { x, y, r, sx, sy, ry, o });
       const tr = trails.current[i];
@@ -441,7 +510,7 @@ function DealToPanel({ renderRef }: SceneProps) {
         <div
           key={item.slug}
           ref={(node) => { cards.current[i] = node; }}
-          className={`${CENTER} preserve-3d`}
+          className={`${CENTER} preserve-3d will-change-transform`}
           style={{ width: CARD_W, height: CARD_H, zIndex: 10 - i }}
         >
           <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
@@ -887,11 +956,14 @@ function PricingToEnvelope({ renderRef }: SceneProps) {
     cardEls.current.forEach((el, i) => {
       const off = i - (plans.length - 1) / 2;
       const s0 = S[i] ?? { x: off * 280, y: vh * 0.1, w: 264, h: 680 };
+      // karty už odjely nad okno (pod nimi je pruh „Větší projekt?" a otázky) —
+      // klon startuje tak, aby spodní část karty vykukovala; žádné prázdné okno
+      const y0 = Math.max(s0.y, 150 - vh / 2 - s0.h / 2);
       // rozměr zůstává, karta se jen zmenšuje do listu (text se nepřelamuje)
       size(el, s0.w, s0.h);
       tf(el, {
         x: lerp(s0.x, 0, merge),
-        y: lerp(s0.y, -EH * 0.35, merge),
+        y: lerp(y0, -EH * 0.35, merge),
         r: Math.sin(Math.PI * merge) * off * 7,
         s: lerp(1, Math.min(LW / s0.w, LH / s0.h), merge),
         o: 1 - seg(q, 0.26, 0.32),

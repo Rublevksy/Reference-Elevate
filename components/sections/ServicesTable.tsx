@@ -108,6 +108,24 @@ export function ServicesTable() {
 
   const choose = useCallback((index: number) => setActive(index), []);
 
+  /*
+   * Hover vybírá kartu jen při skutečném pohybu myši. Při skrolování
+   * „podjíždějí" karty pod stojícím kurzorem a prohlížeč posílá umělé
+   * mouseenter — dřív se tak aktivní karta sama přepínala (a s ní klony
+   * v přechodové scéně), což vypadalo jako cukání karet.
+   */
+  const lastRealMove = useRef(0);
+  useEffect(() => {
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && (event.movementX !== 0 || event.movementY !== 0)) lastRealMove.current = performance.now();
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, []);
+  const hoverChoose = useCallback((index: number) => {
+    if (performance.now() - lastRealMove.current < 120) setActive(index);
+  }, []);
+
   useEffect(() => {
     if (!reduced) return;
     setFlash(true);
@@ -275,7 +293,10 @@ export function ServicesTable() {
     });
   });
 
-  // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce
+  // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce —
+  // a jen dokud je stůl připnutý; jakmile sekce odjíždí do přechodové scény,
+  // zastaví se, ať každý snímek přechodu nepřekresluje i velké SVG platformy
+  const [settled, setSettled] = useState(true);
   useEffect(() => {
     const node = stage.current;
     if (!node) return;
@@ -284,7 +305,23 @@ export function ServicesTable() {
       { rootMargin: '120px' },
     );
     observer.observe(node);
-    return () => observer.disconnect();
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const section = node.closest('section');
+      if (!section) return;
+      setSettled(section.getBoundingClientRect().bottom >= window.innerHeight - 2);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   return (
@@ -352,7 +389,7 @@ export function ServicesTable() {
       {/* ===== STŮL (desktop) ===== */}
       <div ref={stage} className="relative mt-2 hidden h-[clamp(380px,calc(100dvh-392px),520px)] md:block">
         <div className="pointer-events-none absolute inset-0 mx-auto h-full w-full max-w-5xl">
-          <PlatformScene active={visible && !reduced} flash={flash} />
+          <PlatformScene active={visible && settled && !reduced} flash={flash} />
         </div>
 
         {/* karty */}
@@ -379,7 +416,7 @@ export function ServicesTable() {
                 aria-pressed={isActive}
                 aria-label={tItems(`${item.slug}.card`)}
                 onClick={() => choose(index)}
-                onMouseEnter={() => choose(index)}
+                onMouseEnter={() => hoverChoose(index)}
                 onFocus={() => choose(index)}
                 className="peer pointer-events-auto absolute bottom-0 outline-none"
                 style={{ left: (index - (COUNT - 1) / 2) * 158 - 4, width: 158, top: isActive ? -128 : 0 }}

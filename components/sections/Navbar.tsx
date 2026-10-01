@@ -10,8 +10,12 @@ import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { navState, navigateToTop } from '@/lib/scrollTo';
 import { SectionLink } from '@/components/ui/SectionLink';
+import { MobileSubLinks, NavMenuPanel, type MenuKind } from './NavMenu';
 import { site } from '@/content/site';
 import { useContactEmail } from '@/components/ContentProvider';
+
+/** Položky s podmenu (hover / focus) — ostatní vedou rovnou na sekci. */
+const MENUS: readonly string[] = ['detaily', 'proces', 'cenik'];
 
 const ITEMS = [
   // Služby vedou rovnou na rozvinuté panely služeb (NORDA), ne na stůl karet
@@ -75,9 +79,31 @@ export function Navbar() {
     if (clickSuppressTimer.current) window.clearTimeout(clickSuppressTimer.current);
   }, []);
 
+  // podmenu: otevřít s malou prodlevou (projetí myší přes lištu nic neotevře),
+  // mezi položkami přepínat hned, zavřít s rezervou na přejezd do panelu
+  const [menu, setMenu] = useState<MenuKind | null>(null);
+  const menuRef = useRef<MenuKind | null>(null);
+  menuRef.current = menu;
+  const menuTimer = useRef<number | null>(null);
+  const openMenu = useCallback((kind: MenuKind, delay = 70) => {
+    if (menuTimer.current) window.clearTimeout(menuTimer.current);
+    if (menuRef.current || delay === 0) setMenu(kind);
+    else menuTimer.current = window.setTimeout(() => setMenu(kind), delay);
+  }, []);
+  const closeMenu = useCallback((delay = 170) => {
+    if (menuTimer.current) window.clearTimeout(menuTimer.current);
+    if (delay === 0) setMenu(null);
+    else menuTimer.current = window.setTimeout(() => setMenu(null), delay);
+  }, []);
+  useEffect(() => () => {
+    if (menuTimer.current) window.clearTimeout(menuTimer.current);
+  }, []);
+
   useMotionValueEvent(scrollY, 'change', (y) => {
     const delta = y - lastY.current;
     setShrunk(y > 40);
+    // skrolování zavře otevřené podmenu
+    if (menuRef.current && Math.abs(delta) > 2) closeMenu(0);
     // skok navigace není skrolování dolů — lištu nechat vidět
     if (performance.now() < navState.until) {
       lastY.current = y;
@@ -156,13 +182,39 @@ export function Navbar() {
           <ul className="mx-1 hidden items-center lg:flex">
             {ITEMS.map((item) => {
               const isActive = active === item.id;
+              const kind = MENUS.includes(item.id) ? (item.id as MenuKind) : null;
+              const isOpen = kind !== null && menu === kind;
               return (
-                <li key={item.id} className="relative">
+                <li
+                  key={item.id}
+                  className="relative"
+                  onPointerEnter={(e) => {
+                    if (e.pointerType !== 'mouse') return;
+                    if (kind) openMenu(kind);
+                    else closeMenu(0);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === 'mouse' && kind) closeMenu();
+                  }}
+                  onFocus={() => (kind ? openMenu(kind, 0) : closeMenu(0))}
+                  onBlur={(e) => {
+                    if (kind && !e.currentTarget.contains(e.relatedTarget as Node | null)) closeMenu(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') closeMenu(0);
+                  }}
+                >
                   <SectionLink
                     to={item.id}
-                    onNavigate={onNavigate(item.id)}
+                    instant={item.id === 'kontakt'}
+                    onNavigate={() => {
+                      closeMenu(0);
+                      onNavigate(item.id)();
+                    }}
+                    aria-haspopup={kind ? 'true' : undefined}
+                    aria-expanded={kind ? isOpen : undefined}
                     className={`group/item relative block rounded-full px-3.5 py-2 font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${
-                      isActive ? 'text-ink' : 'text-muted hover:text-ink'
+                      isActive || isOpen ? 'text-ink' : 'text-muted hover:text-ink'
                     }`}
                   >
                     {isActive ? (
@@ -174,6 +226,23 @@ export function Navbar() {
                     ) : null}
                     <RollLabel label={t(item.key)} active={isActive} />
                   </SectionLink>
+                  {kind ? (
+                    // pt-4 = „můstek" mezi položkou a panelem, ať se podmenu při přejezdu myší nezavře
+                    <div className={`absolute left-1/2 top-full z-10 -translate-x-1/2 pt-4 ${isOpen ? '' : 'pointer-events-none'}`}>
+                      <AnimatePresence>
+                        {isOpen ? (
+                          <NavMenuPanel
+                            key={kind}
+                            kind={kind}
+                            onNavigate={() => {
+                              closeMenu(0);
+                              onNavigate(item.id)();
+                            }}
+                          />
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
+                  ) : null}
                 </li>
               );
             })}
@@ -186,6 +255,7 @@ export function Navbar() {
           {/* CTA s paprskem po rámečku */}
           <SectionLink
             to="kontakt"
+            instant
             onNavigate={onNavigate('kontakt')}
             className="group/cta relative ml-1 hidden shrink-0 items-center gap-2 overflow-hidden rounded-full bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-4 py-2.5 font-display text-[11px] uppercase tracking-[0.1em] text-white shadow-[0_0_22px_var(--blue-glow)] transition-shadow hover:shadow-[0_0_34px_var(--blue-glow)] sm:flex"
           >
@@ -222,7 +292,8 @@ export function Navbar() {
       <AnimatePresence>
         {open ? (
           <motion.div
-            className="fixed inset-0 z-[110] bg-[var(--bg)] lg:hidden"
+            className="fixed inset-0 z-[110] overflow-y-auto overscroll-contain bg-[var(--bg)] pb-10 lg:hidden"
+            data-lenis-prevent
             initial={{ clipPath: 'circle(0% at 92% 5%)' }}
             animate={{ clipPath: 'circle(145% at 92% 5%)' }}
             exit={{ clipPath: 'circle(0% at 92% 5%)' }}
@@ -251,11 +322,13 @@ export function Navbar() {
                 >
                   <SectionLink
                     to={item.id}
+                    instant={item.id === 'kontakt'}
                     onNavigate={onNavigate(item.id)}
                     className="block py-4 font-display text-[28px] uppercase leading-none tracking-tight text-ink"
                   >
                     {t(item.key)}
                   </SectionLink>
+                  {MENUS.includes(item.id) ? <MobileSubLinks kind={item.id as MenuKind} onNavigate={onNavigate(item.id)} /> : null}
                 </motion.div>
               ))}
             </nav>
@@ -268,6 +341,7 @@ export function Navbar() {
             >
               <SectionLink
                 to="kontakt"
+                instant
                 onNavigate={onNavigate('kontakt')}
                 className="flex w-full items-center justify-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-6 py-4 font-display text-[12px] uppercase tracking-[0.12em] text-white shadow-glow"
               >

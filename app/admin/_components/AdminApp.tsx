@@ -1,12 +1,18 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import type { ProjectRow } from '@/lib/content/projects';
 import {
   createUpload,
+  deleteInquiry,
+  listInquiries,
+  setInquiryStatus,
+  setMaintenance,
+  type Inquiry,
+  type InquiryStatus,
   deleteProject,
   reorderProjects,
   savePricing,
@@ -812,8 +818,340 @@ function AccountTab({ email }: { email: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Poptávky z formuláře                                               */
+/* ------------------------------------------------------------------ */
+
+const STATUS: Record<InquiryStatus, { label: string; dot: string; chip: string }> = {
+  new: { label: 'Nová', dot: 'bg-[var(--blue-bright)] shadow-[0_0_8px_2px_rgba(61,123,255,0.85)]', chip: 'border-[rgba(97,150,255,0.7)] bg-[rgba(31,91,255,0.18)] text-[#dbe8ff]' },
+  progress: { label: 'V řešení', dot: 'bg-[#ffc53d] shadow-[0_0_8px_rgba(255,197,61,0.7)]', chip: 'border-[rgba(255,197,61,0.6)] bg-[rgba(255,197,61,0.1)] text-[#ffe2a0]' },
+  done: { label: 'Vyřízeno', dot: 'bg-[#3ddc97]', chip: 'border-[rgba(61,220,151,0.5)] bg-[rgba(61,220,151,0.08)] text-[#9ff0c9]' },
+};
+const STATUS_ORDER: InquiryStatus[] = ['new', 'progress', 'done'];
+
+const dateFmt = new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+function when(iso: string) {
+  const d = new Date(iso);
+  const diff = (Date.now() - d.getTime()) / 60000;
+  if (diff < 1) return 'právě teď';
+  if (diff < 60) return `před ${Math.round(diff)} min`;
+  if (diff < 60 * 24) return `před ${Math.round(diff / 60)} h`;
+  return dateFmt.format(d);
+}
+
+/** Odkazy v odpovědích (reference) jako klikací. */
+function Linkified({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        /^https?:\/\//.test(part) ? (
+          <a key={i} href={part} target="_blank" rel="noreferrer noopener" className="break-all text-[#9fc0ff] underline-offset-4 hover:underline">
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+function InquiryDetail({
+  item,
+  onStatus,
+  onDelete,
+  onNote,
+  onBack,
+}: {
+  item: Inquiry;
+  onStatus: (s: InquiryStatus) => void;
+  onDelete: () => void;
+  onNote: (note: string) => Promise<boolean>;
+  onBack: () => void;
+}) {
+  const [note, setNote] = useState(item.note ?? '');
+  const noteSave = useSave();
+  useEffect(() => setNote(item.note ?? ''), [item.id, item.note]);
+  const tel = item.reach.match(/\+?[\d\s]{6,}/)?.[0]?.replace(/\s/g, '');
+  const tg = item.reach.match(/@?[A-Za-z0-9_]{4,}$/)?.[0];
+
+  return (
+    <Card>
+      <button type="button" onClick={onBack} className="mb-4 text-sm text-[#9fc0ff] lg:hidden">
+        ← Zpět na seznam
+      </button>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-[rgba(160,185,235,0.7)]">{dateFmt.format(new Date(item.created_at))} · {item.locale.toUpperCase()}</p>
+          <h3 className="mt-1 break-words font-display text-lg font-bold uppercase leading-tight">{item.name}</h3>
+          <p className="mt-1 text-sm text-muted">{item.headline}{item.budget ? ` · ${item.budget}` : ''}</p>
+        </div>
+        <div className="flex rounded-full border border-[var(--line)] p-1" role="radiogroup" aria-label="Stav poptávky">
+          {STATUS_ORDER.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={item.status === s}
+              onClick={() => onStatus(s)}
+              className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${item.status === s ? STATUS[s].chip : 'border-transparent text-muted hover:text-ink'}`}
+            >
+              {STATUS[s].label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a href={`mailto:${item.email}?subject=${encodeURIComponent('Re: poptávka ELEVATE')}`} className="inline-flex h-9 items-center rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-white shadow-[0_0_18px_var(--blue-glow)]">
+          Odpovědět e-mailem
+        </a>
+        {tel ? (
+          <a href={`tel:${tel}`} className="inline-flex h-9 items-center rounded-btn border border-[var(--line)] bg-white/[0.04] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-ink hover:border-[rgba(80,120,255,0.55)]">
+            Zavolat
+          </a>
+        ) : null}
+        {item.reach.startsWith('Telegram') && tg ? (
+          <a href={`https://t.me/${tg.replace(/^@/, '')}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center rounded-btn border border-[var(--line)] bg-white/[0.04] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-ink hover:border-[rgba(80,120,255,0.55)]">
+            Telegram
+          </a>
+        ) : null}
+        <span className="ml-auto" />
+        <Btn size="sm" variant="danger" onClick={onDelete}>Smazat</Btn>
+      </div>
+
+      <dl className="mt-6 space-y-6">
+        {item.sections.map((section) => (
+          <div key={section.title}>
+            <dt className="font-display text-[10.5px] uppercase tracking-[0.16em] text-[#9fc0ff]">{section.title}</dt>
+            <dd className="mt-2 divide-y divide-[rgba(110,150,255,0.1)] rounded-xl border border-[rgba(110,150,255,0.14)] bg-white/[0.015]">
+              {section.rows.map(([label, value]) => (
+                <div key={label} className="grid gap-1 px-3.5 py-2.5 text-sm sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4">
+                  <span className="text-xs text-muted sm:text-sm">{label}</span>
+                  <span className="min-w-0 whitespace-pre-line break-words text-ink">
+                    <Linkified text={value} />
+                  </span>
+                </div>
+              ))}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-6">
+        <Field label="Poznámka (vidíte jen vy)">
+          <textarea className={`${inputClass} min-h-[72px]`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Např. volal jsem 3. 10., pošlu nabídku do pátku" />
+        </Field>
+        <div className="mt-2 flex items-center justify-end gap-3">
+          <SaveStatus state={noteSave.state} error={noteSave.error} />
+          <Btn size="sm" disabled={noteSave.busy || note === (item.note ?? '')} onClick={() => noteSave.run(async () => ((await onNote(note)) ? { ok: true } : { ok: false, error: 'Poznámku se nepodařilo uložit.' }))}>
+            Uložit poznámku
+          </Btn>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function InquiriesTab({ initial, onNewCount }: { initial: Inquiry[]; onNewCount: (n: number) => void }) {
+  const [items, setItems] = useState(initial);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | InquiryStatus>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+  const [, tick] = useState(0);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    const res = await listInquiries();
+    setRefreshing(false);
+    if (res.ok) {
+      setItems(res.items);
+      setError('');
+    } else setError(res.error);
+  }, []);
+
+  // nové poptávky bez obnovení stránky: každou minutu a při návratu do okna
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void refresh();
+      tick((n) => n + 1);
+    }, 60000);
+    const onFocus = () => void refresh();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refresh]);
+
+  const newCount = items.filter((i) => i.status === 'new').length;
+  useEffect(() => onNewCount(newCount), [newCount, onNewCount]);
+
+  const update = async (id: string, patch: Partial<Inquiry>, run: () => Promise<{ ok: boolean; error?: string }>) => {
+    const prev = items;
+    setItems((list) => list.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    const res = await run();
+    if (!res.ok) {
+      setItems(prev);
+      setError(res.error ?? 'Změnu se nepodařilo uložit.');
+      return false;
+    }
+    return true;
+  };
+
+  const visible = filter === 'all' ? items : items.filter((i) => i.status === filter);
+  const current = items.find((i) => i.id === selected) ?? null;
+
+  return (
+    <div className="pb-10">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {(['all', ...STATUS_ORDER] as const).map((f) => {
+            const n = f === 'all' ? items.length : items.filter((i) => i.status === f).length;
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`rounded-full border px-3.5 py-1.5 text-xs transition-colors ${filter === f ? 'border-[rgba(97,150,255,0.7)] bg-[rgba(31,91,255,0.16)] text-ink' : 'border-[var(--line)] text-muted hover:text-ink'}`}
+              >
+                {f === 'all' ? 'Všechny' : STATUS[f].label} <span className="ml-1 text-muted">{n}</span>
+              </button>
+            );
+          })}
+        </div>
+        <Btn size="sm" onClick={() => void refresh()} disabled={refreshing}>
+          {refreshing ? 'Načítám…' : 'Obnovit'}
+        </Btn>
+      </div>
+      {error ? <p className="mb-4 text-sm text-[#ffb3be]">{error}</p> : null}
+
+      {items.length === 0 ? (
+        <Card>
+          <p className="text-sm text-muted">Zatím žádná poptávka. Jakmile někdo odešle formulář na webu, objeví se tady (a přijde i e-mailem, pokud je nastavený Resend).</p>
+        </Card>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:items-start">
+          <ul className={`space-y-2 ${current ? 'max-lg:hidden' : ''} lg:sticky lg:top-[124px] lg:max-h-[calc(100dvh-150px)] lg:overflow-y-auto lg:pr-1`}>
+            {visible.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelected(item.id)}
+                  className={`w-full rounded-2xl border p-3.5 text-left transition-colors ${
+                    selected === item.id ? 'border-[rgba(97,150,255,0.7)] bg-[rgba(31,91,255,0.12)]' : 'border-[var(--line)] bg-white/[0.02] hover:border-[rgba(80,120,255,0.45)]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS[item.status].dot}`} aria-hidden />
+                    <span className={`min-w-0 flex-1 truncate font-display text-[12px] uppercase tracking-[0.06em] ${item.status === 'new' ? 'text-ink' : 'text-[rgba(220,228,245,0.85)]'}`}>{item.name}</span>
+                    <span className="shrink-0 text-[11px] text-muted">{when(item.created_at)}</span>
+                  </span>
+                  <span className="mt-1.5 block truncate pl-[18px] text-xs text-muted">
+                    {item.headline}
+                    {item.budget ? ` · ${item.budget}` : ''}
+                  </span>
+                  <span className="sr-only">Stav: {STATUS[item.status].label}</span>
+                </button>
+              </li>
+            ))}
+            {visible.length === 0 ? <li className="px-1 text-sm text-muted">V tomhle filtru nic není.</li> : null}
+          </ul>
+
+          <div className={current ? '' : 'max-lg:hidden'}>
+            {current ? (
+              <InquiryDetail
+                item={current}
+                onBack={() => setSelected(null)}
+                onStatus={(status) => void update(current.id, { status }, () => setInquiryStatus(current.id, status))}
+                onNote={(note) => update(current.id, { note }, () => setInquiryStatus(current.id, current.status, note))}
+                onDelete={() => {
+                  if (!window.confirm(`Smazat poptávku od „${current.name}“? Nelze vrátit.`)) return;
+                  const id = current.id;
+                  setSelected(null);
+                  void (async () => {
+                    const prev = items;
+                    setItems((list) => list.filter((x) => x.id !== id));
+                    const res = await deleteInquiry(id);
+                    if (!res.ok) {
+                      setItems(prev);
+                      setError(res.error);
+                    }
+                  })();
+                }}
+              />
+            ) : (
+              <Card>
+                <p className="text-sm text-muted">Vyberte poptávku vlevo.</p>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Režim údržby                                                       */
+/* ------------------------------------------------------------------ */
+
+function MaintenanceDialog({ on, onClose, onChanged }: { on: boolean; onClose: () => void; onChanged: (on: boolean) => void }) {
+  const [sure, setSure] = useState(false);
+  const save = useSave();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const submit = async () => {
+    const next = !on;
+    if (await save.run(() => setMaintenance(next))) {
+      onChanged(next);
+      window.setTimeout(onClose, 600);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] grid place-items-center bg-[rgba(2,4,9,0.82)] p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true">
+      <div className="w-full max-w-lg">
+        <Card title={on ? 'Vypnout režim údržby?' : 'Zapnout režim údržby?'}>
+          {on ? (
+            <p className="text-sm leading-relaxed text-muted">Web se návštěvníkům znovu zobrazí během pár sekund.</p>
+          ) : (
+            <>
+              <p className="text-sm leading-relaxed text-muted">
+                Všichni návštěvníci místo webu uvidí obrazovku „Technické práce“ (čeština, angličtina, ruština, ukrajinština). Vyhledávače web po dobu údržby
+                neindexují. Administrace funguje dál.
+              </p>
+              <a href="/cs?udrzba=nahled" target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm text-[#9fc0ff] hover:text-ink">
+                Náhled obrazovky údržby ↗
+              </a>
+              <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[rgba(255,197,61,0.35)] bg-[rgba(255,197,61,0.06)] p-3.5 text-sm text-[#ffe2a0]">
+                <input type="checkbox" checked={sure} onChange={(e) => setSure(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#ffc53d]" />
+                Rozumím — živý web bude pro návštěvníky nedostupný, dokud údržbu nevypnu.
+              </label>
+            </>
+          )}
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <SaveStatus state={save.state} error={save.error} savedText={on ? 'Údržba vypnuta' : 'Údržba zapnuta'} />
+            <Btn onClick={onClose}>Zrušit</Btn>
+            <Btn variant={on ? 'primary' : 'danger'} disabled={save.busy || (!on && !sure)} onClick={submit}>
+              {on ? 'Vypnout údržbu' : 'Zapnout údržbu'}
+            </Btn>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 
 const TABS = [
+  ['inquiries', 'Poptávky'],
   ['projects', 'Projekty'],
   ['texts', 'Texty webu'],
   ['pricing', 'Ceník'],
@@ -829,6 +1167,8 @@ export function AdminApp({
   settings,
   textDefaults,
   textOverrides,
+  maintenance: initialMaintenance,
+  inquiries,
 }: {
   email: string;
   projects: ProjectRow[];
@@ -836,8 +1176,13 @@ export function AdminApp({
   settings: SettingsInput;
   textDefaults: Record<string, string>;
   textOverrides: Record<string, string>;
+  maintenance: boolean;
+  inquiries: Inquiry[];
 }) {
-  const [tab, setTab] = useState<Tab>('projects');
+  const [tab, setTab] = useState<Tab>('inquiries');
+  const [maintenance, setMaintenanceState] = useState(initialMaintenance);
+  const [dialog, setDialog] = useState(false);
+  const [newCount, setNewCount] = useState(() => inquiries.filter((i) => i.status === 'new').length);
   // záložka v adrese (#cenik…) — obnovení stránky zůstane na stejném místě
   useEffect(() => {
     const fromHash = TABS.find(([id]) => `#${id}` === window.location.hash)?.[0];
@@ -851,6 +1196,14 @@ export function AdminApp({
   useEffect(() => {
     document.querySelector('header nav [aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [tab]);
+  // nové poptávky i v názvu karty prohlížeče
+  useEffect(() => {
+    const title = `${newCount ? `(${newCount}) ` : ''}Administrace — ELEVATE`;
+    document.title = title;
+    // Next po hydrataci vrací <title> z metadat — nastavit ještě jednou
+    const id = window.setTimeout(() => (document.title = title), 300);
+    return () => window.clearTimeout(id);
+  }, [newCount]);
 
   return (
     <div className="relative min-h-dvh">
@@ -859,10 +1212,23 @@ export function AdminApp({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pt-3.5 sm:px-5 sm:pt-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <Logo height={20} priority />
-            <span className="rounded-full border border-[var(--line)] px-2.5 py-1 font-display text-[9px] uppercase tracking-[0.2em] text-muted">Admin</span>
+            <span className="hidden rounded-full border border-[var(--line)] px-2.5 py-1 font-display text-[9px] uppercase tracking-[0.2em] text-muted sm:inline">Admin</span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <a href="/cs" target="_blank" rel="noreferrer" className="hidden text-muted transition-colors hover:text-ink sm:inline">Zobrazit web ↗</a>
+          <div className="flex items-center gap-2 text-sm sm:gap-3">
+            {/* stav webu — jasně vidět, přepnutí jen přes potvrzovací dialog */}
+            <button
+              type="button"
+              onClick={() => setDialog(true)}
+              className={`inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs transition-colors ${
+                maintenance
+                  ? 'border-[rgba(255,197,61,0.6)] bg-[rgba(255,197,61,0.1)] text-[#ffe2a0]'
+                  : 'border-[rgba(61,220,151,0.35)] bg-[rgba(61,220,151,0.06)] text-[#9ff0c9] hover:border-[rgba(61,220,151,0.6)]'
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${maintenance ? 'animate-pulse bg-[#ffc53d] shadow-[0_0_8px_#ffc53d]' : 'bg-[#3ddc97] shadow-[0_0_8px_rgba(61,220,151,0.8)]'}`} />
+              {maintenance ? 'Údržba zapnuta' : 'Web běží'}
+            </button>
+            <a href="/cs" target="_blank" rel="noreferrer" className="hidden text-muted transition-colors hover:text-ink md:inline">Zobrazit web ↗</a>
             <form action={signOut}>
               <Btn type="submit" size="sm">Odhlásit</Btn>
             </form>
@@ -878,6 +1244,11 @@ export function AdminApp({
               className={`relative shrink-0 whitespace-nowrap px-3 pb-3 pt-2 font-display text-[10px] uppercase tracking-[0.12em] transition-colors sm:px-4 sm:text-[11px] sm:tracking-[0.14em] ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
             >
               {label}
+              {id === 'inquiries' && newCount ? (
+                <span className="ml-1.5 inline-grid h-4 min-w-4 place-items-center rounded-full bg-[var(--blue-bright)] px-1 font-sans text-[10px] font-semibold tracking-normal text-white shadow-[0_0_10px_rgba(61,123,255,0.8)]">
+                  {newCount}
+                </span>
+              ) : null}
               <span
                 aria-hidden
                 className={`absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[var(--blue-bright)] shadow-[0_0_10px_rgba(61,123,255,0.9)] transition-opacity duration-300 ${tab === id ? 'opacity-100' : 'opacity-0'}`}
@@ -885,16 +1256,29 @@ export function AdminApp({
             </button>
           ))}
         </nav>
+        {maintenance ? (
+          <div className="border-t border-[rgba(255,197,61,0.3)] bg-[rgba(255,197,61,0.08)]">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-[#ffe2a0] sm:px-5">
+              <span>Web je v režimu údržby — návštěvníci vidí obrazovku „Technické práce“.</span>
+              <button type="button" onClick={() => setDialog(true)} className="font-semibold underline-offset-4 hover:underline">
+                Vypnout údržbu
+              </button>
+            </div>
+          </div>
+        ) : null}
       </header>
 
       {/* záložky zůstávají připojené — přepnutí je okamžité a rozepsané změny se neztratí */}
       <main className="relative mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-8">
+        <div hidden={tab !== 'inquiries'}><InquiriesTab initial={inquiries} onNewCount={setNewCount} /></div>
         <div hidden={tab !== 'projects'}><ProjectsTab projects={projects} /></div>
         <div hidden={tab !== 'texts'}><TextsTab defaults={textDefaults} overrides={textOverrides} /></div>
         <div hidden={tab !== 'pricing'}><PricingTab initial={pricing} /></div>
         <div hidden={tab !== 'company'}><CompanyTab initial={settings} /></div>
         <div hidden={tab !== 'account'}><AccountTab email={email} /></div>
       </main>
+
+      {dialog ? <MaintenanceDialog on={maintenance} onClose={() => setDialog(false)} onChanged={setMaintenanceState} /> : null}
     </div>
   );
 }

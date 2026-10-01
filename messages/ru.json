@@ -10,7 +10,9 @@
     "closeMenu": "Закрыть меню",
     "language": "Язык",
     "home": "Главная",
-    "allServices": "Все услуги"
+    "allServices": "Все услуги",
+    "allSteps": "Весь процесс",
+    "allPlans": "Все цены"
   },
   "hero": {
     "eyebrow": "Цифровая студия из Праги",

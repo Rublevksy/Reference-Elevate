@@ -10,7 +10,9 @@
     "closeMenu": "Zavřít menu",
     "language": "Jazyk",
     "home": "Domů",
-    "allServices": "Všechny služby"
+    "allServices": "Všechny služby",
+    "allSteps": "Celý proces",
+    "allPlans": "Celý ceník"
   },
   "hero": {
     "eyebrow": "Digitální studio z Prahy",

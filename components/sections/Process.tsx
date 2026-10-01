@@ -11,6 +11,8 @@ import type { Pose } from '@/content/mascot';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { useScrollFrame } from '@/lib/useScrollFrame';
 
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
 /**
  * Každý krok se skládá vlastním efektem podle toho, co znamená:
  * 01 konzultace = chat, 02 návrh = blueprint, 03 vývoj = dekódovaný kód,
@@ -329,8 +331,36 @@ export function Process() {
   );
 
   useMotionValueEvent(scrollYProgress, 'change', apply);
+
+  /*
+   * Kotvy kroků pro navigaci (podmenu „Proces"): místo scrollu, kde je
+   * daný krok právě složený. Kometa jede po kolejnici lineárně s progressem,
+   * takže stačí přepočítat polohu uzlu na progress → px v rámci pinu.
+   */
+  const anchorRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const placeAnchors = useCallback(() => {
+    const track = trackRef.current;
+    const section = ref.current;
+    if (!track || !section || reduced) return;
+    const cols = qa(track, '[data-col]');
+    if (!cols.length) return;
+    const nodeX = cols.map((c) => c.offsetLeft + c.offsetWidth / 2);
+    const start = nodeX[0] + 14;
+    const end = nodeX[nodeX.length - 1] + 60;
+    const range = section.offsetHeight - window.innerHeight;
+    nodeX.forEach((x, i) => {
+      const el = anchorRefs.current[i];
+      if (!el) return;
+      const head = Math.min(end - 4, x + 44);
+      el.style.top = `${Math.round(clamp01((head - start) / (end - start)) * range)}px`;
+    });
+  }, [reduced]);
+
   useEffect(() => {
-    const run = () => apply(scrollYProgress.get());
+    const run = () => {
+      apply(scrollYProgress.get());
+      placeAnchors();
+    };
     run();
     const id = window.setTimeout(run, 80);
     window.addEventListener('resize', run);
@@ -338,7 +368,7 @@ export function Process() {
       window.clearTimeout(id);
       window.removeEventListener('resize', run);
     };
-  }, [apply, scrollYProgress]);
+  }, [apply, scrollYProgress, placeAnchors]);
 
   return (
     <section
@@ -349,6 +379,19 @@ export function Process() {
       aria-labelledby="proces-title"
     >
       {!reduced ? <MobileProcess steps={steps} /> : null}
+      {!reduced
+        ? steps.map((item, i) => (
+            <span
+              key={`kotva-${item.title}`}
+              id={`krok-${i + 1}`}
+              ref={(el) => {
+                anchorRefs.current[i] = el;
+              }}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0 hidden h-px w-px md:block"
+            />
+          ))
+        : null}
       <div className={reduced ? 'py-24' : 'sticky top-0 hidden h-dvh flex-col overflow-hidden md:flex'}>
         <div className="shell pt-24 md:pt-28">
           <p className="eyebrow">{t('eyebrow')}</p>
@@ -392,7 +435,7 @@ export function Process() {
               {steps.map((item, index) => {
                 const above = index % 2 === 1;
                 return (
-                  <li key={item.title} data-col className="relative w-[78vw] shrink-0 sm:w-[clamp(300px,26vw,380px)]">
+                  <li key={item.title} data-col data-nav-id={reduced ? `krok-${index + 1}` : undefined} className="relative w-[78vw] shrink-0 sm:w-[clamp(300px,26vw,380px)]">
                     {/* obrysové číslo v pozadí */}
                     <span
                       data-ghost
@@ -517,7 +560,7 @@ function MobileProcess({ steps }: { steps: { title: string; text: string }[] }) 
         </span>
 
         {steps.map((item, index) => (
-          <li key={item.title} data-mstep className="relative grid grid-cols-[48px_1fr] gap-4 pb-12 last:pb-2">
+          <li key={item.title} data-mstep data-nav-id={`krok-${index + 1}`} data-nav-offset={-30} className="relative grid grid-cols-[48px_1fr] gap-4 pb-12 last:pb-2">
             <span
               data-node
               className="relative z-10 grid h-12 w-12 place-items-center rounded-full border border-[var(--line)] bg-[var(--bg)] font-display text-xs text-muted"

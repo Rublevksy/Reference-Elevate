@@ -7,6 +7,7 @@ import { currentAdmin } from '@/lib/supabase/requireAdmin';
 import { AdminApp } from './_components/AdminApp';
 import type { SettingsInput } from './actions';
 import { EDITABLE_PATHS, getPath } from '@/lib/content/editable';
+import { readInquiries, type Inquiry } from '@/lib/content/inquiries';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
   const [projects, blocks] = await Promise.all([
     db.from('projects').select('*').order('sort').order('created_at'),
-    db.from('content_blocks').select('key, data'),
+    db.from('content_blocks').select('key, data').not('key', 'like', 'inquiry:%'),
   ]);
   // tabulky ještě nejsou → návod ke spuštění migrace
   if (projects.error || blocks.error) {
@@ -48,6 +49,13 @@ export default async function AdminPage() {
   // výchozí texty ze souboru + uložené změny
   const defaults = Object.fromEntries([...EDITABLE_PATHS].map((p) => [p, String(getPath(csMessages, p) ?? '')]));
   const overrides = (block('messages_cs') ?? {}) as Record<string, string>;
+  const maintenance = (block('site_status') as { maintenance?: boolean } | undefined)?.maintenance === true;
+  let inquiries: Inquiry[] = [];
+  try {
+    inquiries = await readInquiries();
+  } catch {
+    /* poptávky se načtou znovu na záložce */
+  }
 
   return (
     <AdminApp
@@ -57,6 +65,8 @@ export default async function AdminPage() {
       settings={settings}
       textDefaults={defaults}
       textOverrides={overrides}
+      maintenance={maintenance}
+      inquiries={inquiries}
     />
   );
 }

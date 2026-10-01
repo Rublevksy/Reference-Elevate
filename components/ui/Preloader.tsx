@@ -116,8 +116,10 @@ export function Preloader() {
               >
                 <div ref={logoRef} className="max-sm:scale-[0.7]">
                   {/* odkrytí běží v CSS — začne hned s prvním vykreslením, ne až po hydrataci */}
-                  <div className="splash-logo">
+                  <div className="splash-logo relative">
                     <Logo height={52} priority glow />
+                    {/* po odkrytí přeběhne po logu světlo (stejně jako na obrazovce údržby) */}
+                    <span aria-hidden className="logo-shimmer logo-shimmer-delayed pointer-events-none absolute inset-0" />
                   </div>
                 </div>
               </motion.div>
