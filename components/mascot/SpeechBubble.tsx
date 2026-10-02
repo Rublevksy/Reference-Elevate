@@ -59,11 +59,15 @@ export function SpeechBubble({
         className="absolute bottom-2 left-0 top-2 w-[2px] rounded-full bg-[#9fc0ff]"
         style={{ boxShadow: '0 0 8px 1px rgba(61,123,255,0.9)' }}
       />
-      <p className={`${onClose ? 'pr-5' : ''} leading-snug text-ink ${compact ? 'text-[12.5px]' : 'text-sm'}`}>
-        {typed}
-        {!reduced && typed.length < text.length ? (
-          <span className="ml-0.5 inline-block h-3.5 w-[2px] animate-caret bg-[var(--blue-bright)] align-middle" />
-        ) : null}
+      {/* celý text neviditelně drží výšku — dopisování neposouvá obsah pod bublinou */}
+      <p className={`${onClose ? 'pr-5' : ''} grid leading-snug text-ink ${compact ? 'text-[12.5px]' : 'text-sm'}`}>
+        <span aria-hidden className="invisible [grid-area:1/1]">{text}</span>
+        <span className="[grid-area:1/1]">
+          {typed}
+          {!reduced && typed.length < text.length ? (
+            <span className="ml-0.5 inline-block h-3.5 w-[2px] animate-caret bg-[var(--blue-bright)] align-middle" />
+          ) : null}
+        </span>
       </p>
 
       {onClose ? (

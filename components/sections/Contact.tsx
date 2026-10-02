@@ -1,8 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, CalendarDays, Check, FileText, Image as ImageIcon, Loader2, Mail, MapPin, PenTool, Phone, Plus, Sparkles, Type, X } from 'lucide-react';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
+import { ArrowLeft, BookOpen, CalendarDays, Check, FileText, Image as ImageIcon, Loader2, Mail, MapPin, PenTool, Phone, Plus, Sparkles, Type, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -139,7 +139,7 @@ function Chip({ on, multi = false, onClick, children }: { on: boolean; multi?: b
       <span aria-hidden className={`neon-led ${multi ? 'neon-led-box' : ''}`}>
         {multi && on ? <Check className="h-2 w-2" strokeWidth={4} /> : null}
       </span>
-      <span>{children}</span>
+      <span className="min-w-0 text-left">{children}</span>
     </button>
   );
 }
@@ -172,6 +172,8 @@ export function Contact() {
   const locale = useLocale();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
+  /** směr posledního přechodu (1 = dál, -1 = zpět) — kvůli animaci kroků */
+  const [dir, setDir] = useState(1);
   const [maxStep, setMaxStep] = useState(0);
   const [status, setStatus] = useState<'idle' | 'verifying' | 'sending' | 'done' | 'error'>('idle');
   const [serverError, setServerError] = useState<string | null>(null);
@@ -311,6 +313,7 @@ export function Contact() {
 
   const goStep = async (target: number) => {
     if (target === step) return;
+    setDir(target > step ? 1 : -1);
     if (target < step) {
       setStep(target);
       keepInView();
@@ -437,144 +440,239 @@ export function Contact() {
   ].filter((row) => row.text);
 
   const mascotBubble = (compact: boolean) => (
-    <SpeechBubble key={bubbleText} text={bubbleText} compact={compact} />
+    <SpeechBubble key={bubbleText} text={bubbleText} compact={compact} className="!max-w-none" />
   );
 
+  const done = status === 'done';
+  const progress = done ? 1 : step / last;
+  const reach = [
+    ...social.filter((item) => item.kind === 'messenger').map((item) => ({ key: item.href, href: item.href, icon: <SocialIcon brand={item.brand} className="h-4 w-4" />, text: item.display || item.label, external: true })),
+  ];
+
   return (
-    <section id="kontakt" className="relative py-24 md:py-32" aria-labelledby="kontakt-title">
-      <div className="shell">
+    <section id="kontakt" className="relative py-20 md:py-28" aria-labelledby="kontakt-title">
+      <div className="shell max-sm:px-4">
         <div className="mx-auto max-w-3xl text-center">
           <p className="eyebrow">{t('eyebrow')}</p>
           <SplitHeading
             as="h2"
             id="kontakt-title"
-            className="mt-4 font-display text-[clamp(1.7rem,4vw,3rem)] font-bold uppercase leading-[1.08]"
+            className="mt-4 font-display text-[clamp(1.6rem,4vw,3rem)] font-bold uppercase leading-[1.08]"
             parts={[{ text: t('title') + ' ' }, { text: t('titleAccent'), accent: true }]}
           />
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted md:text-base">{t('lead')}</p>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted md:mt-5 md:text-base">{t('lead')}</p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:gap-8">
-          <div ref={cardRef} className="glass relative overflow-hidden rounded-card p-4 sm:p-6 md:p-7">
-            {/* tečkovaná neonová linka a záře nahoře — stejný motiv jako karty webu */}
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-x-8 top-0 h-[3px]"
-              style={{ background: 'radial-gradient(circle, #cfe0ff 0 1px, rgba(97,150,255,0.8) 1.3px, transparent 1.9px) 0 50% / 9px 3px repeat-x' }}
-            />
-            <span aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-40 w-2/3 -translate-x-1/2 rounded-full bg-[rgba(31,91,255,0.12)] blur-3xl" />
-            <AnimatePresence mode="wait">
-              {status === 'done' ? (
+        {/* jedna karta: vlevo průvodce (kroky + maskot), vpravo otázky */}
+        <div
+          ref={cardRef}
+          className="contact-card relative mx-auto mt-8 max-w-[1080px] scroll-mt-24 rounded-[26px] md:mt-12 lg:grid lg:grid-cols-[288px_minmax(0,1fr)]"
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-10 top-0 z-10 h-[3px]"
+            style={{ background: 'radial-gradient(circle, #cfe0ff 0 1px, rgba(97,150,255,0.8) 1.3px, transparent 1.9px) 0 50% / 9px 3px repeat-x' }}
+          />
+
+          {/* ===== průvodce (od lg): svislá kolejnice kroků + maskot s replikou ===== */}
+          <aside className="relative hidden flex-col border-r border-[rgba(110,150,255,0.12)] px-7 pb-0 pt-8 lg:flex" aria-label={t('stepLabel')}>
+            <span aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(130%_55%_at_0%_0%,rgba(31,91,255,0.16),transparent_62%)]" />
+            <p className="relative font-display text-[10px] uppercase tracking-[0.22em] text-muted">
+              {done ? (
+                <span className="text-[#9fc0ff]">{t('doneLabel')}</span>
+              ) : (
+                <>
+                  {t('stepLabel')} <span className="text-ink">{String(step + 1).padStart(2, '0')}</span> / {String(steps.length).padStart(2, '0')}
+                </>
+              )}
+            </p>
+            <ol className="relative mt-6">
+              {/* kolejnice + náplň */}
+              <span aria-hidden className="absolute bottom-4 left-[15px] top-4 w-[2px] rounded-full bg-[rgba(110,150,255,0.14)]" />
+              <span aria-hidden className="absolute bottom-4 left-[15px] top-4 w-[2px]">
+                <motion.span
+                  className="absolute inset-x-0 top-0 rounded-full bg-[linear-gradient(180deg,var(--blue),#5fa8ff)] shadow-[0_0_10px_rgba(61,123,255,0.9)]"
+                  initial={false}
+                  animate={{ height: `${progress * 100}%` }}
+                  transition={{ duration: reduced ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </span>
+              {steps.map((label, i) => {
+                const reachable = !done && (i <= maxStep || i === step + 1);
+                const isDone = done || i < step;
+                const current = !done && i === step;
+                return (
+                  <li key={label} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => void goStep(i)}
+                      disabled={!reachable}
+                      aria-current={current ? 'step' : undefined}
+                      className="group flex w-full items-center gap-3.5 rounded-xl py-2.5 text-left disabled:cursor-default"
+                    >
+                      <span
+                        className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-full border font-display text-[10px] transition-[background,border-color,box-shadow,color] duration-500 ${
+                          current
+                            ? 'border-[#8fb2ff] bg-[radial-gradient(circle_at_50%_35%,#2a4fb8,#0c1638)] text-white shadow-[0_0_0_4px_rgba(31,91,255,0.14),0_0_20px_rgba(61,123,255,0.7)]'
+                            : isDone
+                              ? 'border-transparent bg-[linear-gradient(135deg,var(--blue),var(--blue-bright))] text-white shadow-[0_0_12px_rgba(31,91,255,0.5)]'
+                              : 'border-[rgba(110,150,255,0.25)] bg-[#0b1227] text-muted group-enabled:group-hover:border-[rgba(150,185,255,0.6)] group-enabled:group-hover:text-ink'
+                        }`}
+                      >
+                        {current && !reduced ? <span aria-hidden className="rail-pulse absolute inset-0 rounded-full" /> : null}
+                        {isDone ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span
+                        className={`font-display text-[11px] uppercase tracking-[0.14em] transition-colors ${
+                          current ? 'text-ink' : isDone ? 'text-[#9fc0ff] group-enabled:group-hover:text-ink' : 'text-muted/70'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+            {/* maskot stojí na „podlaze" panelu, replika nad ním */}
+            <div className="relative mt-auto pt-8">
+              <div className="min-h-[86px]">{mascotBubble(false)}</div>
+              <div className="relative mt-2 flex justify-center">
+                <span aria-hidden className="absolute bottom-1 left-1/2 h-8 w-44 -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(31,91,255,0.45),transparent)]" />
+                <Mascot pose={pose} height={196} followCursor={false} />
+              </div>
+            </div>
+          </aside>
+
+          {/* ===== otázky ===== */}
+          <div className="relative min-w-0 px-4 pt-5 sm:px-7 sm:pt-7 lg:px-9 lg:pt-8">
+            {/* telefon/tablet: krok, průběh a průvodce jako „chat" s avatarem */}
+            <div className="lg:hidden">
+              <div className="flex items-baseline justify-between gap-3 font-display text-[10px] uppercase tracking-[0.2em] text-muted">
+                <span>
+                  {done ? (
+                    <span className="text-[#9fc0ff]">{t('doneLabel')}</span>
+                  ) : (
+                    <>
+                      {t('stepLabel')} <span className="text-ink">{String(step + 1).padStart(2, '0')}</span> / {String(steps.length).padStart(2, '0')}
+                    </>
+                  )}
+                </span>
+                {!done ? <span className="truncate text-[#9fc0ff]">{steps[step]}</span> : null}
+              </div>
+              {/* segmenty průběhu — hotové jdou rozkliknout */}
+              <ol className="mt-3 grid grid-cols-5 gap-1.5" aria-label={t('stepLabel')}>
+                {steps.map((label, i) => {
+                  const reachable = !done && (i <= maxStep || i === step + 1);
+                  const filled = done || i < step;
+                  const current = !done && i === step;
+                  return (
+                    <li key={label}>
+                      <button
+                        type="button"
+                        onClick={() => void goStep(i)}
+                        disabled={!reachable}
+                        aria-current={current ? 'step' : undefined}
+                        aria-label={`${t('stepLabel')} ${i + 1}: ${label}`}
+                        className="block w-full py-2.5 disabled:cursor-default"
+                      >
+                        <span
+                          className={`block h-[3px] rounded-full transition-[background,box-shadow] duration-500 ${
+                            filled
+                              ? 'bg-[linear-gradient(90deg,var(--blue),#5fa8ff)] shadow-[0_0_8px_rgba(61,123,255,0.8)]'
+                              : current
+                                ? 'bg-[linear-gradient(90deg,#8fb2ff,rgba(143,178,255,0.25))] shadow-[0_0_10px_rgba(61,123,255,0.7)]'
+                                : 'bg-[rgba(110,150,255,0.16)]'
+                          }`}
+                        />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <div className="mt-2 flex items-start gap-3">
+                <span className="coach-avatar relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full">
+                  <Mascot pose={pose} height={46} bust followCursor={false} />
+                </span>
+                <div className="min-w-0 flex-1 pt-0.5">{mascotBubble(true)}</div>
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait" initial={false}>
+              {done ? (
                 <motion.div
                   key="done"
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative grid min-h-[420px] place-items-center text-center"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: reduced ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative pb-8 pt-8 text-center sm:pb-10 lg:pt-6"
                 >
                   <Confetti />
                   <div className="relative z-10">
-                    <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-[var(--blue-bright)] bg-[rgba(31,91,255,0.2)] text-[var(--blue-bright)] shadow-glow">
-                      <Check className="h-7 w-7" aria-hidden />
-                    </span>
-                    <h3 className="mt-6 font-display text-2xl font-bold uppercase">{t('successTitle')}</h3>
-                    <p className="mx-auto mt-3 max-w-md text-sm text-muted">
+                    <motion.span
+                      initial={reduced ? false : { scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+                      className="success-ring mx-auto grid h-[76px] w-[76px] place-items-center rounded-full text-white"
+                    >
+                      <Check className="h-8 w-8" strokeWidth={2.6} aria-hidden />
+                    </motion.span>
+                    <h3 className="mt-6 font-display text-[clamp(1.35rem,3.4vw,2rem)] font-bold uppercase leading-tight">{t('successTitle')}</h3>
+                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
                       {t('successText')}{' '}
                       <a href="#proces" className="text-[var(--blue-bright)] underline-offset-4 hover:underline">
                         {t('successLink')}
                       </a>
                       .
                     </p>
+                    <p className="mt-8 font-display text-[10px] uppercase tracking-[0.2em] text-[#9fc0ff]">{t('successNextLabel')}</p>
+                    <ol className="mx-auto mt-3 grid max-w-2xl gap-2.5 text-left sm:grid-cols-3">
+                      {(t.raw('successNext') as string[]).map((item, i) => (
+                        <motion.li
+                          key={item}
+                          initial={reduced ? false : { opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.45, delay: reduced ? 0 : 0.35 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                          className="flex items-start gap-3 rounded-2xl border border-[rgba(110,150,255,0.16)] bg-[rgba(8,13,30,0.55)] p-3.5 sm:flex-col sm:gap-2.5"
+                        >
+                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[rgba(97,150,255,0.55)] font-display text-[10px] text-[#cfe0ff]">
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                          <span className="text-[13px] leading-snug text-ink/90">{item}</span>
+                        </motion.li>
+                      ))}
+                    </ol>
+                    <div className="mt-8 flex justify-center">
+                      <Button href="#reference" variant="outline" className="whitespace-nowrap !px-6 !py-3 !text-[12px] max-sm:!px-5 max-sm:!tracking-[0.08em]">
+                        {t('successWorks')}
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               ) : (
-                <motion.form key="form" onSubmit={handleSubmit(onSubmit, onInvalid)} onKeyDown={onKeyDown} initial={{ opacity: 0 }} animate={{ opacity: 1 }} noValidate>
-                  {/* průběh: neonová kolejnice s uzly (jako sekce Proces), hotové kroky jdou rozkliknout */}
-                  <div className="mb-6">
-                    <div className="flex items-baseline justify-between gap-4 font-display text-[10px] uppercase tracking-[0.2em] text-muted">
-                      <span>
-                        {t('stepLabel')} <span className="text-ink">{String(step + 1).padStart(2, '0')}</span> / {String(steps.length).padStart(2, '0')}
-                      </span>
-                      <span className="truncate text-[#9fc0ff] sm:hidden">{steps[step]}</span>
-                    </div>
-                    <ol className="relative mt-4 grid grid-cols-5">
-                      {/* kolejnice: podklad, náplň s kometou */}
-                      <span aria-hidden className="pointer-events-none absolute left-[10%] right-[10%] top-[17px] h-[2px] rounded-full bg-[rgba(110,150,255,0.16)]" />
-                      <span aria-hidden className="pointer-events-none absolute left-[10%] right-[10%] top-[17px] h-[2px]">
-                        <motion.span
-                          className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,var(--blue),#5fa8ff)] shadow-[0_0_10px_rgba(61,123,255,0.9)]"
-                          initial={false}
-                          animate={{ width: `${(step / (steps.length - 1)) * 100}%` }}
-                          transition={{ duration: reduced ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        >
-                          <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-[#dbe8ff] shadow-[0_0_12px_4px_rgba(61,123,255,0.9)]" />
-                        </motion.span>
-                      </span>
-                      {steps.map((label, i) => {
-                        const reachable = i <= maxStep || i === step + 1;
-                        const done = i < step;
-                        const current = i === step;
-                        return (
-                          <li key={label} className="relative flex justify-center">
-                            <button
-                              type="button"
-                              onClick={() => void goStep(i)}
-                              disabled={!reachable}
-                              aria-current={current ? 'step' : undefined}
-                              aria-label={`${t('stepLabel')} ${i + 1}: ${label}`}
-                              className="group flex flex-col items-center disabled:cursor-default"
-                            >
-                              <span
-                                className={`relative grid h-9 w-9 place-items-center rounded-full border font-display text-[10px] transition-[background,border-color,box-shadow,color] duration-500 ${
-                                  current
-                                    ? 'border-[#8fb2ff] bg-[radial-gradient(circle_at_50%_35%,#2a4fb8,#0c1638)] text-white shadow-[0_0_0_4px_rgba(31,91,255,0.16),0_0_22px_rgba(61,123,255,0.75)]'
-                                    : done
-                                      ? 'border-transparent bg-[linear-gradient(135deg,var(--blue),var(--blue-bright))] text-white shadow-[0_0_12px_rgba(31,91,255,0.55)]'
-                                      : 'border-[rgba(110,150,255,0.25)] bg-[#0b1227] text-muted group-enabled:group-hover:border-[rgba(150,185,255,0.6)] group-enabled:group-hover:text-ink'
-                                }`}
-                              >
-                                {current && !reduced ? <span aria-hidden className="rail-pulse absolute inset-0 rounded-full" /> : null}
-                                {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : String(i + 1).padStart(2, '0')}
-                              </span>
-                              <span
-                                className={`mt-2 hidden max-w-full truncate text-[10px] uppercase tracking-[0.12em] transition-colors sm:block ${
-                                  current ? 'text-ink' : done ? 'text-[#9fc0ff] group-hover:text-ink' : 'text-muted/60'
-                                }`}
-                              >
-                                {label}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </div>
-
-                  {/* maskot na mobilu přímo ve formuláři — reakce jsou vidět hned u volby */}
-                  <div className="mb-6 flex min-h-[92px] items-end gap-3 lg:hidden">
-                    <div className="-mb-1 shrink-0">
-                      <Mascot pose={pose} height={96} followCursor={false} />
-                    </div>
-                    <div className="mb-3 min-w-0 flex-1">{mascotBubble(true)}</div>
-                  </div>
-
+                <motion.form key="form" onSubmit={handleSubmit(onSubmit, onInvalid)} onKeyDown={onKeyDown} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} noValidate>
                   <div className="absolute -left-[9999px] top-0" aria-hidden>
                     <label htmlFor="website">{t('honeypot')}</label>
                     <input id="website" type="text" tabIndex={-1} autoComplete="off" {...register('website')} />
                   </div>
 
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.fieldset
-                      key={step}
-                      initial={{ opacity: 0, x: 24 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -24 }}
-                      transition={{ duration: reduced ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }}
-                      className="min-w-0"
-                    >
-                      <legend className="font-display text-base font-bold uppercase leading-tight md:text-lg">{questions[step]}</legend>
+                  {/* výška karty se mění plynule, krok přijede ze směru, kam jdeme */}
+                  <AutoHeight reduced={reduced}>
+                    <AnimatePresence mode="wait" initial={false} custom={dir}>
+                      <motion.fieldset
+                        key={step}
+                        custom={dir}
+                        variants={STEP_VARIANTS}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: reduced ? 0 : 0.32, ease: [0.16, 1, 0.3, 1] }}
+                        className="min-w-0 pt-7 lg:pt-1"
+                      >
+                        <legend className="font-display text-[17px] font-bold uppercase leading-tight sm:text-xl">{questions[step]}</legend>
 
                       {step === 0 ? (
-                        <div className="mt-5 space-y-5">
+                        <div className="mt-5 space-y-6 sm:mt-6">
                           <Group label={t('needsLabel')} hint={t('needsHint')} error={errors.needs?.message}>
                             {v.plan ? (
                               <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[rgba(61,123,255,0.45)] bg-[rgba(31,91,255,0.1)] py-1.5 pl-3.5 pr-1.5 text-xs text-ink">
@@ -589,7 +687,7 @@ export function Contact() {
                                 </button>
                               </p>
                             ) : null}
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               {needs.map((item, i) => {
                                 const on = v.needs.includes(i);
                                 return (
@@ -609,7 +707,7 @@ export function Contact() {
                           </Group>
 
                           <Group label={t('nicheLabel')} error={errors.niche?.message}>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               {industries.map((item) => (
                                 <Chip
                                   key={item.id}
@@ -654,7 +752,7 @@ export function Contact() {
                       ) : null}
 
                       {step === 1 ? (
-                        <div className="mt-5 space-y-5">
+                        <div className="mt-5 space-y-6 sm:mt-6">
                           <Group label={t('startLabel')} error={errors.start?.message}>
                             <div className="grid gap-2.5 sm:grid-cols-3">
                               {starts.map((item, i) => {
@@ -719,7 +817,7 @@ export function Contact() {
                       ) : null}
 
                       {step === 2 ? (
-                        <div className="mt-5 space-y-5">
+                        <div className="mt-5 space-y-6 sm:mt-6">
                           {/* ukázky našich webů z oboru zvoleného v 1. kroku */}
                           {v.niche ? (
                             <IndustryGallery
@@ -781,13 +879,13 @@ export function Contact() {
                                     key={item}
                                     type="button"
                                     aria-pressed={on}
-                                    className="neon-tile !py-2.5"
+                                    className="neon-tile style-tile"
                                     onClick={() => {
                                       choose('style', on ? -1 : i);
                                       if (!on) react('styles', i, i === UNSURE.styles);
                                     }}
                                   >
-                                    <span aria-hidden className="relative h-9 w-14 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/10">
+                                    <span aria-hidden className="style-preview relative shrink-0 overflow-hidden rounded-lg ring-1 ring-white/10">
                                       {STYLE_PREVIEWS[i]}
                                     </span>
                                     <span className="text-[13px] leading-snug">{item}</span>
@@ -798,7 +896,7 @@ export function Contact() {
                           </Group>
 
                           <Group label={t('colorsLabel')} optional={t('optional')}>
-                            <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="grid grid-cols-8 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5">
                               {colors.map((name, i) => {
                                 const on = v.colors.includes(i);
                                 return (
@@ -809,7 +907,7 @@ export function Contact() {
                                     aria-label={name}
                                     title={name}
                                     onClick={() => toggle('colors', i)}
-                                    className={`relative grid h-10 w-10 place-items-center rounded-full transition-[box-shadow,transform] duration-300 hover:scale-105 ${
+                                    className={`relative grid aspect-square w-full max-w-10 place-items-center rounded-full transition-[box-shadow,transform] duration-300 hover:scale-105 sm:h-10 sm:w-10 ${
                                       on ? 'shadow-[0_0_0_2px_var(--bg),0_0_0_4px_var(--blue-bright)]' : 'shadow-[0_0_0_1px_rgba(255,255,255,0.14)]'
                                     }`}
                                     style={{ background: COLOR_SWATCHES[i] }}
@@ -836,7 +934,7 @@ export function Contact() {
                       ) : null}
 
                       {step === 3 ? (
-                        <div className="mt-5 space-y-5">
+                        <div className="mt-5 space-y-6 sm:mt-6">
                           <Group label={t('budgetLabel')} hint={t('budgetHint')} error={errors.budget?.message}>
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                               {budgets.map((item, i) => {
@@ -861,7 +959,7 @@ export function Contact() {
                           </Group>
 
                           <Group label={t('timelineLabel')} error={errors.timeline?.message}>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               {timelines.map((item, i) => (
                                 <Chip
                                   key={item}
@@ -887,8 +985,8 @@ export function Contact() {
                       ) : null}
 
                       {step === 4 ? (
-                        <div className="mt-5 space-y-4">
-                          <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="mt-5 space-y-5 sm:mt-6">
+                          <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
                             <Group label={`${t('nameLabel')} *`} htmlFor="name" error={errors.name?.message}>
                               <input id="name" autoComplete="name" aria-invalid={Boolean(errors.name)} className={field} {...register('name')} />
                             </Group>
@@ -943,7 +1041,7 @@ export function Contact() {
                           </Group>
 
                           {summary.length ? (
-                            <div className="rounded-2xl border border-[var(--line)] bg-white/[0.02] p-4">
+                            <div className="rounded-2xl border border-[rgba(110,150,255,0.16)] bg-[rgba(8,13,30,0.55)] px-4 py-3.5">
                               <p className="text-[11px] uppercase tracking-[0.18em] text-muted">{t('summaryLabel')}</p>
                               <ul className="mt-2.5 space-y-1.5">
                                 {summary.map((row, i) => (
@@ -962,10 +1060,10 @@ export function Contact() {
                             </div>
                           ) : null}
 
-                          <label className="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-muted">
+                          <label className="flex cursor-pointer items-start gap-3 rounded-xl py-1 text-[12.5px] leading-relaxed text-muted">
                             <input
                               type="checkbox"
-                              className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--blue)]"
+                              className="consent-box mt-px shrink-0"
                               onChange={(event) => setValue('consent', event.target.checked as true, { shouldValidate: true })}
                             />
                             <span>
@@ -979,8 +1077,9 @@ export function Contact() {
                           {errors.consent ? <p className="text-xs text-red-400">{errors.consent.message}</p> : null}
                         </div>
                       ) : null}
-                    </motion.fieldset>
-                  </AnimatePresence>
+                      </motion.fieldset>
+                    </AnimatePresence>
+                  </AutoHeight>
 
                   {/* ochrana proti robotům — běžně neviditelná, ověření běží na pozadí;
                       po prvním příchodu na poslední krok zůstává připojená i při návratu zpět */}
@@ -991,22 +1090,33 @@ export function Contact() {
                     </div>
                   ) : null}
 
-                  {serverError ? <p role="alert" className="mt-4 text-sm text-red-400">{serverError}</p> : null}
+                  {serverError ? (
+                    <p role="alert" className="mt-4 rounded-xl border border-[rgba(255,90,110,0.35)] bg-[rgba(255,90,110,0.07)] px-3.5 py-2.5 text-[13px] leading-snug text-[#ffb3be]">
+                      {serverError}
+                    </p>
+                  ) : null}
 
-                  <div className="mt-6 flex items-center justify-between gap-4 border-t border-[rgba(110,150,255,0.12)] pt-5">
+                  {/* akce: na telefonu přilepené dole, dokud je formulář v okně */}
+                  <div className="contact-actions sticky bottom-0 z-20 -mx-4 mt-6 flex items-center gap-3 px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-3.5 sm:-mx-7 sm:px-7 lg:-mx-9 lg:px-9 lg:pb-7 lg:pt-5">
                     <button
                       type="button"
                       onClick={() => void goStep(step - 1)}
                       disabled={step === 0}
-                      className="shrink-0 whitespace-nowrap py-2 text-sm text-muted transition-colors hover:text-ink disabled:opacity-0"
+                      aria-label={t('back')}
+                      className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[rgba(110,150,255,0.28)] bg-white/[0.03] text-ink transition-[opacity,border-color,background-color] hover:border-[rgba(150,185,255,0.6)] active:bg-white/[0.08] disabled:pointer-events-none disabled:opacity-0 sm:h-11 sm:w-auto sm:gap-2 sm:px-4 sm:text-sm sm:text-muted sm:hover:text-ink lg:border-transparent lg:bg-transparent lg:px-0"
                     >
-                      ← {t('back')}
+                      <ArrowLeft className="h-4 w-4" aria-hidden />
+                      <span className="sr-only sm:not-sr-only">{t('back')}</span>
                     </button>
-
+                    <span className="hidden flex-1 font-display text-[10px] uppercase tracking-[0.18em] text-muted/70 sm:block sm:text-right">
+                      {step < last ? `${String(step + 2).padStart(2, '0')} · ${steps[step + 1]}` : ''}
+                    </span>
                     {step < last ? (
-                      <Button onClick={() => void goStep(step + 1)} className="whitespace-nowrap !px-6 !py-3 !text-[12px] max-sm:!gap-2 max-sm:!px-5">{t('next')}</Button>
+                      <Button onClick={() => void goStep(step + 1)} className="h-12 flex-1 whitespace-nowrap !px-6 !py-0 !text-[12px] sm:h-11 sm:flex-none">
+                        {t('next')}
+                      </Button>
                     ) : (
-                      <Button type="submit" disabled={status === 'sending' || status === 'verifying'} className="whitespace-nowrap !px-6 !py-3 !text-[12px] max-sm:!gap-2 max-sm:!px-4 max-sm:!tracking-[0.08em]">
+                      <Button type="submit" disabled={status === 'sending' || status === 'verifying'} className="h-12 flex-1 whitespace-nowrap !px-6 !py-0 !text-[12px] max-sm:!tracking-[0.08em] sm:h-11 sm:flex-none">
                         {status === 'sending' || status === 'verifying' ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -1022,78 +1132,76 @@ export function Contact() {
               )}
             </AnimatePresence>
           </div>
+        </div>
 
-          <aside className="flex flex-col gap-8">
-            <div className="glass relative hidden items-end gap-3 overflow-hidden rounded-card p-6 lg:flex">
-              <Mascot pose={pose} height={210} followCursor={false} />
-              <div className="mb-6 min-w-0 flex-1">{mascotBubble(true)}</div>
-            </div>
-
-            <ul className="space-y-4 text-sm">
-              <li>
-                <a href={`mailto:${contactEmail}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
-                    <Mail className="h-4 w-4" aria-hidden />
-                  </span>
-                  {contactEmail}
+        {/* přímé kontakty pod kartou — jedna nenápadná řada */}
+        <ul className="mx-auto mt-6 flex max-w-[1080px] flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted">
+          <li>
+            <a href={`mailto:${contactEmail}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-ink">
+              <Mail className="h-4 w-4 text-[var(--blue-bright)]" aria-hidden />
+              {contactEmail}
+            </a>
+          </li>
+          {site.phone ? (
+            <li>
+              <a href={`tel:${site.phoneHref}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-ink">
+                <Phone className="h-4 w-4 text-[var(--blue-bright)]" aria-hidden />
+                {site.phone}
+              </a>
+            </li>
+          ) : null}
+          {reach.map((item) => (
+            <li key={item.key}>
+              <a href={item.href} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2.5 transition-colors hover:text-ink">
+                <span className="text-[var(--blue-bright)]">{item.icon}</span>
+                {item.text}
+              </a>
+            </li>
+          ))}
+          <li className="inline-flex items-center gap-2.5">
+            <MapPin className="h-4 w-4 text-[var(--blue-bright)]" aria-hidden />
+            {city}
+          </li>
+          {social
+            .filter((item) => item.kind === 'social')
+            .map((item) => (
+              <li key={item.href}>
+                <a href={item.href} target="_blank" rel="noreferrer noopener" aria-label={item.label} className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line)] transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink">
+                  <SocialIcon brand={item.brand} className="h-3.5 w-3.5" />
                 </a>
               </li>
-              {site.phone ? (
-                <li>
-                  <a href={`tel:${site.phoneHref}`} className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
-                      <Phone className="h-4 w-4" aria-hidden />
-                    </span>
-                    {site.phone}
-                  </a>
-                </li>
-              ) : null}
-              {/* messengery z administrace (WhatsApp, Telegram…) */}
-              {social
-                .filter((item) => item.kind === 'messenger')
-                .map((item) => (
-                  <li key={item.href}>
-                    <a href={item.href} target="_blank" rel="noreferrer noopener" className="flex items-center gap-3 text-muted transition-colors hover:text-ink">
-                      <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
-                        <SocialIcon brand={item.brand} className="h-4 w-4" />
-                      </span>
-                      <span>
-                        {item.label}
-                        {item.display ? <span className="ml-2 text-ink/85">{item.display}</span> : null}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              <li className="flex items-center gap-3 text-muted">
-                <span className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--line)] text-[var(--blue-bright)]">
-                  <MapPin className="h-4 w-4" aria-hidden />
-                </span>
-                {city}
-              </li>
-            </ul>
-
-            {social.some((item) => item.kind === 'social') ? (
-              <ul className="flex flex-wrap gap-2">
-                {social
-                  .filter((item) => item.kind === 'social')
-                  .map((item) => (
-                    <li key={item.href}>
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3.5 py-2 text-xs uppercase tracking-wider text-muted transition-colors hover:border-[rgba(80,120,255,0.5)] hover:text-ink"
-                      >
-                        <SocialIcon brand={item.brand} className="h-3.5 w-3.5" />
-                        {item.label}
-                      </a>
-                    </li>
-                  ))}
-              </ul>
-            ) : null}
-          </aside>
-        </div>
+            ))}
+        </ul>
       </div>
     </section>
+  );
+}
+
+/** Směr přechodu mezi kroky: dopředu zprava, zpátky zleva. */
+const STEP_VARIANTS: Variants = {
+  enter: (dir: number) => ({ opacity: 0, x: dir * 28 }),
+  center: { opacity: 1, x: 0 },
+  // odchod kratší než příchod — mezi kroky žádná „prázdná" pauza
+  exit: (dir: number) => ({ opacity: 0, x: dir * -16, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] as const } }),
+};
+
+/** Plynulá výška obsahu (kroky mají různou délku — karta neposkočí). */
+function AutoHeight({ children, reduced }: { children: ReactNode; reduced: boolean }) {
+  const inner = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | 'auto'>('auto');
+  useEffect(() => {
+    const node = inner.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setHeight(node.offsetHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div
+      style={{ height, transition: reduced ? undefined : 'height 0.42s cubic-bezier(0.16, 1, 0.3, 1)' }}
+      className="overflow-hidden px-1 -mx-1"
+    >
+      <div ref={inner}>{children}</div>
+    </div>
   );
 }

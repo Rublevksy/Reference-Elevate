@@ -632,7 +632,15 @@
       "error": "The examples couldn’t be loaded.",
       "retry": "Try again",
       "react": "Great taste! We’ll keep that in mind for the design."
-    }
+    },
+    "successNext": [
+      "We’ll go through your answers and picked examples",
+      "Within 24 hours we’ll send a proposal with an estimated price",
+      "We’ll arrange a short, no-obligation call"
+    ],
+    "successNextLabel": "What happens next",
+    "successWorks": "See our websites",
+    "doneLabel": "Done"
   },
   "footer": {
     "tagline": "A digital studio from Prague. Websites, e-shops, apps.",

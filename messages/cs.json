@@ -632,7 +632,15 @@
       "error": "Ukázky se nepodařilo načíst.",
       "retry": "Zkusit znovu",
       "react": "Skvělý vkus! Podle toho se při návrhu zařídíme."
-    }
+    },
+    "successNext": [
+      "Projdeme vaše odpovědi i vybrané ukázky",
+      "Do 24 hodin pošleme návrh s orientační cenou",
+      "Domluvíme krátký nezávazný hovor"
+    ],
+    "successNextLabel": "Co bude dál",
+    "successWorks": "Prohlédnout naše weby",
+    "doneLabel": "Hotovo"
   },
   "footer": {
     "tagline": "Digitální studio z Prahy. Weby, e-shopy, aplikace.",
