@@ -1,17 +1,32 @@
 import 'server-only';
 import { Resend } from 'resend';
 import { getSettings } from '@/lib/content/server';
+import { site } from '@/content/site';
 
 /**
- * Odesílání e-mailů přes Resend. Odesílatel (CONTACT_FROM_EMAIL) musí být na
- * doméně ověřené v Resend (Domains) — bez ní funguje jen testovací
- * onboarding@resend.dev, který doručí výhradně na e-mail majitele účtu Resend.
+ * Odesílání e-mailů přes Resend. Odesílatel se bere z CONTACT_FROM_EMAIL
+ * (Vercel → Environment Variables, prostředí Production; po změně Redeploy)
+ * a musí být na doméně ověřené v Resend → Domains.
+ *
+ * Bez proměnné se už NEPOUŽÍVÁ testovací onboarding@resend.dev (ten doručí
+ * jen majiteli účtu Resend a jinak končí chybou 403) — výchozí odesílatel je
+ * noreply@ na doméně webu (elevateit.cz je v Resend ověřená).
  */
-export const TEST_SENDER = 'ELEVATE <onboarding@resend.dev>';
+const SITE_DOMAIN = new URL(site.url).hostname.replace(/^www\./, '');
+export const DEFAULT_SENDER = `ELEVATE <noreply@${SITE_DOMAIN}>`;
+
+/** Hodnota z prostředí bez okolních uvozovek; holý e-mail dostane jméno ELEVATE. */
+function senderFromEnv(raw: string | undefined) {
+  const value = (raw ?? '').trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+  if (!value) return '';
+  return value.includes('<') ? value : `ELEVATE <${value}>`;
+}
 
 export type MailConfig = {
   hasKey: boolean;
   from: string;
+  /** odkud odesílatel je: proměnná prostředí, nebo výchozí noreply@doména webu */
+  fromSource: 'env' | 'default';
   /** doména odesílatele, např. elevateit.cz */
   fromDomain: string;
   usingTestSender: boolean;
@@ -19,13 +34,15 @@ export type MailConfig = {
 };
 
 export async function mailConfig(): Promise<MailConfig> {
-  const from = process.env.CONTACT_FROM_EMAIL?.trim() || TEST_SENDER;
+  const fromEnv = senderFromEnv(process.env.CONTACT_FROM_EMAIL);
+  const from = fromEnv || DEFAULT_SENDER;
   const to = (await getSettings()).contactEmail || process.env.CONTACT_EMAIL?.trim() || '';
   return {
     hasKey: Boolean(process.env.RESEND_API_KEY?.trim()),
     from,
+    fromSource: fromEnv ? 'env' : 'default',
     fromDomain: from.match(/@([^>\s]+)/)?.[1]?.toLowerCase() ?? '',
-    usingTestSender: from === TEST_SENDER || /@resend\.dev\b/i.test(from),
+    usingTestSender: /@resend\.dev\b/i.test(from),
     to,
   };
 }
@@ -64,7 +81,10 @@ export async function sendMail(input: { to: string; subject: string; html: strin
       html: input.html,
       text: input.text,
     });
-    if (error) return { delivered: false, error: explainMailError(error.message, config) };
+    if (error) {
+      console.error(`[mail] Resend odmítl e-mail (from: ${config.from}, zdroj: ${config.fromSource}):`, error.message);
+      return { delivered: false, error: explainMailError(error.message, config) };
+    }
     return { delivered: true, id: data?.id };
   } catch (e) {
     return { delivered: false, error: explainMailError(e instanceof Error ? e.message : String(e), config) };

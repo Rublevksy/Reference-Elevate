@@ -634,8 +634,10 @@ function MailCard() {
           ok: !status.usingTestSender,
           label: 'Odesílatel (CONTACT_FROM_EMAIL)',
           help: status.usingTestSender
-            ? 'Používá se testovací onboarding@resend.dev — doručí jen na e-mail majitele účtu Resend. Nastavte např. ELEVATE <poptavky@elevateit.cz>.'
-            : status.from,
+            ? 'CONTACT_FROM_EMAIL míří na testovací onboarding@resend.dev — doručí jen na e-mail majitele účtu Resend. Nastavte adresu na ověřené doméně, např. ELEVATE <noreply@elevateit.cz>.'
+            : status.fromSource === 'env'
+              ? `${status.from} (z CONTACT_FROM_EMAIL)`
+              : `${status.from} (výchozí — CONTACT_FROM_EMAIL v tomto nasazení není; po přidání ve Vercelu udělejte Redeploy)`,
         },
         {
           ok: status.usingTestSender ? false : domainOk,

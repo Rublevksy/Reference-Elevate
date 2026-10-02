@@ -320,6 +320,7 @@ export async function deleteInquiry(id: string): Promise<Result> {
 export type MailStatus = {
   hasKey: boolean;
   from: string;
+  fromSource: 'env' | 'default';
   fromDomain: string;
   usingTestSender: boolean;
   to: string;
