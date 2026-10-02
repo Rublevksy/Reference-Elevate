@@ -1067,7 +1067,7 @@ function MobileSeam() {
   });
 
   return (
-    <div ref={ref} aria-hidden className="relative h-[24svh] md:hidden">
+    <div ref={ref} aria-hidden className="relative h-[15svh] md:hidden">
       <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,var(--line)_20%,var(--line)_80%,transparent)]" />
       <span
         ref={fill}

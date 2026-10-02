@@ -381,7 +381,11 @@
         "q": "Co když už web mám?",
         "a": "Začněte SEO kontrolou — ukáže, co opravit jako první."
       }
-    ]
+    ],
+    "more": "Celý obsah balíčku · +{count}",
+    "less": "Sbalit",
+    "prev": "Předchozí balíček",
+    "next": "Další balíček"
   },
   "contact": {
     "eyebrow": "Kontakt",

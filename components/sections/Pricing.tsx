@@ -1,9 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Clock3, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, Clock3, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/FeatureIcon';
 import { SplitHeading } from '@/components/ui/SplitHeading';
 import { plans, type Plan } from '@/content/pricing';
@@ -74,11 +74,34 @@ export function PriceCardDecor() {
   );
 }
 
+function Feature({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-2 text-[12.5px] leading-[1.45] text-[rgba(226,232,248,0.86)]">
+      <span aria-hidden className="mt-[5px] h-[7px] w-[7px] shrink-0 rotate-45 border border-[var(--blue-bright)] bg-[rgba(61,123,255,0.25)] shadow-[0_0_6px_rgba(61,123,255,0.8)]" />
+      {text}
+    </li>
+  );
+}
+
 /**
  * Obsah ceníkové karty. Stejná komponenta kreslí skutečnou kartu v Ceníku
  * i klon v přechodové scéně (tam bez interakce) — texty se při předání kryjí.
  */
-export function PriceCardFace({ plan, interactive = false }: { plan: Plan; interactive?: boolean }) {
+/** Na mobilu je vidět jen začátek obsahu balíčku, zbytek se rozbalí. */
+const MOBILE_FEATURES = 4;
+
+export function PriceCardFace({
+  plan,
+  interactive = false,
+  open = false,
+  onToggle,
+}: {
+  plan: Plan;
+  interactive?: boolean;
+  /** mobil: rozbalený celý obsah balíčku (na desktopu je vidět vždy) */
+  open?: boolean;
+  onToggle?: () => void;
+}) {
   const t = useTranslations('pricing');
   const meta = serviceMeta[plan.slug];
   const key = `plans.${plan.id}`;
@@ -123,18 +146,39 @@ export function PriceCardFace({ plan, interactive = false }: { plan: Plan; inter
 
       <p className="font-display text-[10px] uppercase tracking-[0.2em] text-[#9fc0ff]">{t('includes')}</p>
       <ul className="mt-3 space-y-2">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2 text-[12.5px] leading-[1.45] text-[rgba(226,232,248,0.86)]">
-            <span aria-hidden className="mt-[5px] h-[7px] w-[7px] shrink-0 rotate-45 border border-[var(--blue-bright)] bg-[rgba(61,123,255,0.25)] shadow-[0_0_6px_rgba(61,123,255,0.8)]" />
-            {feature}
-          </li>
+        {features.slice(0, MOBILE_FEATURES).map((feature) => (
+          <Feature key={feature} text={feature} />
         ))}
       </ul>
-
-      <p className="mt-5 rounded-xl border border-dashed border-[rgba(130,160,230,0.25)] bg-[rgba(255,255,255,0.02)] px-3 py-2.5 text-[12px] leading-snug text-muted">
-        <span className="mr-1 font-display text-[10px] uppercase tracking-[0.16em] text-[rgba(170,190,230,0.9)]">{t('extra')}:</span>
-        {t(`${key}.extra`)}
-      </p>
+      {/* zbytek balíčku + „zvlášť" — na mobilu sbalené (plynule přes grid-rows), od md vždy vidět */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] md:grid-rows-[1fr] ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {features.length > MOBILE_FEATURES ? (
+            <ul className="space-y-2 pt-2">
+              {features.slice(MOBILE_FEATURES).map((feature) => (
+                <Feature key={feature} text={feature} />
+              ))}
+            </ul>
+          ) : null}
+          <p className="mt-5 rounded-xl border border-dashed border-[rgba(130,160,230,0.25)] bg-[rgba(255,255,255,0.02)] px-3 py-2.5 text-[12px] leading-snug text-muted">
+            <span className="mr-1 font-display text-[10px] uppercase tracking-[0.16em] text-[rgba(170,190,230,0.9)]">{t('extra')}:</span>
+            {t(`${key}.extra`)}
+          </p>
+        </div>
+      </div>
+      {interactive && onToggle ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="mt-3 flex items-center gap-1.5 self-start rounded-full border border-[rgba(110,150,255,0.3)] bg-[rgba(31,91,255,0.08)] py-1.5 pl-3 pr-2.5 text-[12px] text-[#cfe0ff] transition-colors active:bg-[rgba(31,91,255,0.2)] md:hidden"
+        >
+          {open ? t('less') : t('more', { count: Math.max(0, features.length - MOBILE_FEATURES) })}
+          <ChevronDown aria-hidden className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      ) : null}
 
       <div className="mt-auto">
         <p className="mt-5 flex items-center gap-2 text-[12px] text-muted">
@@ -171,6 +215,72 @@ export function Pricing() {
   const custom = t.raw('custom') as { name: string; tagline: string; items: string[] };
   const faqPills = t.raw('faq') as { q: string; a: string }[];
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  /* Mobil (< md): karty v jedné řadě jako karusel se záložkami a stránkováním,
+     obsah balíčku sbalený. Od md se nic z toho neuplatní (karty vedle sebe). */
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const [openCard, setOpenCard] = useState<number | null>(null);
+  const cards = () => Array.from(gridRef.current?.querySelectorAll<HTMLElement>('[data-land="price-card"]') ?? []);
+
+  const goTo = useCallback(
+    (index: number) => {
+      const rail = gridRef.current;
+      const card = cards()[index];
+      if (!rail || !card || rail.scrollWidth <= rail.clientWidth) return;
+      rail.scrollTo({ left: card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+    },
+    [reduced],
+  );
+
+  // aktivní karta = ta nejblíž středu karuselu
+  useEffect(() => {
+    const rail = gridRef.current;
+    if (!rail) return;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const mid = rail.scrollLeft + rail.clientWidth / 2;
+        let best = 0;
+        cards().forEach((card, i) => {
+          const d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - mid);
+          const bestCard = cards()[best];
+          if (d < Math.abs(bestCard.offsetLeft + bestCard.offsetWidth / 2 - mid)) best = i;
+        });
+        setActive(best);
+      });
+    };
+    rail.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      rail.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  // při přechodu na jinou kartu sbalit rozbalenou a posunout záložky k aktivní
+  useEffect(() => {
+    setOpenCard((open) => (open === active ? open : null));
+    const row = tabsRef.current;
+    const tab = row?.children[active] as HTMLElement | undefined;
+    if (row && tab && row.scrollWidth > row.clientWidth) {
+      row.scrollTo({ left: tab.offsetLeft - (row.clientWidth - tab.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+    }
+  }, [active, reduced]);
+
+  // odkaz z menu na konkrétní balíček (#cena-eshop) → dojet i do strany
+  useEffect(() => {
+    const rail = gridRef.current;
+    if (!rail) return;
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        const card = record.target as HTMLElement;
+        if (card.hasAttribute('data-arrived')) goTo(cards().indexOf(card));
+      }
+    });
+    cards().forEach((card) => observer.observe(card, { attributes: true, attributeFilter: ['data-arrived'] }));
+    return () => observer.disconnect();
+  }, [goTo]);
 
   // mobil: karty jdou pod sebou a vyjíždějí zespodu (na desktopu je přiveze
   // přechodová scéna — vlastní vstup by je ukázal podruhé)
@@ -223,16 +333,51 @@ export function Pricing() {
         </div>
       </div>
 
-      {/* pět služeb — na širokém okně vedle sebe, užší 3 + 2, na mobilu pod sebou */}
-      <div ref={gridRef} className="mx-auto mt-14 flex max-w-[1480px] flex-wrap justify-center gap-4 px-5 md:px-6">
-        {plans.map((plan) => (
+      {/* mobil: záložky balíčků nad karuselem */}
+      <div
+        ref={tabsRef}
+        role="tablist"
+        aria-label={t('eyebrow')}
+        className="no-scrollbar mt-10 flex gap-2 overflow-x-auto px-5 md:hidden"
+      >
+        {plans.map((plan, i) => {
+          const on = i === active;
+          return (
+            <button
+              key={plan.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-controls={`cena-${plan.id}`}
+              onClick={() => goTo(i)}
+              className={`flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 font-display text-[11px] uppercase tracking-[0.1em] transition-[color,background-color,border-color,box-shadow] duration-300 ${
+                on
+                  ? 'border-[rgba(143,178,255,0.85)] bg-[linear-gradient(165deg,#1b3577,#0c1638)] text-white shadow-[0_0_18px_-4px_rgba(31,91,255,0.85)]'
+                  : 'border-[rgba(110,150,255,0.22)] bg-white/[0.03] text-[rgba(205,214,236,0.8)]'
+              }`}
+            >
+              <Icon name={serviceMeta[plan.slug].icon} className={`h-3.5 w-3.5 ${on ? 'text-[#9fc0ff]' : 'text-muted'}`} />
+              {t(`plans.${plan.id}.name`)}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* pět služeb — na širokém okně vedle sebe, užší 3 + 2, na mobilu karusel po jedné */}
+      <div
+        ref={gridRef}
+        className="no-scrollbar mx-auto mt-4 flex max-w-[1480px] snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-[9vw] pb-8 pt-3 md:mt-14 md:snap-none md:flex-wrap md:justify-center md:gap-4 md:overflow-visible md:px-6 md:pb-0 md:pt-0"
+      >
+        {plans.map((plan, i) => (
           <article
             key={plan.id}
             id={`cena-${plan.id}`}
             data-nav-offset={-13}
+            data-nav-offset-mobile={-22}
             data-nav-highlight
             data-land="price-card"
-            className={`${PRICE_CARD_CLASS} group w-full transition-transform duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
+            aria-label={t(`plans.${plan.id}.name`)}
+            className={`${PRICE_CARD_CLASS} group w-[82vw] max-w-[380px] shrink-0 snap-center transition-transform duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] md:w-[calc(50%-8px)] md:max-w-none md:shrink md:hover:-translate-y-1.5 lg:w-[calc(33.333%-11px)] xl:w-[calc(20%-13px)]`}
             style={{ background: PRICE_CARD_BG }}
           >
             {/* záře při hoveru — hotová vrstva, mění se jen průhlednost */}
@@ -242,9 +387,44 @@ export function Pricing() {
               style={{ background: 'radial-gradient(90% 55% at 50% 0%, rgba(61,123,255,0.22), transparent 70%)', boxShadow: 'inset 0 0 0 1px rgba(120,160,255,0.45)' }}
             />
             <PriceCardDecor />
-            <PriceCardFace plan={plan} interactive />
+            <PriceCardFace plan={plan} interactive open={openCard === i} onToggle={() => setOpenCard(openCard === i ? null : i)} />
           </article>
         ))}
+      </div>
+
+      {/* mobil: stránkování karuselu */}
+      <div className="-mt-3 flex items-center justify-between gap-4 px-5 md:hidden">
+        <button
+          type="button"
+          onClick={() => goTo(Math.max(0, active - 1))}
+          disabled={active === 0}
+          aria-label={t('prev')}
+          className="grid h-11 w-11 place-items-center rounded-full border border-[rgba(110,150,255,0.3)] bg-white/[0.03] text-ink transition-opacity active:bg-white/[0.1] disabled:opacity-30"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            {plans.map((plan, i) => (
+              <span
+                key={plan.id}
+                className={`h-[3px] rounded-full transition-all duration-500 ${i === active ? 'w-6 bg-[var(--blue-bright)] shadow-[0_0_8px_rgba(61,123,255,0.9)]' : 'w-2.5 bg-[rgba(140,170,235,0.3)]'}`}
+              />
+            ))}
+          </div>
+          <span className="font-mono text-[11px] tracking-[0.14em] text-muted" aria-live="polite">
+            <span className="text-ink">{String(active + 1).padStart(2, '0')}</span> / {String(plans.length).padStart(2, '0')}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => goTo(Math.min(plans.length - 1, active + 1))}
+          disabled={active === plans.length - 1}
+          aria-label={t('next')}
+          className="grid h-11 w-11 place-items-center rounded-full border border-[rgba(110,150,255,0.3)] bg-white/[0.03] text-ink transition-opacity active:bg-white/[0.1] disabled:opacity-30"
+        >
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </button>
       </div>
 
       <div className="shell">

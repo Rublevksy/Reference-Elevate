@@ -620,3 +620,7 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* vodorovné karusely na mobilu (ceník) — posouvat prstem, bez lišty */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

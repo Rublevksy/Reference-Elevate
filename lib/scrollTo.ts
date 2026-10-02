@@ -59,7 +59,9 @@ export function resolveTarget(id: string): HTMLElement | null {
 
 /** Místo, kam se má dojet (horní hrana cíle + případný posun ve vh). */
 export function targetTop(el: HTMLElement) {
-  const offsetVh = Number(el.dataset.navOffset ?? 0);
+  // na mobilu může cíl chtít jiný posun (např. ceník: ukázat i záložky nad karuselem)
+  const mobile = window.innerWidth < 768 ? el.dataset.navOffsetMobile : undefined;
+  const offsetVh = Number(mobile ?? el.dataset.navOffset ?? 0);
   const max = document.documentElement.scrollHeight - window.innerHeight;
   const top = el.getBoundingClientRect().top + window.scrollY + (offsetVh / 100) * window.innerHeight;
   return Math.max(0, Math.min(max, Math.round(top)));

@@ -381,7 +381,11 @@
         "q": "I already have a website?",
         "a": "Start with an SEO check — it shows what to fix first."
       }
-    ]
+    ],
+    "more": "Everything included · +{count}",
+    "less": "Show less",
+    "prev": "Previous package",
+    "next": "Next package"
   },
   "contact": {
     "eyebrow": "Contact",

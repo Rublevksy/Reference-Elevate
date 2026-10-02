@@ -981,15 +981,15 @@ export function Contact() {
                       type="button"
                       onClick={() => void goStep(step - 1)}
                       disabled={step === 0}
-                      className="text-sm text-muted transition-colors hover:text-ink disabled:opacity-0"
+                      className="shrink-0 whitespace-nowrap py-2 text-sm text-muted transition-colors hover:text-ink disabled:opacity-0"
                     >
                       ← {t('back')}
                     </button>
 
                     {step < last ? (
-                      <Button onClick={() => void goStep(step + 1)} className="!px-6 !py-3 !text-[12px]">{t('next')}</Button>
+                      <Button onClick={() => void goStep(step + 1)} className="whitespace-nowrap !px-6 !py-3 !text-[12px] max-sm:!gap-2 max-sm:!px-5">{t('next')}</Button>
                     ) : (
-                      <Button type="submit" disabled={status === 'sending' || status === 'verifying'} className="!px-6 !py-3 !text-[12px]">
+                      <Button type="submit" disabled={status === 'sending' || status === 'verifying'} className="whitespace-nowrap !px-6 !py-3 !text-[12px] max-sm:!gap-2 max-sm:!px-4 max-sm:!tracking-[0.08em]">
                         {status === 'sending' || status === 'verifying' ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
