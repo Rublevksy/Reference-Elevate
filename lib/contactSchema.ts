@@ -1,14 +1,15 @@
 import { z } from 'zod';
+import { MAX_LIKES, OTHER_INDUSTRY } from '@/lib/content/gallery';
 
 /**
  * Kvalifikační formulář. Volby se posílají jako indexy do polí v
- * messages/<jazyk>.json (contact.needs, contact.niches…), takže server
+ * messages/<jazyk>.json (contact.needs, contact.starts…), takže server
  * poptávku vždy popíše česky, ať návštěvník vyplňoval v jakémkoli jazyce.
- * Počty tu musí sedět s délkou těch polí.
+ * Počty tu musí sedět s délkou těch polí. Výjimka: obor je id ze seznamu
+ * oborů z administrace (lib/content/gallery.ts).
  */
 export const CONTACT_OPTIONS = {
   needs: 7,
-  niches: 8,
   starts: 3,
   assets: 4,
   styles: 6,
@@ -20,8 +21,8 @@ export const CONTACT_OPTIONS = {
 
 /** contact.starts[1] = „starý web" → chceme jeho adresu */
 export const START_OLD_SITE = 1;
-/** contact.niches[7] = „jiný obor" → upřesnění je nejdůležitější */
-export const NICHE_OTHER = 7;
+/** „Jiný obor" → upřesnění je nejdůležitější */
+export const NICHE_OTHER = OTHER_INDUSTRY;
 /** indexy do contact.channels (WhatsApp přibyl jako 4. — pořadí na webu určuje CHANNEL_ORDER) */
 export const CHANNEL = { email: 0, phone: 1, telegram: 2, whatsapp: 3 } as const;
 export const CHANNEL_ORDER = [CHANNEL.email, CHANNEL.whatsapp, CHANNEL.phone, CHANNEL.telegram];
@@ -75,7 +76,8 @@ export const makeContactSchema = (m: ContactMessages) =>
     // 1 — projekt
     needs: picks(CONTACT_OPTIONS.needs).min(1, m.needs),
     plan: text(120),
-    niche: pick(CONTACT_OPTIONS.niches, m.niche),
+    // id oboru ze seznamu v administraci (server ho ověří a přeloží na název)
+    niche: z.string().min(1, m.niche).max(40, m.niche).regex(/^[a-z0-9-]+$/, m.niche),
     nicheDetail: text(160),
     // 2 — výchozí stav
     start: pick(CONTACT_OPTIONS.starts, m.start),
@@ -86,6 +88,8 @@ export const makeContactSchema = (m: ContactMessages) =>
     style: z.number().int().min(-1).max(CONTACT_OPTIONS.styles - 1),
     colors: picks(CONTACT_OPTIONS.colors),
     colorNote: text(200),
+    /** ukázky z galerie oboru, které se návštěvníkovi líbí (id snímků) */
+    likes: z.array(z.string().max(40)).max(MAX_LIKES).optional(),
     // 4 — rozpočet a termín
     budget: pick(CONTACT_OPTIONS.budgets, m.budget),
     timeline: pick(CONTACT_OPTIONS.timelines, m.timeline),

@@ -581,7 +581,8 @@
         "We'll call on a weekday. It takes about fifteen minutes.",
         "Telegram? We'll message you there — we reply fast.",
         "WhatsApp is the quickest. We'll send the proposal there, price included."
-      ]
+      ],
+      "nicheAny": "Great, we’re happy to help in this field. Let me show you what we’ve done."
     },
     "consent": "I agree to the processing of my personal data for the purpose of handling this enquiry.",
     "consentLink": "More information",
@@ -610,6 +611,27 @@
       "captchaWait": "The spam check is still running — please try again in a few seconds.",
       "captchaTick": "Please tick the Cloudflare check box above the button and send again.",
       "captchaBroken": "The spam check couldn’t load in your browser (ad blocker?). Try reloading the page, or write to us directly at"
+    },
+    "gallery": {
+      "title": "Our websites for: {industry}",
+      "hint": "Tap an image to enlarge it, tap the heart to mark what you like. You can pick several.",
+      "more": "Show other options",
+      "restart": "Browse the examples again",
+      "allSeen": "That’s every example from this industry.",
+      "empty": "We don’t have examples for your exact industry yet, but we’ll get back to you with a tailored proposal.",
+      "noneLiked": "Nothing caught your eye? No problem — we’ll prepare a tailored proposal.",
+      "liked": "{count} selected",
+      "likedShort": "{count, plural, one {# example selected} other {# examples selected}}",
+      "like": "I like it",
+      "unlike": "Remove from selection",
+      "open": "Enlarge example",
+      "close": "Close",
+      "prev": "Previous example",
+      "next": "Next example",
+      "counter": "Examples {from}–{to} of {total}",
+      "error": "The examples couldn’t be loaded.",
+      "retry": "Try again",
+      "react": "Great taste! We’ll keep that in mind for the design."
     }
   },
   "footer": {

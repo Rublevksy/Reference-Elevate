@@ -16,7 +16,7 @@ import { MascotGuide } from '@/components/mascot/MascotGuide';
 import { SmoothScroll } from '@/lib/SmoothScroll';
 import { Analytics } from '@/components/ui/Analytics';
 import { ContentProvider } from '@/components/ContentProvider';
-import { getProjects, getSettings, getSiteStatus } from '@/lib/content/server';
+import { getIndustries, getProjects, getSettings, getSiteStatus } from '@/lib/content/server';
 import { MaintenancePreview, MaintenanceScreen } from '@/components/ui/MaintenanceScreen';
 
 /**
@@ -114,7 +114,7 @@ export default async function LocaleLayout({
 
   const t = await getTranslations({ locale, namespace: 'a11y' });
 
-  const [projects, settings, status] = await Promise.all([getProjects(), getSettings(), getSiteStatus()]);
+  const [projects, settings, status, industries] = await Promise.all([getProjects(), getSettings(), getSiteStatus(), getIndustries()]);
   // Schema.org pro Google: firma (služby s cenami „od" z Ceníku) + web.
   // Adresa jen město z administrace — bez vymyšleného PSČ či ulice.
   const [tMeta, tPricing] = await Promise.all([
@@ -201,7 +201,7 @@ export default async function LocaleLayout({
           <MaintenanceScreen email={settings.contactEmail} />
         ) : (
           <NextIntlClientProvider>
-            <ContentProvider value={{ projects, contactEmail: settings.contactEmail, city: settings.city, social: settings.social }}>
+            <ContentProvider value={{ projects, contactEmail: settings.contactEmail, city: settings.city, social: settings.social, industries }}>
             <Preloader />
             <MaintenancePreview email={settings.contactEmail} />
             <Backdrop />

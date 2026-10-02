@@ -5,6 +5,11 @@ import { site } from '@/content/site';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, supabaseConfigured } from '@/lib/supabase/env';
 import { FALLBACK_PROJECTS, projectFromRow, type Project, type ProjectRow } from './projects';
 import { resolveSocials, type SocialInput, type SocialLink } from '@/lib/social';
+import { DEFAULT_INDUSTRY_IDS, OTHER_INDUSTRY, sanitizeGallery, sanitizeIndustries, type GalleryItem, type Industry } from './gallery';
+import csMessages from '@/messages/cs.json';
+import enMessages from '@/messages/en.json';
+import ruMessages from '@/messages/ru.json';
+import ukMessages from '@/messages/uk.json';
 
 /** Značka cache — administrace ji po uložení zneplatní (web se přegeneruje). */
 export const CONTENT_TAG = 'content';
@@ -32,7 +37,7 @@ export const getProjects = unstable_cache(
   { tags: [CONTENT_TAG], revalidate: 3600 },
 );
 
-export type BlockKey = 'pricing_cs' | 'settings' | 'messages_cs' | 'site_status';
+export type BlockKey = 'pricing_cs' | 'settings' | 'messages_cs' | 'site_status' | 'industries' | 'gallery';
 
 /**
  * Bloky obsahu čte server přes service role (jen na serveru) — nové bloky
@@ -116,3 +121,32 @@ export const getSiteStatus = unstable_cache(
   // krátká platnost: i bez zásahu administrace se stav údržby srovná do minuty
   { tags: [CONTENT_TAG], revalidate: 60 },
 );
+
+/**
+ * Obory (formulář „Obor podnikání" + kategorie galerie). Dokud je správce
+ * neupraví, platí výchozích osm z messages — české názvy včetně případných
+ * starších úprav z Texty webu. „Jiný obor" je vždy poslední.
+ */
+export async function getIndustries(): Promise<Industry[]> {
+  const stored = sanitizeIndustries(await getBlock('industries'));
+  const list = stored.length ? stored : await defaultIndustries();
+  const other = list.find((i) => i.id === OTHER_INDUSTRY) ?? (await defaultIndustries()).find((i) => i.id === OTHER_INDUSTRY)!;
+  return [...list.filter((i) => i.id !== OTHER_INDUSTRY), other];
+}
+
+export async function defaultIndustries(): Promise<Industry[]> {
+  const overrides = (await getBlock('messages_cs')) ?? {};
+  const all = { cs: csMessages, en: enMessages, ru: ruMessages, uk: ukMessages };
+  return DEFAULT_INDUSTRY_IDS.map((id, i) => {
+    const names: Industry['names'] = {};
+    for (const [l, m] of Object.entries(all)) names[l as keyof typeof all] = (m.contact.niches as string[])[i];
+    const override = overrides[`contact.niches.${i}`];
+    if (typeof override === 'string' && override.trim()) names.cs = override.trim();
+    return { id, names, legacy: i };
+  });
+}
+
+/** Všechny snímky galerie (jen na serveru — veřejně jde přes /api/gallery bez interních údajů). */
+export async function getGallery(): Promise<GalleryItem[]> {
+  return sanitizeGallery(await getBlock('gallery'));
+}

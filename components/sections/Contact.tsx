@@ -25,7 +25,9 @@ import {
   type ContactInput,
 } from '@/lib/contactSchema';
 import { site } from '@/content/site';
-import { useSiteContact } from '@/components/ContentProvider';
+import { useIndustries, useSiteContact } from '@/components/ContentProvider';
+import { industryName } from '@/lib/content/gallery';
+import { IndustryGallery } from './IndustryGallery';
 import { SocialIcon } from '@/components/ui/SocialIcon';
 import { TURNSTILE_SITE_KEY, Turnstile, type TurnstileEvent, type TurnstileHandle } from '@/components/ui/Turnstile';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -34,7 +36,7 @@ import { useReducedMotion } from '@/lib/useReducedMotion';
 const STEP_FIELDS: (keyof ContactInput)[][] = [
   ['needs', 'niche', 'nicheDetail'],
   ['start', 'currentSite', 'assets'],
-  ['refs', 'style', 'colors', 'colorNote'],
+  ['likes', 'refs', 'style', 'colors', 'colorNote'],
   ['budget', 'timeline', 'deadline'],
   ['name', 'email', 'channel', 'phone', 'telegram', 'message', 'consent'],
 ];
@@ -187,7 +189,8 @@ export function Contact() {
   const questions = t.raw('questions') as string[];
   const hints = t.raw('hints') as string[];
   const needs = t.raw('needs') as string[];
-  const niches = t.raw('niches') as string[];
+  // obory z administrace (společný seznam s galerií ukázek)
+  const industries = useIndustries();
   const starts = t.raw('starts') as string[];
   const assets = t.raw('assets') as string[];
   const styles = t.raw('styles') as string[];
@@ -226,9 +229,9 @@ export function Contact() {
     resolver: zodResolver(schema),
     mode: 'onTouched',
     defaultValues: {
-      needs: [], plan: '', niche: -1, nicheDetail: '',
+      needs: [], plan: '', niche: '', nicheDetail: '',
       start: -1, currentSite: '', assets: [],
-      refs: [''], style: -1, colors: [], colorNote: '',
+      likes: [], refs: [''], style: -1, colors: [], colorNote: '',
       budget: -1, timeline: -1, deadline: '',
       name: '', email: '', channel: CHANNEL.email, phone: '', telegram: '', message: '',
       website: '', locale,
@@ -236,7 +239,7 @@ export function Contact() {
   });
 
   useEffect(() => {
-    (['needs', 'niche', 'start', 'assets', 'refs', 'style', 'colors', 'budget', 'timeline', 'channel', 'consent', 'plan'] as const).forEach((name) => register(name));
+    (['needs', 'niche', 'start', 'assets', 'likes', 'refs', 'style', 'colors', 'budget', 'timeline', 'channel', 'consent', 'plan'] as const).forEach((name) => register(name));
   }, [register]);
 
   const v = watch();
@@ -281,7 +284,7 @@ export function Contact() {
     return on;
   };
 
-  const choose = (name: 'niche' | 'start' | 'style' | 'budget' | 'timeline' | 'channel', index: number) => {
+  const choose = (name: 'start' | 'style' | 'budget' | 'timeline' | 'channel', index: number) => {
     setValue(name, index);
     clearErrors(name);
   };
@@ -427,9 +430,9 @@ export function Contact() {
   /** Shrnutí na posledním kroku — co už víme, s odkazem zpět na krok. */
   const summary: { step: number; text: string }[] = [
     { step: 0, text: [v.needs.map((i) => needs[i]).join(', '), v.plan].filter(Boolean).join(' · ') },
-    { step: 0, text: v.niche >= 0 ? [niches[v.niche], v.nicheDetail].filter(Boolean).join(' — ') : '' },
+    { step: 0, text: v.niche ? [industryName(industries.find((i) => i.id === v.niche), locale), v.nicheDetail].filter(Boolean).join(' — ') : '' },
     { step: 1, text: v.start >= 0 ? [starts[v.start], v.start === START_OLD_SITE ? v.currentSite : ''].filter(Boolean).join(' — ') : '' },
-    { step: 2, text: [v.style >= 0 ? styles[v.style] : '', v.colors.map((i) => colors[i]).join(', ')].filter(Boolean).join(' · ') },
+    { step: 2, text: [v.likes?.length ? t('gallery.likedShort', { count: v.likes.length }) : '', v.style >= 0 ? styles[v.style] : '', v.colors.map((i) => colors[i]).join(', ')].filter(Boolean).join(' · ') },
     { step: 3, text: [v.budget >= 0 ? budgets[v.budget] : '', v.timeline >= 0 ? timelines[v.timeline] : ''].filter(Boolean).join(' · ') },
   ].filter((row) => row.text);
 
@@ -607,17 +610,21 @@ export function Contact() {
 
                           <Group label={t('nicheLabel')} error={errors.niche?.message}>
                             <div className="flex flex-wrap gap-2">
-                              {niches.map((item, i) => (
+                              {industries.map((item) => (
                                 <Chip
-                                  key={item}
-                                  on={v.niche === i}
+                                  key={item.id}
+                                  on={v.niche === item.id}
                                   onClick={() => {
-                                    choose('niche', i);
-                                    react('niches', i, i === NICHE_OTHER);
-                                    if (i === NICHE_OTHER) window.setTimeout(() => nicheDetailRef.current?.focus(), 60);
+                                    if (v.niche !== item.id) setValue('likes', []); // ukázky jiného oboru už nesedí
+                                    setValue('niche', item.id);
+                                    clearErrors('niche');
+                                    // původní obory mají vlastní reakci maskota, nové obecnou
+                                    if (item.legacy !== undefined) react('niches', item.legacy, item.id === NICHE_OTHER);
+                                    else setSaid({ text: t('reactions.nicheAny'), pose: 'thumbsUp' });
+                                    if (item.id === NICHE_OTHER) window.setTimeout(() => nicheDetailRef.current?.focus(), 60);
                                   }}
                                 >
-                                  {item}
+                                  {industryName(item, locale)}
                                 </Chip>
                               ))}
                             </div>
@@ -713,6 +720,16 @@ export function Contact() {
 
                       {step === 2 ? (
                         <div className="mt-5 space-y-5">
+                          {/* ukázky našich webů z oboru zvoleného v 1. kroku */}
+                          {v.niche ? (
+                            <IndustryGallery
+                              industryId={v.niche}
+                              industryLabel={industryName(industries.find((i) => i.id === v.niche), locale)}
+                              likes={v.likes ?? []}
+                              onLikes={(ids) => setValue('likes', ids)}
+                              onLike={() => setSaid({ text: t('gallery.react'), pose: 'thumbsUp' })}
+                            />
+                          ) : null}
                           <Group label={t('refsLabel')} hint={t('refsHint')} optional={t('optional')} error={errors.refs?.message}>
                             <div className="space-y-2.5">
                               {refs.map((value, i) => (

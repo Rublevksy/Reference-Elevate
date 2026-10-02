@@ -581,7 +581,8 @@
         "Zavoláme v pracovní dny. Hovor zabere asi čtvrt hodiny.",
         "Telegram? Napíšeme tam, odpovídáme rychle.",
         "WhatsApp je nejrychlejší. Napíšeme vám tam návrh i s cenou."
-      ]
+      ],
+      "nicheAny": "Super, s tímhle oborem rádi pomůžeme. Ukážu vám, co jsme už udělali."
     },
     "consent": "Souhlasím se zpracováním osobních údajů za účelem vyřízení poptávky.",
     "consentLink": "Více informací",
@@ -610,6 +611,27 @@
       "captchaWait": "Ověření proti spamu ještě běží — zkuste to prosím za pár sekund znovu.",
       "captchaTick": "Zaškrtněte prosím políčko „Potvrďte, že jste člověk“ nad tlačítkem a odešlete znovu.",
       "captchaBroken": "Ověření proti spamu se ve vašem prohlížeči nenačetlo (blokátor reklam?). Zkuste obnovit stránku, nebo nám napište přímo na"
+    },
+    "gallery": {
+      "title": "Naše weby pro obor: {industry}",
+      "hint": "Klepnutím obrázek zvětšíte, srdíčkem označíte, co se vám líbí. Můžete vybrat víc.",
+      "more": "Zobrazit jiné varianty",
+      "restart": "Projít ukázky znovu",
+      "allSeen": "To jsou všechny ukázky z tohoto oboru.",
+      "empty": "Ještě nemáme ukázky přesně pro váš obor, ale ozveme se s návrhem na míru.",
+      "noneLiked": "Nic vás nezaujalo? Nevadí — připravíme návrh na míru.",
+      "liked": "{count, plural, one {# vybraná} few {# vybrané} other {# vybraných}}",
+      "likedShort": "{count, plural, one {# vybraná ukázka} few {# vybrané ukázky} other {# vybraných ukázek}}",
+      "like": "Líbí se mi",
+      "unlike": "Zrušit výběr",
+      "open": "Zvětšit ukázku",
+      "close": "Zavřít",
+      "prev": "Předchozí ukázka",
+      "next": "Další ukázka",
+      "counter": "Ukázky {from}–{to} z {total}",
+      "error": "Ukázky se nepodařilo načíst.",
+      "retry": "Zkusit znovu",
+      "react": "Skvělý vkus! Podle toho se při návrhu zařídíme."
     }
   },
   "footer": {

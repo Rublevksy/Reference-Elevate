@@ -4,6 +4,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { FALLBACK_PROJECTS, type Project } from '@/lib/content/projects';
 import { site } from '@/content/site';
 import type { SocialLink } from '@/lib/social';
+import type { Industry } from '@/lib/content/gallery';
 
 export type ContentValue = {
   projects: Project[];
@@ -11,6 +12,8 @@ export type ContentValue = {
   city: string;
   /** sítě a messengery z administrace (WhatsApp, Instagram…) */
   social: SocialLink[];
+  /** obory z administrace (formulář „Obor podnikání" + galerie ukázek) */
+  industries: Industry[];
 };
 
 const ContentContext = createContext<ContentValue>({
@@ -18,6 +21,7 @@ const ContentContext = createContext<ContentValue>({
   contactEmail: site.email,
   city: site.city,
   social: [],
+  industries: [],
 });
 
 /** Obsah z databáze (projekty, kontakt, sítě) pro klientské sekce. */
@@ -28,3 +32,4 @@ export function ContentProvider({ value, children }: { value: ContentValue; chil
 export const useProjects = () => useContext(ContentContext).projects;
 export const useContactEmail = () => useContext(ContentContext).contactEmail;
 export const useSiteContact = () => useContext(ContentContext);
+export const useIndustries = () => useContext(ContentContext).industries;

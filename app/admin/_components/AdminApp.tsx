@@ -34,6 +34,8 @@ import { HintLightbox, HintMini, HintThumb, SerpPreview, hintFor, type Hint } fr
 import { site } from '@/content/site';
 import { PLATFORMS, detectPlatform, resolveSocial, type SocialInput } from '@/lib/social';
 import { SocialIcon } from '@/components/ui/SocialIcon';
+import type { GalleryItem, Industry } from '@/lib/content/gallery';
+import { GalleryTab } from './GalleryTab';
 
 const SITE_URL = site.url;
 
@@ -1138,6 +1140,24 @@ function InquiryDetail({
         ))}
       </dl>
 
+      {/* ukázky z galerie, které zákazník označil srdíčkem */}
+      {item.likes?.length ? (
+        <div className="mt-6">
+          <p className="font-display text-[10.5px] uppercase tracking-[0.16em] text-[#9fc0ff]">Vybrané ukázky ({item.likes.length})</p>
+          <ul className="mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {item.likes.map((like) => (
+              <li key={like.id}>
+                <a href={like.url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-[rgba(255,120,160,0.45)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={like.thumb} alt="" className="aspect-[16/10] w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]" />
+                </a>
+                {like.label ? <p className="mt-1 truncate text-xs text-muted">{like.label}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="mt-6">
         <Field label="Poznámka (vidíte jen vy)">
           <textarea className={`${inputClass} min-h-[72px]`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Např. volal jsem 3. 10., pošlu nabídku do pátku" />
@@ -1353,6 +1373,7 @@ function MaintenanceDialog({ on, onClose, onChanged }: { on: boolean; onClose: (
 const TABS = [
   ['inquiries', 'Poptávky'],
   ['projects', 'Projekty'],
+  ['gallery', 'Galerie ukázek'],
   ['texts', 'Texty webu'],
   ['pricing', 'Ceník'],
   ['company', 'Kontakt a firma'],
@@ -1369,6 +1390,8 @@ export function AdminApp({
   textOverrides,
   maintenance: initialMaintenance,
   inquiries,
+  gallery,
+  industries,
 }: {
   email: string;
   projects: ProjectRow[];
@@ -1378,6 +1401,8 @@ export function AdminApp({
   textOverrides: Record<string, string>;
   maintenance: boolean;
   inquiries: Inquiry[];
+  gallery: GalleryItem[];
+  industries: Industry[];
 }) {
   const [tab, setTab] = useState<Tab>('inquiries');
   const [maintenance, setMaintenanceState] = useState(initialMaintenance);
@@ -1472,6 +1497,7 @@ export function AdminApp({
       <main className="relative mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-8">
         <div hidden={tab !== 'inquiries'}><InquiriesTab initial={inquiries} onNewCount={setNewCount} /></div>
         <div hidden={tab !== 'projects'}><ProjectsTab projects={projects} /></div>
+        <div hidden={tab !== 'gallery'}><GalleryTab initialItems={gallery} initialIndustries={industries} projects={projects} /></div>
         <div hidden={tab !== 'texts'}><TextsTab defaults={textDefaults} overrides={textOverrides} /></div>
         <div hidden={tab !== 'pricing'}><PricingTab initial={pricing} /></div>
         <div hidden={tab !== 'company'}><CompanyTab initial={settings} /></div>

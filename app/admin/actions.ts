@@ -12,6 +12,8 @@ import { requireAdmin } from '@/lib/supabase/requireAdmin';
 import { supabaseServer } from '@/lib/supabase/server';
 import { resolveSocial, type SocialInput } from '@/lib/social';
 import { INQUIRY_PREFIX, readInquiries, type Inquiry, type InquiryStatus } from '@/lib/content/inquiries';
+import { defaultIndustries } from '@/lib/content/server';
+import { OTHER_INDUSTRY, sanitizeGallery, sanitizeIndustries, type GalleryItem, type Industry } from '@/lib/content/gallery';
 export type { Inquiry, InquiryStatus } from '@/lib/content/inquiries';
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -351,5 +353,163 @@ export async function sendTestMail(): Promise<Result> {
     return result.delivered ? { ok: true } : { ok: false, error: result.error };
   } catch (e) {
     return fail(e);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Galerie ukázek a obory                                             */
+/* ------------------------------------------------------------------ */
+
+type GalleryResult = { ok: true; items: GalleryItem[]; industries: Industry[] } | { ok: false; error: string };
+
+async function readGalleryState() {
+  const db = supabaseAdmin();
+  const { data, error } = await db.from('content_blocks').select('key, data').in('key', ['gallery', 'industries']);
+  if (error) throw error;
+  const byKey = Object.fromEntries((data ?? []).map((row) => [row.key as string, row.data]));
+  const stored = sanitizeIndustries(byKey.industries);
+  const industries = stored.length ? stored : await defaultIndustries();
+  return { items: sanitizeGallery(byKey.gallery), industries: withOtherLast(industries, await defaultIndustries()) };
+}
+
+function withOtherLast(list: Industry[], defaults: Industry[]) {
+  const other = list.find((i) => i.id === OTHER_INDUSTRY) ?? defaults.find((i) => i.id === OTHER_INDUSTRY)!;
+  return [...list.filter((i) => i.id !== OTHER_INDUSTRY), other];
+}
+
+async function writeGallery(items: GalleryItem[]) {
+  const { error } = await supabaseAdmin().from('content_blocks').upsert({ key: 'gallery', data: { items } });
+  if (error) throw error;
+}
+
+/** Obrázek galerie smí být jen z našeho úložiště nebo ze složky webu (snímky původních projektů). */
+function ownStorageUrl(url: string) {
+  const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`;
+  if (typeof url !== 'string' || url.includes('..')) return false;
+  return url.startsWith(base) || /^\/cases\/[a-z0-9/_-]+\.(jpe?g|png|webp)$/i.test(url);
+}
+
+const galleryFail = (e: unknown): GalleryResult => ({ ok: false, error: e instanceof Error ? e.message : String(e) });
+
+export async function loadGallery(): Promise<GalleryResult> {
+  try {
+    await requireAdmin();
+    return { ok: true, ...(await readGalleryState()) };
+  } catch (e) {
+    return galleryFail(e);
+  }
+}
+
+/**
+ * Uložit seznam oborů (pořadí, názvy, překlady). Smazaný obor zmizí i ze
+ * snímků; „Jiný obor" zůstává vždy poslední.
+ */
+export async function saveIndustries(input: Industry[]): Promise<GalleryResult> {
+  try {
+    await requireAdmin();
+    const clean = sanitizeIndustries({ items: input });
+    if (!clean.some((i) => i.id !== OTHER_INDUSTRY)) return { ok: false, error: 'Nechte aspoň jeden obor.' };
+    const state = await readGalleryState();
+    const industries = withOtherLast(clean, await defaultIndustries());
+    const ids = new Set(industries.map((i) => i.id));
+    const items = state.items.map((item) => ({ ...item, industries: item.industries.filter((id) => ids.has(id)) }));
+    const db = supabaseAdmin();
+    const { error } = await db.from('content_blocks').upsert({ key: 'industries', data: { items: industries } });
+    if (error) throw error;
+    await writeGallery(items);
+    publish();
+    return { ok: true, items, industries };
+  } catch (e) {
+    return galleryFail(e);
+  }
+}
+
+/** Dvě podepsané adresy pro nahrání: plný snímek a zmenšenina. */
+export async function createGalleryUpload(): Promise<
+  { ok: true; image: { path: string; token: string; publicUrl: string }; thumb: { path: string; token: string; publicUrl: string } } | { ok: false; error: string }
+> {
+  try {
+    await requireAdmin();
+    const db = supabaseAdmin();
+    const base = `gallery/${new Date().toISOString().slice(0, 10)}-${randomUUID().slice(0, 8)}`;
+    const slots = await Promise.all(
+      [`${base}.jpg`, `${base}-thumb.jpg`].map(async (path) => {
+        const { data, error } = await db.storage.from('media').createSignedUploadUrl(path);
+        if (error || !data) throw error ?? new Error('Úložiště neodpovídá.');
+        return { path, token: data.token, publicUrl: db.storage.from('media').getPublicUrl(path).data.publicUrl };
+      }),
+    );
+    return { ok: true, image: slots[0], thumb: slots[1] };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export type GalleryInput = Pick<GalleryItem, 'url' | 'thumb' | 'width' | 'height' | 'industries' | 'label' | 'owned'>;
+
+function checkInput(input: GalleryInput, industryIds: Set<string>) {
+  if (!ownStorageUrl(input.url) || !ownStorageUrl(input.thumb)) throw new Error('Obrázek musí být nahraný do úložiště webu.');
+  return {
+    url: input.url,
+    thumb: input.thumb,
+    width: Math.max(0, Math.round(Number(input.width) || 0)),
+    height: Math.max(0, Math.round(Number(input.height) || 0)),
+    industries: [...new Set(input.industries)].filter((id) => industryIds.has(id)),
+    label: (input.label ?? '').trim().slice(0, 80),
+    owned: (input.owned ?? []).filter((p) => typeof p === 'string' && p.startsWith('gallery/') && !p.includes('..')),
+  };
+}
+
+export async function addGalleryItems(inputs: GalleryInput[]): Promise<GalleryResult> {
+  try {
+    await requireAdmin();
+    const state = await readGalleryState();
+    const ids = new Set(state.industries.map((i) => i.id));
+    const now = new Date().toISOString();
+    const added: GalleryItem[] = inputs.slice(0, 50).map((input) => ({ id: randomUUID().slice(0, 12), created_at: now, ...checkInput(input, ids) }));
+    const items = [...added, ...state.items];
+    await writeGallery(items);
+    publish();
+    return { ok: true, items, industries: state.industries };
+  } catch (e) {
+    return galleryFail(e);
+  }
+}
+
+/** Úprava snímku: obory, popisek, nebo výměna obrázku (staré soubory se smažou). */
+export async function updateGalleryItem(id: string, patch: Partial<GalleryInput>): Promise<GalleryResult> {
+  try {
+    await requireAdmin();
+    const state = await readGalleryState();
+    const current = state.items.find((item) => item.id === id);
+    if (!current) return { ok: false, error: 'Snímek už neexistuje.' };
+    const ids = new Set(state.industries.map((i) => i.id));
+    const next = { ...current, ...checkInput({ ...current, ...patch }, ids) };
+    const replaced = patch.url && patch.url !== current.url;
+    const items = state.items.map((item) => (item.id === id ? next : item));
+    await writeGallery(items);
+    if (replaced) {
+      const stale = current.owned.filter((p) => !next.owned.includes(p));
+      if (stale.length) await supabaseAdmin().storage.from('media').remove(stale);
+    }
+    publish();
+    return { ok: true, items, industries: state.industries };
+  } catch (e) {
+    return galleryFail(e);
+  }
+}
+
+export async function deleteGalleryItem(id: string): Promise<GalleryResult> {
+  try {
+    await requireAdmin();
+    const state = await readGalleryState();
+    const current = state.items.find((item) => item.id === id);
+    const items = state.items.filter((item) => item.id !== id);
+    await writeGallery(items);
+    if (current?.owned.length) await supabaseAdmin().storage.from('media').remove(current.owned);
+    publish();
+    return { ok: true, items, industries: state.industries };
+  } catch (e) {
+    return galleryFail(e);
   }
 }

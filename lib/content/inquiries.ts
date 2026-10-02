@@ -24,6 +24,8 @@ export type InquiryData = {
   budget: string;
   sections: InquirySection[];
   note?: string;
+  /** ukázky z galerie oboru, které se zákazníkovi líbily */
+  likes?: { id: string; url: string; thumb: string; label: string }[];
   /** doručení upozornění e-mailem (Resend) — kvůli diagnostice v administraci */
   mail?: { delivered: boolean; error?: string; to?: string; at: string };
 };

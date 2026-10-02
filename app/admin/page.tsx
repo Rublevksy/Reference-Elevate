@@ -8,7 +8,7 @@ import { AdminApp } from './_components/AdminApp';
 import type { SettingsInput } from './actions';
 import { EDITABLE_PATHS, getPath } from '@/lib/content/editable';
 import { readInquiries, type Inquiry } from '@/lib/content/inquiries';
-import { readSocialInputs } from '@/lib/content/server';
+import { getGallery, getIndustries, readSocialInputs } from '@/lib/content/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +55,8 @@ export default async function AdminPage() {
     /* poptávky se načtou znovu na záložce */
   }
 
+  const [gallery, industries] = await Promise.all([getGallery(), getIndustries()]);
+
   return (
     <AdminApp
       email={admin.email}
@@ -65,6 +67,8 @@ export default async function AdminPage() {
       textOverrides={overrides}
       maintenance={maintenance}
       inquiries={inquiries}
+      gallery={gallery}
+      industries={industries}
     />
   );
 }

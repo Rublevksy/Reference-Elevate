@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import cs from '@/messages/cs.json';
 import { CHANNEL, START_OLD_SITE, conditionalIssues, contactSchema } from '@/lib/contactSchema';
-import { getBlock } from '@/lib/content/server';
+import { getBlock, getGallery, getIndustries } from '@/lib/content/server';
+import { MAX_LIKES, OTHER_INDUSTRY, industryName } from '@/lib/content/gallery';
 import { applyTextOverrides } from '@/lib/content/editable';
 import { patchInquiry, saveInquiry, type InquiryData } from '@/lib/content/inquiries';
 import { mailConfig, sendMail } from '@/lib/mail';
@@ -44,6 +45,10 @@ const linkify = (value: string) => {
   const safe = escapeHtml(value);
   return safe.replace(/(https?:\/\/[^\s<]+)/g, (url) => `<a href="${url}" style="color:#7da6ff">${url}</a>`);
 };
+
+const absolute = (url: string) => (url.startsWith('/') ? `${site.url}${url}` : url);
+
+const chunk = <T,>(list: T[], size: number) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
 
 const formatDate = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number);
@@ -146,6 +151,17 @@ export async function POST(request: Request) {
   const one = (labels: string[], i: number) => (i >= 0 ? labels[i] ?? '' : '');
 
   const refs = (data.refs ?? []).map((r) => r.trim()).filter(Boolean);
+  // obor = id ze seznamu v administraci → český název
+  const industries = await getIndustries();
+  const niche = industryName(industries.find((i) => i.id === data.niche), 'cs') || (data.niche === OTHER_INDUSTRY ? 'Jiný obor' : data.niche);
+  // vybrané ukázky z galerie (jen existující snímky)
+  const gallery = await getGallery();
+  const liked = [...new Set(data.likes ?? [])]
+    .map((id) => gallery.find((item) => item.id === id))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .slice(0, MAX_LIKES)
+    // v e-mailu musí být adresy absolutní (snímky původních projektů jsou ve složce webu)
+    .map(({ id, url, thumb, label }) => ({ id, url: absolute(url), thumb: absolute(thumb), label }));
   const channel = one(c.channels, data.channel);
   const reach =
     data.channel === CHANNEL.phone || data.channel === CHANNEL.whatsapp
@@ -160,7 +176,7 @@ export async function POST(request: Request) {
       rows: [
         ['Typ projektu', list(c.needs, data.needs)],
         ['Vybraný balíček', data.plan || ''],
-        ['Obor', one(c.niches, data.niche)],
+        ['Obor', niche],
         ['Upřesnění oboru', data.nicheDetail || ''],
       ],
     },
@@ -175,6 +191,7 @@ export async function POST(request: Request) {
     {
       title: 'Vzhled',
       rows: [
+        ['Vybrané ukázky', liked.length ? `${liked.length} z galerie oboru${liked.some((l) => l.label) ? ` — ${liked.map((l) => l.label).filter(Boolean).join(', ')}` : ''}` : ''],
         ['Líbí se jim', refs.join('\n'), true],
         ['Styl', one(c.styles, data.style)],
         ['Barvy', [list(c.colors, data.colors), data.colorNote].filter(Boolean).join(' · ')],
@@ -221,12 +238,32 @@ export async function POST(request: Request) {
       </table>`,
         )
         .join('')}
+      ${
+        liked.length
+          ? `<h2 style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#7da6ff;margin:26px 0 10px">Vybrané ukázky z galerie (${liked.length})</h2>
+      <table style="border-collapse:separate;border-spacing:0 0">
+        ${chunk(liked, 3)
+          .map(
+            (row) => `<tr>${row
+              .map(
+                (item) => `<td style="padding:0 10px 12px 0;vertical-align:top;width:190px">
+          <a href="${escapeHtml(item.url)}" style="text-decoration:none;color:#c8d4f0">
+            <img src="${escapeHtml(item.thumb)}" width="180" height="113" alt="${escapeHtml(item.label || 'Ukázka')}" style="display:block;width:180px;height:113px;object-fit:cover;border-radius:8px;border:1px solid rgba(80,120,255,0.35)">
+            <span style="display:block;margin-top:5px;font-size:11px">${escapeHtml(item.label || 'Ukázka')}</span>
+          </a></td>`,
+              )
+              .join('')}</tr>`,
+          )
+          .join('')}
+      </table>`
+          : ''
+      }
       <p style="margin-top:22px;font-size:12px;color:#8a93a8">Poptávka je uložená i v administraci: <a href="${site.url}/admin#inquiries" style="color:#7da6ff">${site.url.replace(/^https?:\/\//, '')}/admin</a> · IP: ${escapeHtml(ip)}</p>
     </div>`;
 
   const text = sections
     .map((section) => `${section.title.toUpperCase()}\n${section.rows.map(([label, value]) => `${label}: ${value || '—'}`).join('\n')}`)
-    .join('\n\n');
+    .join('\n\n') + (liked.length ? `\n\nVYBRANÉ UKÁZKY\n${liked.map((l) => `${l.label || 'Ukázka'}: ${l.url}`).join('\n')}` : '');
 
   // 1) uložit do administrace (záložka Poptávky) — nezávisle na e-mailu
   const inquiry: InquiryData = {
@@ -236,9 +273,10 @@ export async function POST(request: Request) {
     email: data.email,
     reach,
     locale: data.locale || 'cs',
-    headline: [list(c.needs, data.needs), one(c.niches, data.niche)].filter(Boolean).join(' · '),
+    headline: [list(c.needs, data.needs), niche].filter(Boolean).join(' · '),
     budget: one(c.budgets, data.budget),
     sections: sections.map((section) => ({ title: section.title, rows: section.rows.filter(([, value]) => value).map(([label, value]) => [label, value] as [string, string]) })),
+    ...(liked.length ? { likes: liked } : {}),
   };
   let key: string | null = null;
   try {
@@ -249,7 +287,6 @@ export async function POST(request: Request) {
   const stored = Boolean(key);
 
   // 2) upozornění e-mailem
-  const niche = one(c.niches, data.niche);
   const mail = await sendMail({
     to,
     replyTo: data.email,
