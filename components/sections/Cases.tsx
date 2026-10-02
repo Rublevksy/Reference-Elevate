@@ -37,7 +37,7 @@ function useAutoScroll(active: boolean, contentRatio: number, hovered: boolean) 
 
   useEffect(() => {
     const img = imgRef.current;
-    if (img) img.style.transform = 'translate3d(0,0,0)';
+    if (img) img.style.transform = '';
     if (!active || reduced) return;
 
     let raf = 0;
@@ -69,7 +69,7 @@ function useAutoScroll(active: boolean, contentRatio: number, hovered: boolean) 
           phaseStart = now;
           phaseLen = atEnd ? 1700 : hoveredRef.current ? 650 : 1050;
         }
-        node.style.transform = `translate3d(0, ${(-pos).toFixed(1)}px, 0)`;
+        node.style.transform = pos > 0.05 ? `translate3d(0, ${(-pos).toFixed(1)}px, 0)` : '';
       }
       raf = requestAnimationFrame(tick);
     };
@@ -142,7 +142,7 @@ function DeviceScreen({
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="absolute inset-x-0 top-0 w-full max-w-none will-change-transform"
+          className="absolute inset-x-0 top-0 w-full max-w-none md:will-change-transform"
         />
       </motion.div>
       {/* hloubka skla: stín při okrajích + statický odraz nahoře */}

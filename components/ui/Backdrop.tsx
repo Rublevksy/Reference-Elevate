@@ -22,6 +22,8 @@ const LIGHT_KEYS: { at: number; x: number; y: number; hue: number; a: number }[]
 function SceneLight() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // jen počítač — na telefonu je světlo statické (žádný posluchač scrollu)
+    if (!window.matchMedia('(min-width: 768px)').matches) return;
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -67,7 +69,54 @@ function SceneLight() {
  */
 export function Backdrop() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden grain">
+    <>
+      <MobileBackdrop />
+      <DesktopBackdrop />
+    </>
+  );
+}
+
+/**
+ * Telefon: atmosféra NENÍ fixní vrstva. Pevné pozadí pod obsahem nutí
+ * prohlížeč kreslit celou stránku do dalších velkých GPU vrstev nad ním —
+ * iOS Safari je pak při rychlém švihnutí nestíhá vykreslit a obsah na
+ * okamžik zmizí. Tady je to jeden statický prvek přes celou výšku stránky
+ * (kreslí se s obsahem): záře nahoře, mřížka, rozptýlené tůně světla a hvězdný prach.
+ */
+function MobileBackdrop() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full overflow-hidden md:hidden"
+      style={{
+        backgroundImage: [
+          'radial-gradient(95% 520px at 50% -40px, rgba(31,91,255,0.26), transparent 72%)',
+          'radial-gradient(1.4px 1.4px at 12% 22%, rgba(255,255,255,0.5), transparent), radial-gradient(1.2px 1.2px at 68% 14%, rgba(160,190,255,0.45), transparent), radial-gradient(1.6px 1.6px at 82% 46%, rgba(255,255,255,0.32), transparent), radial-gradient(1.2px 1.2px at 32% 68%, rgba(160,190,255,0.36), transparent), radial-gradient(1.1px 1.1px at 54% 88%, rgba(255,255,255,0.28), transparent)',
+          'radial-gradient(70% 520px at 72% 50%, rgba(31,91,255,0.1), transparent 72%)',
+          'radial-gradient(70% 480px at 24% 50%, rgba(0,140,255,0.07), transparent 72%)',
+        ].join(', '),
+        backgroundSize: '100% 1200px, 390px 844px, 100% 1700px, 100% 2300px',
+        backgroundRepeat: 'no-repeat, repeat, repeat-y, repeat-y',
+        backgroundPosition: '0 0, 0 0, 0 600px, 0 1500px',
+      }}
+    >
+      <div
+        className="absolute inset-x-0 top-0 h-[900px] opacity-[0.22]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(80,120,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(80,120,255,0.08) 1px, transparent 1px)',
+          backgroundSize: '84px 84px',
+          maskImage: 'radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 75%)',
+        }}
+      />
+    </div>
+  );
+}
+
+function DesktopBackdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 hidden overflow-hidden grain md:block">
       <div className="absolute inset-0 bg-[var(--bg)]" />
 
       {/* mřížka */}

@@ -86,11 +86,8 @@ export function Mascot({
         />
       ) : null}
       <div ref={tiltRef} className="absolute inset-0" style={{ transformOrigin: 'center bottom' }}>
-        <motion.div
-          className="absolute inset-0 origin-bottom"
-          animate={reduced ? { scaleY: 1 } : { scaleY: [1, 1.012, 1] }}
-          transition={{ duration: celebrate ? 1.6 : 4.2, repeat: Infinity, ease: 'easeInOut' }}
-        >
+        {/* dýchání v CSS — běží v kompozitoru a mimo obrazovku se nepočítá */}
+        <div className={`absolute inset-0 origin-bottom ${reduced ? '' : 'breathe'}`} style={{ animationDuration: celebrate ? '1.6s' : '4.2s' }}>
           <AnimatePresence initial={false}>
             <motion.img
               key={pose}
@@ -111,7 +108,7 @@ export function Mascot({
               transition={{ opacity: { duration: 0.3 }, y: { duration: 0.5, ease: 'easeOut' } }}
             />
           </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

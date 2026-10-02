@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import cs from '@/messages/cs.json';
 import { CHANNEL, START_OLD_SITE, conditionalIssues, contactSchema } from '@/lib/contactSchema';
-import { getBlock, getSettings } from '@/lib/content/server';
+import { getBlock } from '@/lib/content/server';
 import { applyTextOverrides } from '@/lib/content/editable';
-import { saveInquiry } from '@/lib/content/inquiries';
+import { patchInquiry, saveInquiry, type InquiryData } from '@/lib/content/inquiries';
+import { mailConfig, sendMail } from '@/lib/mail';
 import { site } from '@/content/site';
 
 export const runtime = 'nodejs';
@@ -135,11 +135,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, delivered: false, stored: false });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
   // adresát: nastavení z administrace, pak proměnná prostředí
-  // (prázdná hodnota v .env = výchozí; ?? by nechalo prázdný řetězec a Resend by selhal)
-  const to = (await getSettings()).contactEmail || process.env.CONTACT_EMAIL || '';
-  const from = process.env.CONTACT_FROM_EMAIL || 'ELEVATE <onboarding@resend.dev>';
+  const { to } = await mailConfig();
 
   // Poptávku vždy popsat česky — volby přišly jako indexy, popisky bereme
   // z češtiny včetně úprav z administrace.
@@ -232,48 +229,46 @@ export async function POST(request: Request) {
     .join('\n\n');
 
   // 1) uložit do administrace (záložka Poptávky) — nezávisle na e-mailu
-  let stored = false;
+  const inquiry: InquiryData = {
+    created_at: new Date().toISOString(),
+    status: 'new',
+    name: data.name,
+    email: data.email,
+    reach,
+    locale: data.locale || 'cs',
+    headline: [list(c.needs, data.needs), one(c.niches, data.niche)].filter(Boolean).join(' · '),
+    budget: one(c.budgets, data.budget),
+    sections: sections.map((section) => ({ title: section.title, rows: section.rows.filter(([, value]) => value).map(([label, value]) => [label, value] as [string, string]) })),
+  };
+  let key: string | null = null;
   try {
-    await saveInquiry({
-      created_at: new Date().toISOString(),
-      status: 'new',
-      name: data.name,
-      email: data.email,
-      reach,
-      locale: data.locale || 'cs',
-      headline: [list(c.needs, data.needs), one(c.niches, data.niche)].filter(Boolean).join(' · '),
-      budget: one(c.budgets, data.budget),
-      sections: sections.map((section) => ({ title: section.title, rows: section.rows.filter(([, value]) => value).map(([label, value]) => [label, value] as [string, string]) })),
-    });
-    stored = true;
+    key = await saveInquiry(inquiry);
   } catch (error) {
     console.error('[contact] uložení poptávky selhalo', error);
   }
+  const stored = Boolean(key);
 
-  if (!apiKey) {
-    // Bez klíče poptávku aspoň zalogujeme, ať se na vývoji nic neztratí.
-    console.warn(`[contact] RESEND_API_KEY není nastavený — poptávka ${stored ? 'uložena v administraci' : 'jen zalogována'}.\n` + text);
-    return NextResponse.json({ ok: true, delivered: false, stored });
+  // 2) upozornění e-mailem
+  const niche = one(c.niches, data.niche);
+  const mail = await sendMail({
+    to,
+    replyTo: data.email,
+    subject: `Nová poptávka: ${list(c.needs, data.needs)}${niche ? ` · ${niche}` : ''} — ${data.name}`,
+    html,
+    text,
+  });
+  if (!mail.delivered) console.error('[contact] e-mail neodešel:', mail.error, stored ? '(poptávka je v administraci)' : '\n' + text);
+
+  // výsledek odeslání k poptávce — v administraci je vidět, proč e-mail nedorazil
+  if (key) {
+    try {
+      await patchInquiry(key, inquiry, { mail: { delivered: mail.delivered, error: mail.delivered ? undefined : mail.error, to, at: new Date().toISOString() } });
+    } catch (error) {
+      console.error('[contact] stav e-mailu se nepodařilo uložit', error);
+    }
   }
 
-  try {
-    const resend = new Resend(apiKey);
-    const niche = one(c.niches, data.niche);
-    const { error } = await resend.emails.send({
-      from,
-      to,
-      replyTo: data.email,
-      subject: `Nová poptávka: ${list(c.needs, data.needs)}${niche ? ` · ${niche}` : ''} — ${data.name}`,
-      html,
-      text,
-    });
-
-    if (error) throw new Error(error.message);
-    return NextResponse.json({ ok: true, delivered: true, stored });
-  } catch (error) {
-    console.error('[contact] odeslání selhalo', error);
-    // poptávka je v administraci → pro návštěvníka je odeslaná
-    if (stored) return NextResponse.json({ ok: true, delivered: false, stored });
-    return NextResponse.json({ ok: false, code: 'send', to }, { status: 502 });
-  }
+  // poptávka je v administraci → pro návštěvníka je odeslaná, i když e-mail selhal
+  if (stored || mail.delivered) return NextResponse.json({ ok: true, delivered: mail.delivered, stored });
+  return NextResponse.json({ ok: false, code: 'send', to }, { status: 502 });
 }

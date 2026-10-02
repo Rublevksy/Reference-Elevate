@@ -29,10 +29,15 @@ const BLUE = '61,123,255';
 const q = <T extends Element = HTMLElement>(root: Element, sel: string) => root.querySelector<T & HTMLElement>(sel);
 const qa = (root: Element, sel: string) => Array.from(root.querySelectorAll<HTMLElement>(sel));
 
+/**
+ * Průhlednost + posun. translate3d → 2D translate: na telefonu by každý
+ * prvek s 3D transformem dostal vlastní GPU vrstvu (a iOS Safari je pak
+ * při rychlém scrollu nestíhá vykreslit); v cíli (o = 1) transform zmizí.
+ */
 function show(el: HTMLElement | null, o: number, transform = '') {
   if (!el) return;
   el.style.opacity = o.toFixed(3);
-  el.style.transform = transform;
+  el.style.transform = o >= 0.999 ? '' : transform.replace(/translate3d\(([^,]+),\s*([^,]+),\s*0\)/g, 'translate($1, $2)');
 }
 
 /** Nadpis rozdělený na znaky (efekty psaní / dekódování); čtečky dostanou celý text. */
@@ -494,28 +499,58 @@ function MobileProcess({ steps }: { steps: { title: string; text: string }[] }) 
   const fillRef = useRef<HTMLSpanElement>(null);
   const headRef = useRef<HTMLSpanElement>(null);
 
+  // polohy uzlů se mění jen se změnou rozvržení — měřit jednou, ne každý snímek
+  // (čtení offsetTop po zápisech stylů by vynutilo přepočet rozvržení na každém kroku)
+  const nodeYs = useRef<number[]>([]);
+  const stepState = useRef<string[]>([]);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      nodeYs.current = qa(list, '[data-mstep]').map((li) => {
+        const node = q(li, '[data-node]');
+        return li.offsetTop + (node ? node.offsetTop + node.offsetHeight / 2 : 0);
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, []);
+
   useScrollFrame(() => {
     const list = listRef.current;
     if (!list || !list.offsetHeight) return;
     const vh = window.innerHeight;
-    const H = list.offsetHeight;
-    const headY = vh * 0.62 - list.getBoundingClientRect().top;
+    const rect = list.getBoundingClientRect();
+    // daleko mimo obrazovku nic nepočítat
+    if (rect.bottom < -vh || rect.top > vh * 2) return;
+    const H = rect.height;
+    const headY = vh * 0.62 - rect.top;
     const fill = Math.max(0, Math.min(H, headY));
     if (fillRef.current) fillRef.current.style.transform = `scaleY(${(fill / H).toFixed(4)})`;
     if (headRef.current) {
-      headRef.current.style.transform = `translate3d(0, ${fill.toFixed(1)}px, 0)`;
+      headRef.current.style.transform = `translate3d(0, ${fill.toFixed(1)}px, 0)`; // jede každý snímek → vlastní vrstva
       headRef.current.style.opacity = headY > 0 && headY < H ? '1' : '0';
     }
     qa(list, '[data-mstep]').forEach((li, i) => {
       const node = q(li, '[data-node]');
-      const nodeY = li.offsetTop + (node ? node.offsetTop + node.offsetHeight / 2 : 0);
+      const nodeY = nodeYs.current[i] ?? 0;
       const d = headY - nodeY;
       const tStep = seg(d, -vh * 0.32, 24);
+      // krok v klidu (ještě nezačal / dávno hotový) a beze změny od minula → nic nepřekreslovat
+      const key = `${tStep === 0 ? 0 : tStep === 1 ? 1 : 'x'}|${d < -10 ? 'pre' : d > 150 ? 'post' : 'x'}`;
+      if (key !== 'x|x' && !key.includes('x') && stepState.current[i] === key) {
+        const ghost = q(li, '[data-ghost]');
+        if (ghost && Math.abs(d) < vh * 1.5) ghost.style.transform = `translate3d(0, ${(-d * 0.12).toFixed(1)}px, 0)`;
+        return;
+      }
+      stepState.current[i] = key;
       const card = q(li, '[data-card]');
       if (card) {
         const c = easeOut(seg(tStep, 0, 0.25));
         card.style.opacity = c.toFixed(3);
-        card.style.transform = `translate3d(${((1 - c) * 18).toFixed(1)}px, 0, 0) scale(${(0.94 + 0.06 * c).toFixed(3)})`;
+        card.style.transform = c >= 0.999 ? '' : `translate(${((1 - c) * 18).toFixed(1)}px, 0) scale(${(0.94 + 0.06 * c).toFixed(3)})`;
       }
       applyStep(KINDS[i % KINDS.length], li, tStep);
       if (node) {
@@ -528,6 +563,7 @@ function MobileProcess({ steps }: { steps: { title: string; text: string }[] }) 
         show(q(li, '[data-ring]'), r > 0 && r < 1 ? 0.8 * (1 - r) : 0, `scale(${(1 + 1.9 * easeOut(r)).toFixed(3)})`);
       }
       const ghost = q(li, '[data-ghost]');
+      // paralaxa jede každý snímek → 3D (kompozitor), ne překreslování obrysového písma
       if (ghost) ghost.style.transform = `translate3d(0, ${(-d * 0.12).toFixed(1)}px, 0)`;
     });
   });

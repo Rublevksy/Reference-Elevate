@@ -47,6 +47,8 @@
     "titleAccent": "your growth",
     "subtitle": "Pick a service.",
     "learnMore": "Price and what is included",
+    "prev": "Previous service",
+    "next": "Next service",
     "items": {
       "weby": {
         "tab": "Websites",

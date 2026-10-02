@@ -624,3 +624,28 @@
 /* vodorovné karusely na mobilu (ceník) — posouvat prstem, bez lišty */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* nekonečné drobné animace — v CSS běží mimo hlavní vlákno a na skrytém prvku se nepočítají */
+@keyframes glow-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.8; } }
+.glow-pulse { animation: glow-pulse 4.5s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.012); } }
+.breathe { animation: breathe 4.2s ease-in-out infinite; }
+@keyframes hint-dot { 0%, 100% { transform: translate(-50%, 0); opacity: 1; } 50% { transform: translate(-50%, 10px); opacity: 0.2; } }
+.hint-dot { animation: hint-dot 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .glow-pulse, .breathe, .hint-dot { animation: none; }
+}
+
+/* telefon: zrno přes mix-blend-mode je při rychlém scrollu v Safari drahé — vypnout */
+@media (max-width: 767px) {
+  .grain::after { display: none; }
+}
+
+/* mobilní hero mimo obrazovku: nekonečné animace vypnout (jinak drží vlastní GPU vrstvy) */
+#hero-m[data-away] .animate-neon-hum,
+#hero-m[data-away] .animate-scroll-drip { animation: none; }
+
+/* tečkovaný neon nahoře na kartách ceníku — záře (filter) jen na větších obrazovkách */
+@media (min-width: 768px) {
+  .neon-dots { filter: drop-shadow(0 0 3px rgba(61, 123, 255, 0.95)); }
+}

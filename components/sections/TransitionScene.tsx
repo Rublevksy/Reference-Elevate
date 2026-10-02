@@ -1049,6 +1049,7 @@ function MobileSeam() {
     if (!el || !el.offsetHeight) return;
     const vh = window.innerHeight;
     const r = el.getBoundingClientRect();
+    if (r.bottom < -vh || r.top > vh * 2) return;
     // 0 = nit vjíždí do okna zespodu, 1 = odjela nad jeho třetinu
     const t = reduced ? 1 : Math.min(1, Math.max(0, (vh * 0.9 - r.top) / (r.height + vh * 0.5)));
     const draw = ease(seg(t, 0, 0.6));
@@ -1061,7 +1062,7 @@ function MobileSeam() {
       const lit = neonFlicker(seg(t, 0.28, 0.5));
       const up = easeOut(seg(t, 0.28, 0.7));
       arrow.current.style.opacity = (0.25 + 0.75 * lit).toFixed(3);
-      arrow.current.style.transform = `translate3d(-50%, ${(-50 - 22 * up).toFixed(1)}%, 0) scale(${(0.85 + 0.15 * up).toFixed(3)})`;
+      arrow.current.style.transform = `translate(-50%, ${(-50 - 22 * up).toFixed(1)}%) scale(${(0.85 + 0.15 * up).toFixed(3)})`;
       arrow.current.style.filter = lit > 0.2 ? `drop-shadow(0 0 ${(10 * lit).toFixed(1)}px rgba(61,123,255,0.95))` : '';
     }
   });
@@ -1075,7 +1076,7 @@ function MobileSeam() {
         style={{ transform: 'scaleY(0)' }}
       />
       <span ref={spark} className="absolute left-1/2 top-0 -ml-[5px] -mt-[5px] h-2.5 w-2.5 rounded-full bg-[#dbe8ff] opacity-0 shadow-[0_0_14px_4px_rgba(61,123,255,0.9)]" />
-      <svg ref={arrow} viewBox={SYMBOL_VIEWBOX} className="absolute left-1/2 top-1/2 h-11 w-9 opacity-25" style={{ transform: 'translate3d(-50%, -50%, 0)' }}>
+      <svg ref={arrow} viewBox={SYMBOL_VIEWBOX} className="absolute left-1/2 top-1/2 h-11 w-9 opacity-25" style={{ transform: 'translate(-50%, -50%)' }}>
         <polygon points={SYMBOL_POINTS} fill="rgba(8,14,32,0.9)" stroke="#8fb2ff" strokeWidth={9} strokeLinejoin="round" />
       </svg>
     </div>

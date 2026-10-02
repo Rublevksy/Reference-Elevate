@@ -10,7 +10,6 @@ import { createPortal } from 'react-dom';
 import { subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
 import { ease, seg } from '@/lib/fx';
 import { scrollToId } from '@/lib/scrollTo';
-import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
 import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { PlatformScene } from './PlatformScene';
@@ -274,24 +273,35 @@ export function ServicesTable() {
     };
   }, [applyFlight, mounted]);
 
-  // Mobil: karta vyjede zespodu rubem nahoru a jak projíždí oknem, otočí se
-  // lícem (sloupce se zpožděním — „rozdávání" po dvojicích). Oběma směry.
-  const mobileGrid = useRef<HTMLDivElement>(null);
-  useScrollFrame(() => {
-    const grid = mobileGrid.current;
-    if (!grid || !grid.offsetHeight || reduced) return;
-    grid.querySelectorAll<HTMLElement>('[data-mcard]').forEach((card, index) => {
-      const col = index % 2;
-      const v = viewProgress(card, 1.02, 0.5);
-      const rise = easeOut(seg(v, 0, 0.45));
-      const flip = ease(seg(v, 0.25 + col * 0.1, 0.85 + col * 0.1));
-      card.style.opacity = rise.toFixed(3);
-      card.style.transform = `translate3d(0, ${((1 - rise) * 60).toFixed(1)}px, 0) rotateX(${((1 - rise) * 24).toFixed(2)}deg) rotateZ(${((1 - flip) * (col ? 4 : -4)).toFixed(2)}deg)`;
-      const flipper = card.firstElementChild as HTMLElement | null;
-      if (flipper) flipper.style.transform = `rotateY(${(180 * flip).toFixed(1)}deg)`;
-      card.style.filter = flip > 0.05 && flip < 0.95 ? `drop-shadow(0 0 ${(18 * Math.sin(Math.PI * flip)).toFixed(1)}px rgba(61,123,255,0.8))` : '';
-    });
-  });
+  // Mobil: karty v jedné vodorovné řadě. Jakmile řada vjede do okna, karty se
+  // jednou postupně otočí lícem (CSS přechod) a pak zůstanou jako ploché karty —
+  // žádné 3D vrstvy ani výpočty při každém snímku scrollu.
+  const mobileRow = useRef<HTMLDivElement>(null);
+  const [dealt, setDealt] = useState(false);
+  const [flat, setFlat] = useState(false);
+  useEffect(() => {
+    if (reduced) {
+      setFlat(true);
+      return;
+    }
+    const row = mobileRow.current;
+    if (!row) return;
+    let timer = 0;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        setDealt(true);
+        timer = window.setTimeout(() => setFlat(true), 900 + COUNT * 110 + 150);
+      },
+      { threshold: 0.45 },
+    );
+    observer.observe(row);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [reduced]);
 
   // ambientní pohyb (rotace platformy, dýchání sloupů) běží jen na obrazovce —
   // a jen dokud je stůl připnutý; jakmile sekce odjíždí do přechodové scény,
@@ -451,26 +461,32 @@ export function ServicesTable() {
 
       </div>
 
-      {/* ===== MOBIL: karty pod sebou (2 sloupce), při scrollu se otáčejí lícem ===== */}
-      <div ref={mobileGrid} className="shell mt-9 grid grid-cols-2 gap-3.5 md:hidden" style={{ perspective: 1100 }}>
+      {/* ===== MOBIL: karty v jedné řadě (posun prstem), klepnutí = detail služby ===== */}
+      <div ref={mobileRow} className="no-scrollbar mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-2 md:hidden">
         {services.map((item, index) => (
           <button
             key={item.slug}
             type="button"
-            data-mcard
-            onClick={() => scrollToId(`panel-${item.slug}`)}
+            onClick={() => scrollToId(`sluzba-${item.slug}`)}
             aria-label={tItems(`${item.slug}.card`)}
-            className={`relative aspect-[150/240] rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)] ${
-              index === COUNT - 1 && COUNT % 2 === 1 ? 'col-span-2 mx-auto w-[calc(50%-7px)]' : 'w-full'
-            }`}
-            style={reduced ? undefined : { opacity: 0 }}
+            className="relative aspect-[150/240] w-[38vw] max-w-[180px] shrink-0 snap-start rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
+            style={flat ? undefined : { perspective: 900 }}
           >
-            <span data-mflip className="preserve-3d absolute inset-0" style={{ transform: reduced ? 'rotateY(180deg)' : undefined }}>
-              <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
-              <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 34px rgba(31,91,255,0.4)' }}>
+            {flat ? (
+              <span className="absolute inset-0 rounded-2xl" style={{ boxShadow: '0 0 30px -6px rgba(31,91,255,0.5)' }}>
                 <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
               </span>
-            </span>
+            ) : (
+              <span
+                className="preserve-3d absolute inset-0 transition-transform duration-[900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+                style={{ transform: dealt ? 'rotateY(180deg)' : 'none', transitionDelay: `${index * 110}ms` }}
+              >
+                <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)' }}>
+                  <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                </span>
+              </span>
+            )}
           </button>
         ))}
       </div>

@@ -12,7 +12,7 @@ import { SectionLink } from '@/components/ui/SectionLink';
 import { NORDA_BOXES, NORDA_VISUALS, NordaStage, STAGE_W } from '@/components/norda/NordaVisuals';
 import { clamp01, ease, easeIn, easeOut, lerp, seg } from '@/lib/fx';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { useScrollFrame, viewProgress } from '@/lib/useScrollFrame';
+import { CarouselPager, CarouselTabs, useCarousel } from '@/components/ui/Carousel';
 
 const COUNT = services.length;
 
@@ -519,69 +519,59 @@ export function ServiceDeck() {
 }
 
 /**
- * Mobil: pět panelů NORDA pod sebou — žádný sticky stoh (panely delší než
- * okno se dřív překrývaly). Vizuál při vjezdu do okna vyjede z náklonu a
- * odkryje se, přes displej přejede neonový odlesk, text naskočí po skupinách.
- * Vše je funkce polohy v okně, takže to funguje oběma směry.
+ * Mobil: pět panelů NORDA jako karusel (stejná logika jako ceník) — záložky
+ * služeb, panel po jednom na šířku obrazovky, stránkování. Žádné scroll
+ * animace po snímcích: obsah stojí, posouvá se jen prstem (rychlé na iPhonu).
+ * Karta ze „stolu služeb" nebo odkaz z menu (#sluzba-…) dojede na svůj panel.
  */
 function MobileDeck() {
-  const root = useRef<HTMLDivElement>(null);
-
-  useScrollFrame(() => {
-    const el = root.current;
-    if (!el || !el.offsetHeight) return;
-    el.querySelectorAll<HTMLElement>('[data-mpanel]').forEach((panel) => {
-      const vis = panel.querySelector<HTMLElement>('[data-mvis]');
-      if (vis) {
-        const v = viewProgress(vis, 1.02, 0.42);
-        const e = easeOut(v);
-        vis.style.opacity = seg(v, 0, 0.3).toFixed(3);
-        vis.style.transform = `perspective(900px) rotateX(${((1 - e) * 16).toFixed(2)}deg) scale(${(0.9 + 0.1 * e).toFixed(4)})`;
-        const inset = 1 - e;
-        vis.style.clipPath = e >= 0.999 ? '' : `inset(${(inset * 12).toFixed(2)}% ${(inset * 7).toFixed(2)}% 0% ${(inset * 7).toFixed(2)}% round 22px)`;
-        const glare = panel.querySelector<HTMLElement>('[data-mglare]');
-        if (glare) {
-          const g = seg(v, 0.5, 1);
-          glare.style.opacity = g > 0 && g < 1 ? Math.sin(Math.PI * g).toFixed(3) : '0';
-          glare.style.transform = `translateX(${(-60 + 260 * g).toFixed(1)}%) skewX(-18deg)`;
-        }
-      }
-      panel.querySelectorAll<HTMLElement>('[data-t]').forEach((node) => {
-        const t = easeOut(viewProgress(node, 0.98, 0.78));
-        node.style.opacity = t.toFixed(3);
-        node.style.transform = t >= 0.999 ? '' : `translate3d(0, ${((1 - t) * 22).toFixed(1)}px, 0)`;
-      });
-    });
-  });
+  const t = useTranslations('services');
+  const tItems = useTranslations('services.items');
+  const { railRef, tabsRef, active, goTo } = useCarousel(services.length);
 
   return (
-    <div ref={root} className="pb-4 pt-6 md:hidden">
-      {services.map((service, i) => {
-        const Visual = NORDA_VISUALS[service.slug];
-        return (
-          <article key={service.slug} id={`panel-${service.slug}`} data-nav-id={`sluzba-${service.slug}`} data-nav-offset={-10} data-mpanel className="shell relative pb-16">
-            <div
-              data-mvis
-              className="relative overflow-hidden rounded-[22px] border border-[rgba(80,120,255,0.28)] bg-[rgba(8,12,26,0.92)] shadow-[0_30px_70px_-30px_rgba(31,91,255,0.55)]"
-              style={{ opacity: 0 }}
+    <div className="pb-4 pt-6 md:hidden">
+      <CarouselTabs
+        tabsRef={tabsRef}
+        label={t('eyebrow')}
+        active={active}
+        onPick={goTo}
+        items={services.map((service) => ({
+          key: service.slug,
+          label: tItems(`${service.slug}.card`),
+          controls: `panel-${service.slug}`,
+          icon: <Icon name={service.icon} className="h-3.5 w-3.5" />,
+        }))}
+      />
+      <div ref={railRef} className="no-scrollbar mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-[6vw] pb-5 pt-1">
+        {services.map((service, i) => {
+          const Visual = NORDA_VISUALS[service.slug];
+          return (
+            <article
+              key={service.slug}
+              id={`panel-${service.slug}`}
+              data-slide
+              data-nav-id={`sluzba-${service.slug}`}
+              data-nav-offset-mobile={-20}
+              data-nav-highlight
+              aria-label={tItems(`${service.slug}.card`)}
+              className="relative w-[88vw] max-w-[420px] shrink-0 snap-center overflow-hidden rounded-[22px] border border-[rgba(80,120,255,0.24)] p-3.5 pb-5 shadow-[0_30px_60px_-34px_rgba(0,0,0,0.95)]"
+              style={{ background: 'radial-gradient(120% 50% at 100% 0%, rgba(40,72,170,0.24), transparent 60%), linear-gradient(168deg, #101a3a 0%, #0a1024 48%, #070b18 100%)' }}
             >
-              <NordaStage>
-                <Visual />
-              </NordaStage>
-              <span
-                data-mglare
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(160,200,255,0.22), transparent)' }}
-              />
-              <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(61,123,255,0.9), transparent)' }} />
-            </div>
-            <div className="mt-7">
-              <ServiceText index={i} />
-            </div>
-          </article>
-        );
-      })}
+              <div className="relative overflow-hidden rounded-[16px] border border-[rgba(80,120,255,0.28)] bg-[rgba(8,12,26,0.92)]">
+                <NordaStage>
+                  <Visual />
+                </NordaStage>
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(61,123,255,0.9), transparent)' }} />
+              </div>
+              <div className="mt-5 px-1.5">
+                <ServiceText index={i} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <CarouselPager count={services.length} active={active} onGo={goTo} prevLabel={t('prev')} nextLabel={t('next')} />
     </div>
   );
 }

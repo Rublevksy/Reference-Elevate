@@ -2,6 +2,31 @@
 
 import { useEffect, useRef } from 'react';
 
+/*
+ * Jeden společný plánovač pro všechny scroll-řízené animace: jeden posluchač
+ * scrollu a jeden requestAnimationFrame za snímek, ve kterém proběhnou všechny
+ * odběry. (Dřív měl každý odběr vlastní posluchač i rAF — při rychlém švihnutí
+ * na iPhonu to bylo přes deset volání za snímek.)
+ */
+const subscribers = new Set<{ current: () => void }>();
+let frame = 0;
+let listening = false;
+
+function flush() {
+  frame = 0;
+  subscribers.forEach((ref) => ref.current());
+}
+function schedule() {
+  if (!frame) frame = requestAnimationFrame(flush);
+}
+function listen(on: boolean) {
+  if (on === listening) return;
+  listening = on;
+  const method = on ? 'addEventListener' : 'removeEventListener';
+  window[method]('scroll', schedule, { passive: true });
+  window[method]('resize', schedule);
+}
+
 /**
  * Zavolá `cb` jednou za snímek, když se stránka posune nebo změní velikost
  * (a hned po připojení). Pro scroll-řízené animace, které píšou přímo do
@@ -12,24 +37,20 @@ export function useScrollFrame(cb: () => void) {
   ref.current = cb;
 
   useEffect(() => {
-    let raf = 0;
-    const run = () => {
-      if (!raf)
-        raf = requestAnimationFrame(() => {
-          raf = 0;
-          ref.current();
-        });
-    };
-    run();
+    const entry = ref;
+    subscribers.add(entry);
+    listen(true);
+    schedule();
     // obrázky/fonty můžou po načtení posunout rozvržení
-    const late = window.setTimeout(run, 400);
-    window.addEventListener('scroll', run, { passive: true });
-    window.addEventListener('resize', run);
+    const late = window.setTimeout(schedule, 400);
     return () => {
-      cancelAnimationFrame(raf);
+      subscribers.delete(entry);
       window.clearTimeout(late);
-      window.removeEventListener('scroll', run);
-      window.removeEventListener('resize', run);
+      if (!subscribers.size) {
+        listen(false);
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
     };
   }, []);
 }

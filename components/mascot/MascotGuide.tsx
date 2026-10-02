@@ -22,7 +22,23 @@ const AVOID = 'main a, main button, main input, main textarea, main select, main
  * v novém. Setrvačnost scrollu ho jemně naklání, klik = zamávání.
  * Kde maskot hraje přímo ve scéně (hero, Proces, kontakt…), není vidět.
  */
+/**
+ * Průvodce je jen pro počítač (na telefonu se nevejde vedle obsahu) — na
+ * mobilu se vůbec nepřipojí, takže neběží ani jeho posluchače scrollu.
+ */
 export function MascotGuide() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px)');
+    const update = () => setDesktop(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return desktop ? <Guide /> : null;
+}
+
+function Guide() {
   const t = useTranslations('mascot');
   const reduced = useReducedMotion();
   const [cueId, setCueId] = useState<string | null>(null);
@@ -56,13 +72,22 @@ export function MascotGuide() {
       setHeroDone(true);
       return;
     }
-    const check = () => setHeroDone(window.scrollY >= hero.offsetTop + hero.offsetHeight - window.innerHeight - 2);
-    check();
+    // hranici měřit jen při změně velikosti — čtení offsetTop při každém
+    // scrollu vynucuje přepočet rozvržení uprostřed animací
+    let limit = 0;
+    const measure = () => {
+      limit = hero.offsetTop + hero.offsetHeight - window.innerHeight - 2;
+      check();
+    };
+    const check = () => setHeroDone(window.scrollY >= limit);
+    measure();
+    const late = window.setTimeout(measure, 1200);
     window.addEventListener('scroll', check, { passive: true });
-    window.addEventListener('resize', check);
+    window.addEventListener('resize', measure);
     return () => {
+      window.clearTimeout(late);
       window.removeEventListener('scroll', check);
-      window.removeEventListener('resize', check);
+      window.removeEventListener('resize', measure);
     };
   }, []);
 

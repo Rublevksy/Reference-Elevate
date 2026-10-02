@@ -4,39 +4,38 @@ import Lenis from 'lenis';
 // pathname bez prefixu jazyka — při přepnutí jazyka se scroll nemá resetovat
 import { usePathname } from '@/i18n/navigation';
 import { useEffect, useRef } from 'react';
-import { ScrollTrigger, gsap } from './gsap';
 import { useReducedMotion } from './useReducedMotion';
 import { arriveAtHash, jumpTo, navigateTo, resolveTarget } from './scrollTo';
 
 /**
- * Lenis + ScrollTrigger. Lenis řídí scroll, GSAP se na něj jen věší —
- * proto ScrollTrigger.update() voláme z Lenisu a ne z nativního scroll eventu.
+ * Lenis — plynulý scroll kolečkem myši / touchpadem na počítači.
+ *
+ * Na dotykových zařízeních (telefon, tablet) Lenis vůbec nespouštíme: prst
+ * má scrollovat nativně (iOS Safari má vlastní setrvačnost a vykreslování
+ * mimo hlavní vlákno) a Lenis by jen držel stálou smyčku requestAnimationFrame
+ * a posluchače scrollu, které Safari při rychlém švihnutí nestíhá — obsah pak
+ * na okamžik zmizí. Navigace (lib/scrollTo) má pro tenhle případ nativní cestu.
  */
+const isTouchDevice = () => window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const lenisRef = useRef<Lenis | null>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || isTouchDevice()) return;
 
     const lenis = new Lenis({
       duration: 1.05,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      touchMultiplier: 1.6,
+      autoRaf: true,
     });
     lenisRef.current = lenis;
     window.__lenis = lenis;
 
-    lenis.on('scroll', ScrollTrigger.update);
-
-    const raf = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
-
     return () => {
-      gsap.ticker.remove(raf);
       lenis.destroy();
       lenisRef.current = null;
       window.__lenis = undefined;
@@ -59,7 +58,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('click', onClick);
   }, []);
 
-  // Nová stránka = scroll nahoru a přepočet triggerů. Po přepnutí jazyka
+  // Nová stránka = scroll nahoru. Po přepnutí jazyka
   // (LocaleSwitcher) ale zůstat na stejném místě — okamžitě, bez efektu.
   useEffect(() => {
     let keep: number | null = null;
@@ -104,14 +103,10 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       raf = requestAnimationFrame(() => {
         if (arriveAtHash(hash)) {
           window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
-        } else lenisRef.current?.scrollTo(0, { immediate: true });
+        } else jumpTo(0);
       });
-    } else lenisRef.current?.scrollTo(0, { immediate: true });
-    const id = window.setTimeout(() => ScrollTrigger.refresh(), 120);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.clearTimeout(id);
-    };
+    } else jumpTo(0);
+    return () => cancelAnimationFrame(raf);
   }, [pathname]);
 
   return <>{children}</>;

@@ -681,11 +681,7 @@ export function Hero() {
           {/* pozvánka ke skrolování — dole uprostřed, film je příběh */}
           <Fly x={0} y={140} className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex">
             <span className="relative block h-9 w-6 rounded-full border border-[rgba(160,185,255,0.45)]">
-              <motion.span
-                className="absolute left-1/2 top-2 h-2 w-1 -translate-x-1/2 rounded-full bg-[var(--blue-bright)] shadow-glow"
-                animate={{ y: [0, 10, 0], opacity: [1, 0.2, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-              />
+              <span className="hint-dot absolute left-1/2 top-2 h-2 w-1 rounded-full bg-[var(--blue-bright)] shadow-glow" />
             </span>
             <span className="font-display text-[10px] uppercase tracking-[0.3em] text-muted">{t('scrollHint')}</span>
           </Fly>
@@ -717,13 +713,19 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
     const el = root.current;
     if (!el || !el.offsetHeight || reduced) return;
     const vh = window.innerHeight;
-    const p = clamp01(-el.getBoundingClientRect().top / Math.max(1, el.offsetHeight - vh));
+    const rect = el.getBoundingClientRect();
+    // mimo obrazovku: vypnout nekonečné animace (drží vlastní GPU vrstvy) a nic nepočítat
+    const away = rect.bottom < -vh * 0.25;
+    if (away !== el.hasAttribute('data-away')) el.toggleAttribute('data-away', away);
+    if (away) return;
+    const p = clamp01(-rect.top / Math.max(1, el.offsetHeight - vh));
     const z = smooth(p);
     if (bg.current) bg.current.style.transform = `translate3d(0, ${(-4 * z).toFixed(2)}%, 0) scale(${(1 + 0.3 * z).toFixed(4)})`;
     if (glow.current) glow.current.style.opacity = (0.45 + 0.55 * seg(p, [0, 0.7])).toFixed(3);
     const out = seg(p, [0.08, 0.62]);
     if (text.current) {
-      text.current.style.transform = `translate3d(0, ${(-90 * smooth(out)).toFixed(1)}px, 0)`;
+      // 2D posun a v klidu žádný transform — iOS pak pro text nedrží zvláštní vrstvu
+      text.current.style.transform = out > 0 ? `translateY(${(-90 * smooth(out)).toFixed(1)}px)` : '';
       text.current.style.opacity = (1 - smooth(out)).toFixed(3);
       text.current.style.pointerEvents = out > 0.5 ? 'none' : '';
     }

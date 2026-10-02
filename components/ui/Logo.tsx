@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import logo from '@/public/brand/logo-elevate.png';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
@@ -46,16 +45,11 @@ export function Logo({
 
       {/* záře šipky — samostatná vrstva nad logem, tvar zůstává netknutý */}
       {glow && !reduced ? (
-        <motion.span
+        // pulz v CSS (kompozitor) — ne JS smyčka, která by běžela každý snímek
+        <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-[14%] w-[22%]"
-          style={{
-            background:
-              'radial-gradient(circle at 50% 35%, rgba(61,160,255,0.75), transparent 68%)',
-            filter: 'blur(6px)',
-          }}
-          animate={{ opacity: [0.25, 0.8, 0.25] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="glow-pulse pointer-events-none absolute inset-y-0 right-[14%] w-[22%]"
+          style={{ background: 'radial-gradient(circle at 50% 35%, rgba(61,160,255,0.75), transparent 68%)', filter: 'blur(6px)' }}
         />
       ) : null}
     </span>

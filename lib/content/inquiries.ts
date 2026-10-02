@@ -24,6 +24,8 @@ export type InquiryData = {
   budget: string;
   sections: InquirySection[];
   note?: string;
+  /** doručení upozornění e-mailem (Resend) — kvůli diagnostice v administraci */
+  mail?: { delivered: boolean; error?: string; to?: string; at: string };
 };
 export type Inquiry = InquiryData & { id: string };
 
@@ -32,6 +34,12 @@ export async function saveInquiry(data: InquiryData) {
   const { error } = await supabaseAdmin().from('content_blocks').insert({ key, data });
   if (error) throw error;
   return key;
+}
+
+/** Doplnit k uložené poptávce další údaje (např. výsledek odeslání e-mailu). */
+export async function patchInquiry(key: string, data: InquiryData, patch: Partial<InquiryData>) {
+  const { error } = await supabaseAdmin().from('content_blocks').update({ data: { ...data, ...patch } }).eq('key', key);
+  if (error) throw error;
 }
 
 /** Nejnovější poptávky. Volat jen po ověření správce. */

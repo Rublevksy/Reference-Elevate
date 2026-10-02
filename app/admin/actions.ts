@@ -310,3 +310,46 @@ export async function deleteInquiry(id: string): Promise<Result> {
     return fail(e);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Doručování e-mailů (Resend)                                        */
+/* ------------------------------------------------------------------ */
+
+export type MailStatus = {
+  hasKey: boolean;
+  from: string;
+  fromDomain: string;
+  usingTestSender: boolean;
+  to: string;
+  /** domény v účtu Resend; null = klíč je jen pro odesílání, seznam nejde načíst */
+  domains: { name: string; status: string }[] | null;
+};
+
+export async function getMailStatus(): Promise<{ ok: true; status: MailStatus } | { ok: false; error: string }> {
+  try {
+    await requireAdmin();
+    const { mailConfig, resendDomains } = await import('@/lib/mail');
+    const config = await mailConfig();
+    return { ok: true, status: { ...config, domains: await resendDomains() } };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Zkušební e-mail na kontaktní adresu — ukáže přesnou chybu Resend. */
+export async function sendTestMail(): Promise<Result> {
+  try {
+    await requireAdmin();
+    const { mailConfig, sendMail } = await import('@/lib/mail');
+    const { to } = await mailConfig();
+    const result = await sendMail({
+      to,
+      subject: 'Zkušební e-mail z administrace ELEVATE',
+      html: '<div style="font-family:system-ui,sans-serif;padding:24px;background:#04060b;color:#f2f5ff"><h1 style="font-size:18px">Doručování funguje ✓</h1><p style="color:#8a93a8">Poptávky z formuláře budou chodit sem.</p></div>',
+      text: 'Doručování funguje. Poptávky z formuláře budou chodit sem.',
+    });
+    return result.delivered ? { ok: true } : { ok: false, error: result.error };
+  } catch (e) {
+    return fail(e);
+  }
+}

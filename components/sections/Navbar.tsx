@@ -146,7 +146,7 @@ export function Navbar() {
       >
         <motion.nav
           aria-label={tA11y('mainNav')}
-          className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(8,12,22,0.72)] shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)] backdrop-blur-xl"
+          className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(8,12,22,0.92)] shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)] md:bg-[rgba(8,12,22,0.72)] md:backdrop-blur-xl"
           animate={{
             paddingLeft: shrunk ? 10 : 14,
             paddingRight: shrunk ? 8 : 10,

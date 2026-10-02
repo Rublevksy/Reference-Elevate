@@ -8,6 +8,9 @@ import type { ProjectRow } from '@/lib/content/projects';
 import {
   createUpload,
   deleteInquiry,
+  getMailStatus,
+  sendTestMail,
+  type MailStatus,
   listInquiries,
   setInquiryStatus,
   setMaintenance,
@@ -606,6 +609,79 @@ function SocialEditor({ items, onChange, visual }: { items: SocialInput[]; onCha
   );
 }
 
+/** Doručování poptávek e-mailem — kontrolní seznam nastavení Resend + zkušební e-mail. */
+function MailCard() {
+  const [status, setStatus] = useState<MailStatus | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const test = useSave();
+  const load = useCallback(async () => {
+    const res = await getMailStatus();
+    if (res.ok) setStatus(res.status);
+    else setLoadError(res.error);
+  }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const domain = status?.domains?.find((d) => d.name === status.fromDomain);
+  const domainOk = domain ? domain.status === 'verified' : null;
+  const rows: { ok: boolean | null; label: string; help: string }[] = status
+    ? [
+        { ok: status.hasKey, label: 'Klíč Resend (RESEND_API_KEY)', help: status.hasKey ? 'Nastavený ve Vercelu.' : 'Chybí — Resend → API Keys → Create, vložit do Vercelu a Redeploy.' },
+        {
+          ok: !status.usingTestSender,
+          label: 'Odesílatel (CONTACT_FROM_EMAIL)',
+          help: status.usingTestSender
+            ? 'Používá se testovací onboarding@resend.dev — doručí jen na e-mail majitele účtu Resend. Nastavte např. ELEVATE <poptavky@elevateit.cz>.'
+            : status.from,
+        },
+        {
+          ok: status.usingTestSender ? false : domainOk,
+          label: `Ověřená doména${status.fromDomain && !status.usingTestSender ? ` ${status.fromDomain}` : ''}`,
+          help: status.usingTestSender
+            ? 'Resend → Domains → Add domain, DNS záznamy vložit u správce DNS (Endora) a kliknout Verify.'
+            : domain
+              ? domain.status === 'verified'
+                ? 'Ověřená.'
+                : `Stav v Resend: ${domain.status} — zkontrolujte DNS záznamy a klikněte Verify.`
+              : status.domains
+                ? 'Doména v účtu Resend není — přidejte ji v Domains.'
+                : 'Stav nejde načíst (klíč má jen oprávnění k odesílání) — ověří to zkušební e-mail.',
+        },
+        { ok: Boolean(status.to), label: 'Adresát', help: status.to || 'Vyplňte kontaktní e-mail výše a uložte.' },
+      ]
+    : [];
+
+  return (
+    <Card title="Doručování e-mailů" subtitle="Každá poptávka se uloží sem do administrace a zároveň přijde e-mailem.">
+      {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
+      {!status && !loadError ? <p className="text-sm text-muted">Načítám…</p> : null}
+      <ul className="space-y-2.5">
+        {rows.map((row) => (
+          <li key={row.label} className="flex gap-3 text-sm">
+            <span
+              aria-hidden
+              className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                row.ok === null ? 'bg-[rgba(160,185,235,0.5)]' : row.ok ? 'bg-[#3ddc97] shadow-[0_0_8px_rgba(61,220,151,0.8)]' : 'bg-[#ffc53d] shadow-[0_0_8px_rgba(255,197,61,0.7)]'
+              }`}
+            />
+            <span className="min-w-0">
+              <span className="text-ink">{row.label}</span>
+              <span className="block break-words text-xs text-muted">{row.help}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <Btn size="sm" disabled={test.busy || !status} onClick={() => test.run(sendTestMail)}>
+          Odeslat zkušební e-mail
+        </Btn>
+        <SaveStatus state={test.state} error={test.error} savedText={`Odesláno na ${status?.to ?? ''} — zkontrolujte schránku (i spam)`} />
+      </div>
+    </Card>
+  );
+}
+
 function CompanyTab({ initial }: { initial: SettingsInput }) {
   const [v, setV] = useState<SettingsInput>(initial);
   const [dirty, setDirty] = useState(false);
@@ -623,6 +699,7 @@ function CompanyTab({ initial }: { initial: SettingsInput }) {
           <input className={inputClass} type="email" value={v.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} />
         </Field>
       </Card>
+      <MailCard />
       <Card title="Firma">
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Město" visual={mini('settings.city', 'Město')}><input className={inputClass} value={v.city} onChange={(e) => set({ city: e.target.value })} /></Field>
@@ -994,6 +1071,14 @@ function InquiryDetail({
           <p className="font-mono text-[10px] tracking-[0.2em] text-[rgba(160,185,235,0.7)]">{dateFmt.format(new Date(item.created_at))} · {item.locale.toUpperCase()}</p>
           <h3 className="mt-1 break-words font-display text-lg font-bold uppercase leading-tight">{item.name}</h3>
           <p className="mt-1 text-sm text-muted">{item.headline}{item.budget ? ` · ${item.budget}` : ''}</p>
+          {item.mail ? (
+            <p className={`mt-2 inline-flex max-w-full items-start gap-2 rounded-lg border px-2.5 py-1.5 text-xs ${item.mail.delivered ? 'border-[rgba(61,220,151,0.35)] text-[#9ff0c9]' : 'border-[rgba(255,197,61,0.45)] bg-[rgba(255,197,61,0.06)] text-[#ffe2a0]'}`}>
+              <span aria-hidden className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${item.mail.delivered ? 'bg-[#3ddc97]' : 'bg-[#ffc53d]'}`} />
+              <span className="min-w-0 break-words">
+                {item.mail.delivered ? `E-mail odeslán na ${item.mail.to ?? ''}` : `E-mail neodešel: ${item.mail.error ?? 'neznámá chyba'}`}
+              </span>
+            </p>
+          ) : null}
         </div>
         <div className="flex rounded-full border border-[var(--line)] p-1" role="radiogroup" aria-label="Stav poptávky">
           {STATUS_ORDER.map((s) => (

@@ -48,7 +48,7 @@ export function SpeechBubble({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: side === 'left' ? -8 : 8 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className={`relative rounded-xl border border-[rgba(80,120,255,0.18)] bg-[rgba(8,14,34,0.74)] py-2.5 pl-4 pr-3 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.9)] backdrop-blur-md ${
+      className={`relative rounded-xl border border-[rgba(80,120,255,0.18)] bg-[rgba(8,14,34,0.94)] py-2.5 pl-4 pr-3 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.9)] md:bg-[rgba(8,14,34,0.74)] md:backdrop-blur-md ${
         compact ? 'max-w-[220px]' : 'max-w-[280px]'
       } ${className}`}
       role="status"
