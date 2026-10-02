@@ -512,6 +512,8 @@
     "next": "Pokračovat",
     "submit": "Odeslat poptávku",
     "sending": "Odesílám",
+    "verifying": "Ověřuji",
+    "captchaAsk": "Poslední krok: zaškrtněte prosím políčko níže, ať víme, že nejste robot.",
     "successTitle": "Díky, poptávka je u nás.",
     "successText": "Projdeme odpovědi a do 24 hodin se ozveme s návrhem. Mezitím se můžete podívat na náš",
     "hints": [
@@ -598,8 +600,10 @@
       "phone": "Doplňte telefon, ať vám můžeme zavolat.",
       "telegram": "Doplňte uživatelské jméno na Telegramu.",
       "whatsapp": "Doplňte číslo, na kterém máte WhatsApp.",
-      "captcha": "Ověření proti spamu se nepovedlo. Obnovte prosím stránku a zkuste to znovu.",
-      "captchaWait": "Ještě chvilku — ověřujeme, že nejste robot. Zkuste to za pár sekund."
+      "captcha": "Ověření proti spamu nevyšlo. Zkuste prosím poptávku odeslat ještě jednou.",
+      "captchaWait": "Ověření proti spamu ještě běží — zkuste to prosím za pár sekund znovu.",
+      "captchaTick": "Zaškrtněte prosím políčko „Potvrďte, že jste člověk“ nad tlačítkem a odešlete znovu.",
+      "captchaBroken": "Ověření proti spamu se ve vašem prohlížeči nenačetlo (blokátor reklam?). Zkuste obnovit stránku, nebo nám napište přímo na"
     }
   },
   "footer": {

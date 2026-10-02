@@ -27,7 +27,7 @@ import {
 import { site } from '@/content/site';
 import { useSiteContact } from '@/components/ContentProvider';
 import { SocialIcon } from '@/components/ui/SocialIcon';
-import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/ui/Turnstile';
+import { TURNSTILE_SITE_KEY, Turnstile, type TurnstileEvent, type TurnstileHandle } from '@/components/ui/Turnstile';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 /* Pět kroků kvalifikačního formuláře — která pole který krok kontroluje. */
@@ -171,10 +171,15 @@ export function Contact() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'verifying' | 'sending' | 'done' | 'error'>('idle');
   const [serverError, setServerError] = useState<string | null>(null);
   const [said, setSaid] = useState<{ text: string; pose: Pose } | null>(null);
-  const [captcha, setCaptcha] = useState('');
+  // Turnstile: token (jednorázový), zda Cloudflare chce kliknutí, zda widget selhává
+  const captchaRef = useRef<TurnstileHandle>(null);
+  const captchaToken = useRef('');
+  const captchaWaiters = useRef<((token: string) => void)[]>([]);
+  const [captchaAsk, setCaptchaAsk] = useState(false);
+  const [captchaBroken, setCaptchaBroken] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const nicheDetailRef = useRef<HTMLInputElement | null>(null);
 
@@ -319,25 +324,69 @@ export function Contact() {
     keepInView();
   };
 
+  const captchaAskRef = useRef(false);
+  // hlášky o ověření zmizí, jakmile token dorazí
+  const captchaMessages = useRef<string[]>([]);
+  captchaMessages.current = [t('errors.captchaWait'), t('errors.captchaTick'), t('errors.captcha')];
+  const onCaptcha = useCallback((event: TurnstileEvent) => {
+    if (event.type === 'token') {
+      captchaToken.current = event.token;
+      if (!event.token) return;
+      setCaptchaBroken(false);
+      setServerError((e) => (e && captchaMessages.current.includes(e) ? null : e));
+      captchaWaiters.current.splice(0).forEach((resolve) => resolve(event.token));
+    } else if (event.type === 'interactive') {
+      captchaAskRef.current = event.on;
+      setCaptchaAsk(event.on);
+      // Cloudflare chce kliknutí → nečekat potichu, ukázat políčko a říct proč
+      if (event.on) captchaWaiters.current.splice(0).forEach((resolve) => resolve(''));
+    } else {
+      setCaptchaBroken(true);
+    }
+  }, []);
+
+  /** Počká na token Turnstile; '' když nepřijde včas nebo je potřeba zaškrtnout políčko. */
+  const waitForCaptcha = (timeout: number) =>
+    new Promise<string>((resolve) => {
+      const done = (token: string) => {
+        window.clearTimeout(timer);
+        captchaWaiters.current = captchaWaiters.current.filter((fn) => fn !== done);
+        resolve(token);
+      };
+      const timer = window.setTimeout(() => done(''), timeout);
+      captchaWaiters.current.push(done);
+    });
+
   const onSubmit = async (values: ContactInput) => {
     const conditional = conditionalIssues(values);
     if (conditional.length) {
       conditional.forEach((c) => setError(c.field, { message: t(`errors.${c.message}`) }));
       return;
     }
+    setServerError(null);
+    let captcha = captchaToken.current;
     if (TURNSTILE_SITE_KEY && !captcha) {
-      setServerError(t('errors.captchaWait'));
-      return;
+      if (captchaAsk) {
+        setServerError(t('errors.captchaTick'));
+        return;
+      }
+      // ověření ještě běží na pozadí → počkat na token (nebo na políčko k zaškrtnutí)
+      setStatus('verifying');
+      captcha = await waitForCaptcha(captchaBroken ? 4000 : 15000);
+      if (!captcha) {
+        setStatus('idle');
+        setServerError(captchaBroken ? `${t('errors.captchaBroken')} ${contactEmail}` : t(captchaAskRef.current ? 'errors.captchaTick' : 'errors.captchaWait'));
+        return;
+      }
     }
     setStatus('sending');
-    setServerError(null);
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...values, refs: values.refs.filter((r) => r.trim()), locale, captcha }),
       });
-      const data = (await response.json()) as { ok?: boolean; code?: string; to?: string };
+      const data = (await response.json().catch(() => ({}))) as { ok?: boolean; code?: string; to?: string };
       if (!response.ok || !data.ok) {
         const code = data.code ?? 'generic';
         const key = ['rate', 'server', 'send', 'captcha'].includes(code) ? code : 'generic';
@@ -346,7 +395,11 @@ export function Contact() {
       setStatus('done');
     } catch (error) {
       setStatus('error');
-      setServerError(error instanceof Error ? error.message : t('errors.generic'));
+      // TypeError = výpadek sítě (fetch), jinak naše srozumitelná hláška
+      setServerError(error instanceof Error && !(error instanceof TypeError) ? error.message : t('errors.generic'));
+    } finally {
+      // token platí jen jednou → hned připravit nový pro případný další pokus
+      captchaRef.current?.reset();
     }
   };
 
@@ -907,15 +960,19 @@ export function Contact() {
                             </span>
                           </label>
                           {errors.consent ? <p className="text-xs text-red-400">{errors.consent.message}</p> : null}
-                          {/* ochrana proti robotům — běžně neviditelná, ověření běží na pozadí */}
-                          <Turnstile language={locale} onToken={(token) => {
-                            setCaptcha(token);
-                            if (token) setServerError(null);
-                          }} />
                         </div>
                       ) : null}
                     </motion.fieldset>
                   </AnimatePresence>
+
+                  {/* ochrana proti robotům — běžně neviditelná, ověření běží na pozadí;
+                      po prvním příchodu na poslední krok zůstává připojená i při návratu zpět */}
+                  {TURNSTILE_SITE_KEY && maxStep >= last ? (
+                    <div className={step === last ? 'mt-4' : 'hidden'}>
+                      {captchaAsk ? <p className="mb-2 text-xs text-[rgba(205,214,236,0.9)]">{t('captchaAsk')}</p> : null}
+                      <Turnstile ref={captchaRef} language={locale} onEvent={onCaptcha} />
+                    </div>
+                  ) : null}
 
                   {serverError ? <p role="alert" className="mt-4 text-sm text-red-400">{serverError}</p> : null}
 
@@ -932,11 +989,11 @@ export function Contact() {
                     {step < last ? (
                       <Button onClick={() => void goStep(step + 1)} className="!px-6 !py-3 !text-[12px]">{t('next')}</Button>
                     ) : (
-                      <Button type="submit" disabled={status === 'sending'} className="!px-6 !py-3 !text-[12px]">
-                        {status === 'sending' ? (
+                      <Button type="submit" disabled={status === 'sending' || status === 'verifying'} className="!px-6 !py-3 !text-[12px]">
+                        {status === 'sending' || status === 'verifying' ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                            {t('sending')}
+                            {t(status === 'verifying' ? 'verifying' : 'sending')}
                           </span>
                         ) : (
                           t('submit')

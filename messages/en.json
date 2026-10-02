@@ -512,6 +512,8 @@
     "next": "Continue",
     "submit": "Send enquiry",
     "sending": "Sending",
+    "verifying": "Verifying",
+    "captchaAsk": "Last step: please tick the box below so we know you’re not a robot.",
     "successTitle": "Thanks — your enquiry is in.",
     "successText": "We'll go through your answers and get back to you with a proposal within 24 hours. Meanwhile, have a look at our",
     "hints": [
@@ -598,8 +600,10 @@
       "phone": "Add a phone number so we can call you.",
       "telegram": "Add your Telegram username.",
       "whatsapp": "Add the number you use for WhatsApp.",
-      "captcha": "The spam check didn't pass. Please reload the page and try again.",
-      "captchaWait": "One moment — we're checking you're not a robot. Try again in a few seconds."
+      "captcha": "The spam check didn’t pass. Please try sending the inquiry once more.",
+      "captchaWait": "The spam check is still running — please try again in a few seconds.",
+      "captchaTick": "Please tick the Cloudflare check box above the button and send again.",
+      "captchaBroken": "The spam check couldn’t load in your browser (ad blocker?). Try reloading the page, or write to us directly at"
     }
   },
   "footer": {

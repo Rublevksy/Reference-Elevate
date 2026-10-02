@@ -52,6 +52,50 @@ const formatDate = (iso: string) => {
 
 type Section = { title: string; rows: [string, string, boolean?][] };
 
+/**
+ * Ověření tokenu Turnstile. Neplatný / chybějící / použitý token = robot.
+ * Naopak chyba na NAŠÍ straně (špatně zkopírovaný tajný klíč, výpadek
+ * Cloudflare) poptávku neblokuje — jen se hlasitě zaloguje (Vercel → Logs):
+ * přijít o zákazníka je horší než pustit jeden spam, honeypot a rate limit
+ * platí dál.
+ */
+async function verifyCaptcha(token: string, ip: string): Promise<'pass' | 'fail'> {
+  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
+  if (!secret) return 'pass';
+  if (!token) return 'fail';
+  try {
+    const body = new URLSearchParams({ secret, response: token });
+    if (ip !== 'unknown') body.set('remoteip', ip);
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body,
+      signal: AbortSignal.timeout(8000),
+    });
+    const out = (await res.json()) as { success?: boolean; action?: string; hostname?: string; 'error-codes'?: string[] };
+    if (out.success) {
+      if (out.action && out.action !== 'contact') {
+        console.warn('[contact] Turnstile: token z jiné akce', out.action);
+        return 'fail';
+      }
+      return 'pass';
+    }
+    const codes = out['error-codes'] ?? [];
+    if (codes.some((code) => code === 'invalid-input-secret' || code === 'missing-input-secret')) {
+      console.error('[contact] TURNSTILE_SECRET_KEY je neplatný — zkontrolujte ho ve Vercelu (Secret key z Cloudflare → Turnstile). Poptávka propuštěna bez ověření.');
+      return 'pass';
+    }
+    if (codes.includes('internal-error')) {
+      console.error('[contact] Turnstile: interní chyba Cloudflare — poptávka propuštěna bez ověření.');
+      return 'pass';
+    }
+    console.warn('[contact] Turnstile zamítl token', codes.join(', ') || '(bez kódu)');
+    return 'fail';
+  } catch (error) {
+    console.error('[contact] Turnstile nedostupný — poptávka propuštěna bez ověření.', error);
+    return 'pass';
+  }
+}
+
 export async function POST(request: Request) {
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
@@ -77,18 +121,8 @@ export async function POST(request: Request) {
   const data = parsed.data;
 
   // Cloudflare Turnstile: s nastaveným tajným klíčem musí token projít ověřením
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (secret) {
-    let human = false;
-    try {
-      const body = new URLSearchParams({ secret, response: data.captcha ?? '', remoteip: ip });
-      const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
-      const out = (await res.json()) as { success?: boolean; action?: string };
-      human = Boolean(out.success) && (!out.action || out.action === 'contact');
-    } catch (error) {
-      console.error('[contact] ověření Turnstile selhalo', error);
-    }
-    if (!human) return NextResponse.json({ ok: false, code: 'captcha' }, { status: 403 });
+  if ((await verifyCaptcha(data.captcha ?? '', ip)) === 'fail') {
+    return NextResponse.json({ ok: false, code: 'captcha' }, { status: 403 });
   }
 
   // Honeypot vyplněn → tváříme se, že je vše v pořádku, ale nic neodesíláme.
