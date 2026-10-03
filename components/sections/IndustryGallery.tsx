@@ -94,7 +94,7 @@ export function IndustryGallery({
 
   const header = (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <p className="font-display text-[11px] uppercase tracking-[0.16em] text-[#9fc0ff]">{t('title', { industry: industryLabel })}</p>
+      <p className="text-[13.5px] font-semibold text-[#e6ecff]">{t('title', { industry: industryLabel })}</p>
       {likes.length ? (
         <p className="inline-flex items-center gap-1.5 text-xs text-ink">
           <Heart className="h-3.5 w-3.5 fill-[#ff5c8a] text-[#ff5c8a]" aria-hidden />
@@ -107,7 +107,7 @@ export function IndustryGallery({
   // prázdný obor (nebo „Jiný obor" bez ukázek) — přátelská zpráva
   if (items && !items.length) {
     return (
-      <div className="rounded-2xl border border-[rgba(110,150,255,0.2)] bg-[linear-gradient(165deg,rgba(27,53,119,0.28),rgba(8,12,26,0.6))] p-4">
+      <div className="qf-note">
         {header}
         <div className="mt-3 flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgba(61,123,255,0.45)] bg-[rgba(31,91,255,0.14)] text-[var(--blue-bright)] shadow-[0_0_16px_rgba(31,91,255,0.35)]">
@@ -120,9 +120,9 @@ export function IndustryGallery({
   }
 
   return (
-    <div className="rounded-2xl border border-[rgba(110,150,255,0.2)] bg-[linear-gradient(165deg,rgba(27,53,119,0.22),rgba(8,12,26,0.55))] p-3 sm:p-4">
+    <div className="qf-note">
       {header}
-      <p className="mt-1 text-xs leading-snug text-muted">{t('hint')}</p>
+      <p className="mt-1 text-xs leading-snug text-[rgba(160,172,205,0.85)]">{t('hint')}</p>
 
       {failed ? (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[rgba(255,90,110,0.3)] px-3 py-2.5 text-xs text-[#ffc2cb]">

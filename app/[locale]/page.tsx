@@ -6,7 +6,7 @@ import { WhyAnimatedBlock } from '@/components/sections/WhyAnimated';
 import { Process } from '@/components/sections/Process';
 import { Cases } from '@/components/sections/Cases';
 import { Pricing } from '@/components/sections/Pricing';
-import { Contact } from '@/components/sections/Contact';
+import { Contact } from '@/components/sections/ContactForm';
 import { TransitionScene } from '@/components/sections/TransitionScene';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
