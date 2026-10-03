@@ -15,7 +15,7 @@ import { CardBody } from './ServiceDeck';
 import { DEMO_FIRST_FRAME } from './DemoScreen';
 import { PRICE_CARD_BG, PRICE_CARD_CLASS, PriceCardDecor, PriceCardFace } from './Pricing';
 import { plans, type Plan } from '@/content/pricing';
-import { ServiceCardBack, ServiceCardFront, cardTitleSize } from './ServiceCard';
+import { ServiceCardBack, ServiceCardFront, cardLabelStyle, cardTitleSize } from './ServiceCard';
 
 export type TransitionVariant =
   | 'cardToPanel'
@@ -389,6 +389,7 @@ function deckPanel(vw: number, vh: number) {
 function DealToPanel({ renderRef }: SceneProps) {
   const tItems = useTranslations('services.items');
   const titleSize = cardTitleSize(services.map((item) => tItems(`${item.slug}.card`)));
+  const labelStyle = cardLabelStyle(services.map((item) => tItems(`${item.slug}.tab`)));
   const cards = useRef<(HTMLDivElement | null)[]>([]);
   const trails = useRef<(HTMLSpanElement | null)[]>([]);
   const edge = useRef<HTMLDivElement>(null);
@@ -515,7 +516,7 @@ function DealToPanel({ renderRef }: SceneProps) {
           className={`${CENTER} preserve-3d will-change-transform`}
           style={{ width: CARD_W, height: CARD_H, zIndex: 10 - i }}
         >
-          <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+          <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} labelStyle={labelStyle} className="backface-hidden" />
           <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
             <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
           </span>
@@ -877,6 +878,7 @@ function PriceFace({ plan, className = '', style }: { plan: Plan; className?: st
 
 function PhoneToPricing({ renderRef }: SceneProps) {
   const tItems = useTranslations('services.items');
+  const labelStyle = cardLabelStyle(services.map((item) => tItems(`${item.slug}.tab`)));
   const cardEls = useRef<(HTMLDivElement | null)[]>([]);
 
   /**
@@ -924,7 +926,7 @@ function PhoneToPricing({ renderRef }: SceneProps) {
         const item = services[i];
         return (
           <div key={plan.id} ref={(el) => { cardEls.current[i] = el; }} className={`${CENTER} preserve-3d opacity-0`}>
-            <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+            <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} labelStyle={labelStyle} className="backface-hidden" />
             <PriceFace plan={plan} className="backface-hidden" style={{ transform: 'rotateY(180deg)' }} />
           </div>
         );

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { DocumentTitle } from '@/components/ui/DocumentTitle';
+import { site } from '@/content/site';
 
 /** Stránka 404 má vlastní titulek (ne titulek úvodní stránky) a neindexuje se. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,6 +16,7 @@ export default function NotFound() {
 
   return (
     <div className="shell grid min-h-[70vh] place-items-center py-32 text-center">
+      <DocumentTitle title={`${t('title')} | ${site.name}`} />
       <div>
         <p className="font-display text-[clamp(4rem,14vw,9rem)] font-bold leading-none text-white/[0.08]">404</p>
         <h1 className="mt-4 font-display text-2xl font-bold uppercase">{t('title')}</h1>

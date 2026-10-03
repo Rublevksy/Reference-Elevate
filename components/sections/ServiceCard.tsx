@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type CSSProperties } from 'react';
 import { Icon } from '@/components/ui/FeatureIcon';
 import type { IconName } from '@/content/icons';
 import { SYMBOL_POINTS, SYMBOL_VIEWBOX } from '@/lib/fx';
@@ -19,12 +19,38 @@ function Watermark({ className = '' }: { className?: string }) {
   );
 }
 
-export const ServiceCardBack = memo(function ServiceCardBack({ item, label, className = '' }: { item: Item; label: string; className?: string }) {
+/**
+ * Zkratka služby na rubu karty (vedle ikony): 10 px s prostrkáním, nebo méně
+ * a těsněji, když by se nejdelší zkratka sady nevešla (RU „Приложения").
+ * Stejné písmo pro celou sadu; cqw = šířka karty.
+ */
+export function cardLabelStyle(labels: string[]): CSSProperties {
+  const longest = Math.max(1, ...labels.map((label) => label.length));
+  // šířka znaku vůči velikosti písma včetně prostrkání 0,16em (cyrilice je širší)
+  const wide = labels.some((label) => /[\u0400-\u04ff]/.test(label)) ? 1.12 : 0.99;
+  // místo vedle ikony na kartě široké 150 px
+  if (80 / (longest * wide) >= 10) return {};
+  const tight = wide - 0.12;
+  return { letterSpacing: '0.04em', fontSize: `min(10px, calc((100cqw - 68px) / ${(longest * tight).toFixed(2)}))` };
+}
+
+export const ServiceCardBack = memo(function ServiceCardBack({
+  item,
+  label,
+  labelStyle,
+  className = '',
+}: {
+  item: Item;
+  label: string;
+  /** společný styl zkratky pro celou sadu karet (cardLabelStyle) */
+  labelStyle?: CSSProperties;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden
       className={`absolute inset-0 overflow-hidden rounded-2xl border border-[rgba(80,120,255,0.28)] ${className}`}
-      style={{ background: 'linear-gradient(170deg,#0c1638 0%,#070b1c 58%,#0a1330 100%)' }}
+      style={{ containerType: 'inline-size', background: 'linear-gradient(170deg,#0c1638 0%,#070b1c 58%,#0a1330 100%)' }}
     >
       {/* neonová trubice po levé hraně */}
       <span
@@ -45,7 +71,9 @@ export const ServiceCardBack = memo(function ServiceCardBack({ item, label, clas
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(61,123,255,0.6)] bg-[rgba(31,91,255,0.14)] text-[var(--blue-bright)] shadow-[0_0_16px_rgba(31,91,255,0.45)]">
           <Icon name={item.icon} className="h-4 w-4" />
         </span>
-        <span className="font-display text-[10px] uppercase leading-tight tracking-[0.16em] text-muted">{label}</span>
+        <span className="whitespace-nowrap font-display text-[10px] uppercase leading-tight tracking-[0.16em] text-muted" style={labelStyle ?? cardLabelStyle([label])}>
+          {label}
+        </span>
       </span>
     </span>
   );

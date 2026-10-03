@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
 import { ease, seg } from '@/lib/fx';
 import { scrollToId } from '@/lib/scrollTo';
-import { ServiceCardBack, ServiceCardFront, cardTitleSize } from './ServiceCard';
+import { ServiceCardBack, ServiceCardFront, cardLabelStyle, cardTitleSize } from './ServiceCard';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { PlatformScene } from './PlatformScene';
 
@@ -79,6 +79,7 @@ export function ServicesTable() {
   const tItems = useTranslations('services.items');
   // jedna velikost názvu pro všech pět karet (podle nejdelšího slova v daném jazyce)
   const titleSize = cardTitleSize(services.map((item) => tItems(`${item.slug}.card`)));
+  const labelStyle = cardLabelStyle(services.map((item) => tItems(`${item.slug}.tab`)));
   const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -449,7 +450,7 @@ export function ServicesTable() {
                   animate={{ rotateY: isActive ? 180 : 0 }}
                   transition={reduced ? { duration: 0 } : { ...SPRING, damping: 26 }}
                 >
-                  <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                  <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} labelStyle={labelStyle} className="backface-hidden" />
                   <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
                     <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                   </span>
@@ -482,7 +483,7 @@ export function ServicesTable() {
                 className="preserve-3d absolute inset-0 transition-transform duration-[900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
                 style={{ transform: dealt ? 'rotateY(180deg)' : 'none', transitionDelay: `${index * 110}ms` }}
               >
-                <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} labelStyle={labelStyle} className="backface-hidden" />
                 <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)' }}>
                   <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                 </span>
@@ -505,7 +506,7 @@ export function ServicesTable() {
                   style={{ width: CARD_W, height: CARD_H, visibility: 'hidden', perspective: 900, zIndex: index === 0 ? 20 : 10 - index }}
                 >
                   <div className="preserve-3d relative h-full w-full">
-                    <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
+                    <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} labelStyle={labelStyle} className="backface-hidden" />
                     <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
                       <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                     </span>
