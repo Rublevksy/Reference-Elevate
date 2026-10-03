@@ -189,7 +189,7 @@ export const EDIT_SECTIONS: EditSection[] = [
         title: 'Krok 3 · Vzhled',
         fields: [
           f('contact.questions.2', 'Otázka kroku'),
-          f('contact.gallery.title', 'Galerie ukázek — nadpis', { note: '{industry} = název oboru' }),
+          f('contact.gallery.title', 'Galerie ukázek — nadpis', { note: '{what} = typ projektu a obor' }),
           f('contact.gallery.hint', 'Galerie ukázek — nápověda', { long: true }),
           f('contact.gallery.more', 'Galerie ukázek — tlačítko další varianty'),
           f('contact.gallery.empty', 'Galerie ukázek — obor bez ukázek', { long: true }),

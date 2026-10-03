@@ -2,24 +2,26 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import { useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Check, ImagePlus, Languages, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ImagePlus, Languages, LayoutGrid, Play, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import type { ProjectRow } from '@/lib/content/projects';
-import { INDUSTRY_LOCALES, OTHER_INDUSTRY, industryName, slugifyIndustry, type GalleryItem, type Industry } from '@/lib/content/gallery';
+import { GALLERY_TYPES, GALLERY_TYPE_LABEL, INDUSTRY_LOCALES, OTHER_INDUSTRY, industryName, slugifyIndustry, type GalleryItem, type GalleryType, type Industry } from '@/lib/content/gallery';
 import { addGalleryItems, createGalleryUpload, deleteGalleryItem, saveIndustries, updateGalleryItem, type GalleryInput } from '../actions';
 import { Btn, Card, inputClass, SaveBar, useSave } from './ui';
 
 /**
- * Galerie ukázek: skutečné weby studia rozdělené podle oborů. Ve formuláři
- * (krok Vzhled) uvidí návštěvník ukázky ze svého oboru a může označit, co se
- * mu líbí. Obory jsou zároveň volby „Obor podnikání" ve formuláři.
+ * Galerie ukázek: každá ukázka má dva štítky — typ projektu (web / e-shop /
+ * logo / aplikace) a obor. Ve formuláři (krok Vzhled) se ukazují jen ukázky
+ * pro kombinaci, kterou zákazník vybral. Tady: přehled počtů v tabulce
+ * typ × obor, klepnutím na buňku se zobrazí jen ta kombinace.
  */
 
 const LOCALE_LABEL = { cs: 'Česky', en: 'English', ru: 'Русский', uk: 'Українська' } as const;
+const PAGE = 24;
 
 /* ---------- příprava obrázků v prohlížeči ---------- */
 
-const FULL = { width: 1200, maxHeight: 3200 };
-const THUMB = { width: 640, height: 400 };
+const FULL = { width: 1000, maxHeight: 2600 };
+const THUMB = { width: 480, height: 600 };
 
 async function toBlob(canvas: HTMLCanvasElement, quality: number) {
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
@@ -27,7 +29,7 @@ async function toBlob(canvas: HTMLCanvasElement, quality: number) {
   return blob;
 }
 
-/** Plný snímek (max 1200 px na šířku, horní část dlouhých screenshotů). */
+/** Plný snímek (max 1000 px na šířku, horní část dlouhých stránek). */
 async function fullImage(bitmap: ImageBitmap) {
   const width = Math.min(FULL.width, bitmap.width);
   const scale = width / bitmap.width;
@@ -42,7 +44,7 @@ async function fullImage(bitmap: ImageBitmap) {
   return { blob: await toBlob(canvas, 0.82), width, height };
 }
 
-/** Zmenšenina 16:10 z horní části (úvodní obrazovka webu). */
+/** Náhled 4:5 — stránky na výšku od horní hrany, obrázky na šířku celé na tmavém plátně. */
 async function thumbImage(bitmap: ImageBitmap) {
   const canvas = document.createElement('canvas');
   canvas.width = THUMB.width;
@@ -50,27 +52,43 @@ async function thumbImage(bitmap: ImageBitmap) {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Prohlížeč neumí zpracovat obrázek.');
   ctx.imageSmoothingQuality = 'high';
-  const scale = THUMB.width / bitmap.width;
-  const srcH = Math.min(bitmap.height, THUMB.height / scale);
-  ctx.fillStyle = '#05070d';
+  ctx.fillStyle = '#0a0c14';
   ctx.fillRect(0, 0, THUMB.width, THUMB.height);
-  ctx.drawImage(bitmap, 0, 0, bitmap.width, srcH, 0, 0, THUMB.width, srcH * scale);
+  if (bitmap.height / bitmap.width >= 1.15) {
+    const scale = THUMB.width / bitmap.width;
+    const srcH = Math.min(bitmap.height, THUMB.height / scale);
+    ctx.drawImage(bitmap, 0, 0, bitmap.width, srcH, 0, 0, THUMB.width, srcH * scale);
+  } else {
+    const scale = Math.min(THUMB.width / bitmap.width, THUMB.height / bitmap.height);
+    const w = bitmap.width * scale;
+    const h = bitmap.height * scale;
+    ctx.drawImage(bitmap, (THUMB.width - w) / 2, (THUMB.height - h) / 2, w, h);
+  }
   return toBlob(canvas, 0.78);
 }
+
+type Filter = { type: GalleryType | 'all'; industry: string };
 
 /* ---------- komponenta ---------- */
 
 export function GalleryTab({ initialItems, initialIndustries, projects }: { initialItems: GalleryItem[]; initialIndustries: Industry[]; projects: ProjectRow[] }) {
   const [items, setItems] = useState(initialItems);
   const [industries, setIndustries] = useState(initialIndustries);
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilterState] = useState<Filter>({ type: 'all', industry: 'all' });
+  const [limit, setLimit] = useState(PAGE);
   const [queue, setQueue] = useState<{ name: string; state: string }[]>([]);
   const [error, setError] = useState('');
   const [fromProjects, setFromProjects] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(
     () => createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!),
     [],
   );
+  const setFilter = (next: Filter, scroll = false) => {
+    setFilterState(next);
+    setLimit(PAGE);
+    if (scroll) window.setTimeout(() => listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
 
   const apply = (res: Awaited<ReturnType<typeof addGalleryItems>>) => {
     if (!res.ok) {
@@ -83,16 +101,32 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
     return true;
   };
 
+  /** počty: typ → obor (‚none' = bez oboru) */
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    for (const item of items) for (const id of item.industries) map.set(id, (map.get(id) ?? 0) + 1);
+    const bump = (k: string) => map.set(k, (map.get(k) ?? 0) + 1);
+    for (const item of items) {
+      bump(`${item.type}|*`);
+      if (!item.industries.length) bump(`${item.type}|none`);
+      for (const id of item.industries) {
+        bump(`${item.type}|${id}`);
+        bump(`*|${id}`);
+      }
+    }
     return map;
   }, [items]);
-  const orphans = items.filter((item) => !item.industries.length).length;
-  const shown = items.filter((item) => (filter === 'all' ? true : filter === 'none' ? !item.industries.length : item.industries.includes(filter)));
-  const presetIndustries = filter !== 'all' && filter !== 'none' ? [filter] : [];
+  const perIndustry = useMemo(() => new Map(industries.map((ind) => [ind.id, counts.get(`*|${ind.id}`) ?? 0])), [industries, counts]);
+  const count = (type: string, industry: string) => counts.get(`${type}|${industry}`) ?? 0;
 
-  /** Nahrát soubor(y) → plný snímek + zmenšenina do úložiště. */
+  const matches = (item: GalleryItem) =>
+    (filter.type === 'all' || item.type === filter.type) &&
+    (filter.industry === 'all' ? true : filter.industry === 'none' ? !item.industries.length : item.industries.includes(filter.industry));
+  const overview = filter.type === 'all' && filter.industry === 'all';
+  const shown = overview ? [] : items.filter(matches);
+  const presetType: GalleryType = filter.type === 'all' ? 'web' : filter.type;
+  const presetIndustries = filter.industry !== 'all' && filter.industry !== 'none' ? [filter.industry] : [];
+  const presetText = `${GALLERY_TYPE_LABEL[presetType]}${presetIndustries.length ? ` → ${industryName(industries.find((i) => i.id === filter.industry), 'cs')}` : ''}`;
+
   const upload = async (file: File): Promise<Pick<GalleryInput, 'url' | 'thumb' | 'width' | 'height' | 'owned'>> => {
     const bitmap = await createImageBitmap(file);
     try {
@@ -111,14 +145,14 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const list = Array.from(files).slice(0, 30);
+    const list = Array.from(files).slice(0, 40);
     setQueue(list.map((f) => ({ name: f.name, state: 'čeká' })));
     const ready: GalleryInput[] = [];
     for (const [i, file] of list.entries()) {
       setQueue((q) => q.map((row, k) => (k === i ? { ...row, state: 'nahrávám…' } : row)));
       try {
         const up = await upload(file);
-        ready.push({ ...up, industries: presetIndustries, label: file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 80) });
+        ready.push({ ...up, type: presetType, industries: presetIndustries, label: file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 80) });
         setQueue((q) => q.map((row, k) => (k === i ? { ...row, state: 'hotovo' } : row)));
       } catch (e) {
         setQueue((q) => q.map((row, k) => (k === i ? { ...row, state: `chyba: ${e instanceof Error ? e.message : String(e)}` } : row)));
@@ -128,7 +162,6 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
     window.setTimeout(() => setQueue((q) => q.filter((row) => !row.state.startsWith('hotovo'))), 2500);
   };
 
-  /** Snímek z hotového projektu: plný obrázek zůstane projektu, nahraje se jen zmenšenina. */
   const addFromProject = async (project: ProjectRow) => {
     setQueue([{ name: project.name, state: 'připravuji…' }]);
     try {
@@ -141,15 +174,7 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
       if (upErr) throw upErr;
       const ok = apply(
         await addGalleryItems([
-          {
-            url: project.desktop_image,
-            thumb: slot.thumb.publicUrl,
-            width: project.desktop_width,
-            height: project.desktop_height,
-            industries: presetIndustries,
-            label: project.name,
-            owned: [slot.thumb.path],
-          },
+          { type: 'web', url: project.desktop_image, thumb: slot.thumb.publicUrl, width: project.desktop_width, height: project.desktop_height, industries: presetIndustries, label: project.name, owned: [slot.thumb.path] },
         ]),
       );
       setQueue(ok ? [] : [{ name: project.name, state: 'chyba' }]);
@@ -162,35 +187,34 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
     if (!file) return;
     setQueue([{ name: file.name, state: 'vyměňuji…' }]);
     try {
-      const up = await upload(file);
-      apply(await updateGalleryItem(item.id, up));
+      apply(await updateGalleryItem(item.id, await upload(file)));
       setQueue([]);
     } catch (e) {
       setQueue([{ name: file.name, state: `chyba: ${e instanceof Error ? e.message : String(e)}` }]);
     }
   };
 
-  const toggleIndustry = async (item: GalleryItem, id: string) => {
-    const next = item.industries.includes(id) ? item.industries.filter((x) => x !== id) : [...item.industries, id];
-    setItems((list) => list.map((x) => (x.id === item.id ? { ...x, industries: next } : x)));
-    apply(await updateGalleryItem(item.id, { industries: next }));
+  const patch = async (item: GalleryItem, change: Partial<GalleryInput>) => {
+    setItems((list) => list.map((x) => (x.id === item.id ? { ...x, ...change } : x)));
+    apply(await updateGalleryItem(item.id, change));
   };
 
   const usedProjectUrls = new Set(items.map((item) => item.url));
   const projectChoices = projects.filter((p) => p.desktop_image && !usedProjectUrls.has(p.desktop_image));
+  const chip = (on: boolean, warn = false) =>
+    `rounded-full border px-3 py-1.5 text-xs transition-colors ${on ? 'border-[rgba(143,178,255,0.85)] bg-[rgba(31,91,255,0.2)] text-white' : warn ? 'border-[rgba(255,197,61,0.5)] text-[#ffe2a0]' : 'border-[var(--line)] text-muted hover:text-ink'}`;
+  const industryCols = [...industries.map((ind) => ({ id: ind.id, label: industryName(ind, 'cs') })), { id: 'none', label: 'Bez oboru' }];
 
   return (
     <div className="space-y-6 pb-28">
-      <IndustriesCard industries={industries} counts={counts} onSaved={(res) => apply(res)} />
-
       <Card
         title="Ukázky"
-        subtitle="Jen skutečné weby studia. Každá ukázka musí mít aspoň jeden obor — ve formuláři se ukáže zákazníkům z toho oboru."
+        subtitle={`${items.length} ukázek. Každá má typ projektu a obor — ve formuláři se zákazníkovi ukážou jen ty, které odpovídají jeho výběru.`}
         actions={
           <div className="flex flex-wrap gap-2">
-            <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-white shadow-[0_0_24px_var(--blue-glow)]">
+            <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-btn bg-[linear-gradient(120deg,var(--blue),var(--blue-bright))] px-3.5 font-display text-[10px] uppercase tracking-[0.12em] text-white shadow-[0_0_24px_var(--blue-glow)]" title={`Nahrané obrázky dostanou: ${presetText}`}>
               <ImagePlus className="h-3.5 w-3.5" aria-hidden />
-              Nahrát obrázky
+              Nahrát do: {presetText}
               <input
                 type="file"
                 multiple
@@ -212,7 +236,7 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
       >
         {fromProjects && projectChoices.length ? (
           <div className="mb-5 rounded-xl border border-[rgba(110,150,255,0.2)] bg-white/[0.02] p-3">
-            <p className="mb-2 text-xs text-muted">Snímek webu z hotového projektu (záložka Projekty). {presetIndustries.length ? `Přidá se do oboru „${industryName(industries.find((i) => i.id === filter), 'cs')}".` : 'Obor pak vyberete u ukázky.'}</p>
+            <p className="mb-2 text-xs text-muted">Snímek webu z hotového projektu (záložka Projekty) — přidá se jako Web.</p>
             <div className="flex flex-wrap gap-2">
               {projectChoices.map((project) => (
                 <button key={project.id} type="button" onClick={() => addFromProject(project)} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white/[0.03] py-1 pl-1 pr-3 text-xs text-ink hover:border-[rgba(80,120,255,0.55)]">
@@ -225,7 +249,6 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
             </div>
           </div>
         ) : null}
-
         {queue.length ? (
           <ul className="mb-4 space-y-1 text-xs">
             {queue.map((row, i) => (
@@ -237,54 +260,117 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
         ) : null}
         {error ? <p className="mb-4 text-sm text-[#ffb3be]">{error}</p> : null}
 
-        {/* filtr podle oboru */}
-        <div className="mb-5 flex flex-wrap gap-1.5">
-          {[
-            { id: 'all', label: 'Vše', n: items.length },
-            ...industries.map((ind) => ({ id: ind.id, label: industryName(ind, 'cs'), n: counts.get(ind.id) ?? 0 })),
-            ...(orphans ? [{ id: 'none', label: 'Bez oboru', n: orphans }] : []),
-          ].map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => setFilter(chip.id)}
-              aria-pressed={filter === chip.id}
-              className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                filter === chip.id
-                  ? 'border-[rgba(143,178,255,0.85)] bg-[rgba(31,91,255,0.2)] text-white'
-                  : chip.id === 'none'
-                    ? 'border-[rgba(255,197,61,0.5)] text-[#ffe2a0]'
-                    : 'border-[var(--line)] text-muted hover:text-ink'
-              }`}
-            >
-              {chip.label} <span className="opacity-60">{chip.n}</span>
+        {/* filtry: typ projektu + obor */}
+        <div ref={listRef} className="scroll-mt-40 space-y-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 w-12 text-[10px] uppercase tracking-[0.14em] text-muted">Typ</span>
+            <button type="button" onClick={() => setFilter({ ...filter, type: 'all' })} aria-pressed={filter.type === 'all'} className={chip(filter.type === 'all')}>
+              Vše <span className="opacity-60">{items.length}</span>
             </button>
-          ))}
+            {GALLERY_TYPES.map((type) => (
+              <button key={type} type="button" onClick={() => setFilter({ ...filter, type })} aria-pressed={filter.type === type} className={chip(filter.type === type)}>
+                {GALLERY_TYPE_LABEL[type]} <span className="opacity-60">{count(type, '*')}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 w-12 text-[10px] uppercase tracking-[0.14em] text-muted">Obor</span>
+            <button type="button" onClick={() => setFilter({ ...filter, industry: 'all' })} aria-pressed={filter.industry === 'all'} className={chip(filter.industry === 'all')}>
+              Vše
+            </button>
+            {industryCols.map((col) => {
+              const n = filter.type === 'all' ? (col.id === 'none' ? items.filter((i) => !i.industries.length).length : perIndustry.get(col.id) ?? 0) : count(filter.type, col.id);
+              return (
+                <button key={col.id} type="button" onClick={() => setFilter({ ...filter, industry: col.id })} aria-pressed={filter.industry === col.id} className={chip(filter.industry === col.id)}>
+                  {col.label} <span className="opacity-60">{n}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {shown.length ? (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {shown.map((item) => (
-              <GalleryCard
-                key={item.id}
-                item={item}
-                industries={industries}
-                onToggle={(id) => toggleIndustry(item, id)}
-                onLabel={async (label) => apply(await updateGalleryItem(item.id, { label }))}
-                onReplace={(file) => replace(item, file)}
-                onDelete={async () => {
-                  if (!window.confirm('Smazat ukázku? Obrázek zmizí i z formuláře.')) return;
-                  apply(await deleteGalleryItem(item.id));
-                }}
-              />
-            ))}
-          </ul>
+        {overview ? (
+          /* přehled: tabulka typ × obor, klepnutí = jen ta kombinace */
+          <div className="mt-6 overflow-x-auto rounded-xl border border-[rgba(110,150,255,0.16)]">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <thead>
+                <tr className="text-left text-[10px] uppercase tracking-[0.12em] text-muted">
+                  <th className="px-3 py-2.5 font-normal">
+                    <span className="inline-flex items-center gap-1.5">
+                      <LayoutGrid className="h-3.5 w-3.5" aria-hidden /> Obor ╲ Typ
+                    </span>
+                  </th>
+                  {GALLERY_TYPES.map((type) => (
+                    <th key={type} className="px-2 py-2.5 text-center font-normal">
+                      <button type="button" onClick={() => setFilter({ type, industry: 'all' }, true)} className="hover:text-ink">
+                        {GALLERY_TYPE_LABEL[type]}
+                      </button>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {industryCols.map((col) => (
+                  <tr key={col.id} className="border-t border-[rgba(110,150,255,0.1)]">
+                    <th className="px-3 py-2 text-left font-normal">
+                      <button type="button" onClick={() => setFilter({ type: 'all', industry: col.id }, true)} className="text-ink/90 hover:text-white">
+                        {col.label}
+                      </button>
+                    </th>
+                    {GALLERY_TYPES.map((type) => {
+                      const n = count(type, col.id);
+                      return (
+                        <td key={type} className="px-2 py-1.5 text-center">
+                          {n ? (
+                            <button type="button" onClick={() => setFilter({ type, industry: col.id }, true)} className="inline-grid h-8 min-w-12 place-items-center rounded-lg border border-[rgba(110,150,255,0.25)] bg-[rgba(31,91,255,0.1)] px-2 tabular-nums text-ink hover:border-[rgba(143,178,255,0.85)] hover:bg-[rgba(31,91,255,0.24)]">
+                              {n}
+                            </button>
+                          ) : (
+                            <span className="text-muted/50">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="border-t border-[rgba(110,150,255,0.1)] px-3 py-2 text-xs text-muted">Klepněte na číslo — zobrazí se jen ta kombinace (např. E-shop → Gastro a ubytování). Loga a aplikace bez oboru se ve formuláři ukazují u všech oborů.</p>
+          </div>
+        ) : shown.length ? (
+          <>
+            <p className="mt-5 text-xs text-muted">
+              {shown.length} ukázek · {filter.type === 'all' ? 'všechny typy' : GALLERY_TYPE_LABEL[filter.type]} · {filter.industry === 'all' ? 'všechny obory' : industryCols.find((c) => c.id === filter.industry)?.label}
+            </p>
+            <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {shown.slice(0, limit).map((item) => (
+                <GalleryCard
+                  key={item.id}
+                  item={item}
+                  industries={industries}
+                  onType={(type) => patch(item, { type })}
+                  onToggle={(id) => patch(item, { industries: item.industries.includes(id) ? item.industries.filter((x) => x !== id) : [...item.industries, id] })}
+                  onLabel={(label) => patch(item, { label })}
+                  onReplace={(file) => replace(item, file)}
+                  onDelete={async () => {
+                    if (!window.confirm('Smazat ukázku? Obrázek zmizí i z formuláře.')) return;
+                    apply(await deleteGalleryItem(item.id));
+                  }}
+                />
+              ))}
+            </ul>
+            {shown.length > limit ? (
+              <div className="mt-5 text-center">
+                <Btn onClick={() => setLimit((n) => n + PAGE)}>Zobrazit další ({shown.length - limit})</Btn>
+              </div>
+            ) : null}
+          </>
         ) : (
-          <p className="rounded-xl border border-dashed border-[var(--line)] p-6 text-center text-sm text-muted">
-            {items.length ? 'V tomhle oboru zatím nic není.' : 'Galerie je prázdná — nahrajte první snímky webů.'}
-          </p>
+          <p className="mt-6 rounded-xl border border-dashed border-[var(--line)] p-6 text-center text-sm text-muted">Pro tuhle kombinaci zatím nic není — zákazník ve formuláři uvidí zprávu „ozveme se s návrhem na míru“.</p>
         )}
       </Card>
+
+      <IndustriesCard industries={industries} counts={perIndustry} onSaved={(res) => apply(res)} />
     </div>
   );
 }
@@ -292,6 +378,7 @@ export function GalleryTab({ initialItems, initialIndustries, projects }: { init
 function GalleryCard({
   item,
   industries,
+  onType,
   onToggle,
   onLabel,
   onReplace,
@@ -299,60 +386,64 @@ function GalleryCard({
 }: {
   item: GalleryItem;
   industries: Industry[];
+  onType: (type: GalleryType) => void;
   onToggle: (id: string) => void;
   onLabel: (label: string) => void;
   onReplace: (file: File | undefined) => void;
   onDelete: () => void;
 }) {
   const [label, setLabel] = useState(item.label);
-  const missing = !item.industries.length;
+  const [open, setOpen] = useState(false);
+  // web a e-shop obor potřebují; loga a aplikace mohou být obecné
+  const missing = !item.industries.length && (item.type === 'web' || item.type === 'eshop');
   return (
     <li className={`overflow-hidden rounded-xl border bg-white/[0.02] ${missing ? 'border-[rgba(255,197,61,0.55)]' : 'border-[rgba(110,150,255,0.18)]'}`}>
-      <a href={item.url} target="_blank" rel="noreferrer" className="block aspect-[16/10] overflow-hidden bg-black/40" title="Otevřít celý obrázek">
+      <a href={item.video ?? item.url} target="_blank" rel="noreferrer" className="relative block aspect-[4/5] overflow-hidden bg-black/40" title="Otevřít celý náhled">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={item.thumb} alt="" className="h-full w-full object-cover object-top" loading="lazy" />
+        {item.video ? (
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+            <Play className="h-3 w-3 fill-white" aria-hidden /> video
+          </span>
+        ) : null}
       </a>
-      <div className="space-y-3 p-3">
-        <input
-          className={`${inputClass} !py-2 text-xs`}
-          value={label}
-          placeholder="Popisek (např. název projektu)"
-          onChange={(e) => setLabel(e.target.value)}
-          onBlur={() => label !== item.label && onLabel(label)}
-        />
-        <div>
-          <p className={`mb-1.5 text-[10px] uppercase tracking-[0.14em] ${missing ? 'text-[#ffe2a0]' : 'text-muted'}`}>{missing ? 'Vyberte aspoň jeden obor' : 'Obory'}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {industries.map((ind) => {
-              const on = item.industries.includes(ind.id);
-              return (
-                <button
-                  key={ind.id}
-                  type="button"
-                  onClick={() => onToggle(ind.id)}
-                  aria-pressed={on}
-                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-                    on ? 'border-[rgba(143,178,255,0.85)] bg-[rgba(31,91,255,0.22)] text-white' : 'border-[var(--line)] text-muted hover:text-ink'
-                  }`}
-                >
-                  {on ? <Check className="h-3 w-3" aria-hidden /> : null}
-                  {industryName(ind, 'cs')}
-                </button>
-              );
-            })}
-          </div>
+      <div className="space-y-2.5 p-3">
+        <div className="grid grid-cols-4 gap-1 rounded-lg border border-[var(--line)] p-0.5" role="radiogroup" aria-label="Typ projektu">
+          {GALLERY_TYPES.map((type) => (
+            <button key={type} type="button" role="radio" aria-checked={item.type === type} onClick={() => item.type !== type && onType(type)} className={`rounded-md px-1 py-1 text-[10.5px] transition-colors ${item.type === type ? 'bg-[rgba(31,91,255,0.3)] text-white' : 'text-muted hover:text-ink'}`}>
+              {type === 'logo' ? 'Logo' : GALLERY_TYPE_LABEL[type]}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-[rgba(110,150,255,0.12)] pt-3">
-          <span className="text-[11px] text-muted">{item.width} × {item.height} px</span>
-          <div className="flex gap-1.5">
-            <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-btn border border-[var(--line)] bg-white/[0.04] px-2.5 text-[11px] text-ink hover:border-[rgba(80,120,255,0.55)]">
-              <RefreshCw className="h-3 w-3" aria-hidden />
-              Vyměnit
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className={`block w-full truncate text-left text-xs ${missing ? 'text-[#ffe2a0]' : 'text-muted hover:text-ink'}`}>
+          {item.industries.length ? item.industries.map((id) => industryName(industries.find((i) => i.id === id), 'cs')).join(', ') : missing ? 'Vyberte obor' : 'Bez oboru — u všech oborů'}
+          <span className="ml-1 text-[var(--blue-bright)]">{open ? '▴' : '▾'}</span>
+        </button>
+        {open ? (
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap gap-1.5">
+              {industries.map((ind) => {
+                const on = item.industries.includes(ind.id);
+                return (
+                  <button key={ind.id} type="button" onClick={() => onToggle(ind.id)} aria-pressed={on} className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${on ? 'border-[rgba(143,178,255,0.85)] bg-[rgba(31,91,255,0.22)] text-white' : 'border-[var(--line)] text-muted hover:text-ink'}`}>
+                    {on ? <Check className="h-3 w-3" aria-hidden /> : null}
+                    {industryName(ind, 'cs')}
+                  </button>
+                );
+              })}
+            </div>
+            <input className={`${inputClass} !py-2 text-xs`} value={label} placeholder="Popisek" onChange={(e) => setLabel(e.target.value)} onBlur={() => label !== item.label && onLabel(label)} />
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between gap-2 border-t border-[rgba(110,150,255,0.12)] pt-2.5">
+          <span className="min-w-0 truncate text-[11px] text-muted" title={item.label}>{item.label || `${item.width} × ${item.height}`}</span>
+          <div className="flex shrink-0 gap-1.5">
+            <label className="grid h-8 w-8 cursor-pointer place-items-center rounded-btn border border-[var(--line)] bg-white/[0.04] text-ink hover:border-[rgba(80,120,255,0.55)]" title="Vyměnit obrázek">
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden />
               <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => onReplace(e.target.files?.[0])} />
             </label>
-            <button type="button" onClick={onDelete} className="inline-flex h-8 items-center gap-1.5 rounded-btn border border-[rgba(255,90,110,0.35)] px-2.5 text-[11px] text-[#ffc2cb] hover:border-[rgba(255,90,110,0.7)]">
-              <Trash2 className="h-3 w-3" aria-hidden />
-              Smazat
+            <button type="button" onClick={onDelete} title="Smazat" className="grid h-8 w-8 place-items-center rounded-btn border border-[rgba(255,90,110,0.35)] text-[#ffc2cb] hover:border-[rgba(255,90,110,0.7)]">
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
             </button>
           </div>
         </div>

@@ -613,7 +613,7 @@
       "captchaBroken": "The spam check couldn’t load in your browser (ad blocker?). Try reloading the page, or write to us directly at"
     },
     "gallery": {
-      "title": "Our websites for: {industry}",
+      "title": "Style examples: {what}",
       "hint": "Tap an image to enlarge it, tap the heart to mark what you like. You can pick several.",
       "more": "Show other options",
       "restart": "Browse the examples again",
@@ -631,7 +631,13 @@
       "counter": "Examples {from}–{to} of {total}",
       "error": "The examples couldn’t be loaded.",
       "retry": "Try again",
-      "react": "Great taste! We’ll keep that in mind for the design."
+      "react": "Great taste! We’ll keep that in mind for the design.",
+      "types": {
+        "web": "Website",
+        "eshop": "E-shop",
+        "logo": "Logo",
+        "app": "App"
+      }
     },
     "successNext": [
       "We’ll go through your answers and picked examples",

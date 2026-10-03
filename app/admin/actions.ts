@@ -13,7 +13,7 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { resolveSocial, type SocialInput } from '@/lib/social';
 import { INQUIRY_PREFIX, readInquiries, type Inquiry, type InquiryStatus } from '@/lib/content/inquiries';
 import { defaultIndustries } from '@/lib/content/server';
-import { OTHER_INDUSTRY, sanitizeGallery, sanitizeIndustries, type GalleryItem, type Industry } from '@/lib/content/gallery';
+import { GALLERY_TYPES, OTHER_INDUSTRY, sanitizeGallery, sanitizeIndustries, type GalleryItem, type Industry } from '@/lib/content/gallery';
 export type { Inquiry, InquiryStatus } from '@/lib/content/inquiries';
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -446,11 +446,12 @@ export async function createGalleryUpload(): Promise<
   }
 }
 
-export type GalleryInput = Pick<GalleryItem, 'url' | 'thumb' | 'width' | 'height' | 'industries' | 'label' | 'owned'>;
+export type GalleryInput = Pick<GalleryItem, 'type' | 'url' | 'thumb' | 'width' | 'height' | 'industries' | 'label' | 'owned'>;
 
 function checkInput(input: GalleryInput, industryIds: Set<string>) {
   if (!ownStorageUrl(input.url) || !ownStorageUrl(input.thumb)) throw new Error('Obrázek musí být nahraný do úložiště webu.');
   return {
+    type: GALLERY_TYPES.includes(input.type) ? input.type : ('web' as const),
     url: input.url,
     thumb: input.thumb,
     width: Math.max(0, Math.round(Number(input.width) || 0)),

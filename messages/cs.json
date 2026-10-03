@@ -613,7 +613,7 @@
       "captchaBroken": "Ověření proti spamu se ve vašem prohlížeči nenačetlo (blokátor reklam?). Zkuste obnovit stránku, nebo nám napište přímo na"
     },
     "gallery": {
-      "title": "Naše weby pro obor: {industry}",
+      "title": "Ukázky stylu: {what}",
       "hint": "Klepnutím obrázek zvětšíte, srdíčkem označíte, co se vám líbí. Můžete vybrat víc.",
       "more": "Zobrazit jiné varianty",
       "restart": "Projít ukázky znovu",
@@ -631,7 +631,13 @@
       "counter": "Ukázky {from}–{to} z {total}",
       "error": "Ukázky se nepodařilo načíst.",
       "retry": "Zkusit znovu",
-      "react": "Skvělý vkus! Podle toho se při návrhu zařídíme."
+      "react": "Skvělý vkus! Podle toho se při návrhu zařídíme.",
+      "types": {
+        "web": "Web",
+        "eshop": "E-shop",
+        "logo": "Logo",
+        "app": "Aplikace"
+      }
     },
     "successNext": [
       "Projdeme vaše odpovědi i vybrané ukázky",

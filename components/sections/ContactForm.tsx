@@ -22,7 +22,7 @@ import {
 } from '@/lib/contactSchema';
 import { site } from '@/content/site';
 import { useIndustries, useSiteContact } from '@/components/ContentProvider';
-import { industryName } from '@/lib/content/gallery';
+import { galleryTypesForNeeds, industryName } from '@/lib/content/gallery';
 import { IndustryGallery } from './IndustryGallery';
 import { SocialIcon } from '@/components/ui/SocialIcon';
 import { TURNSTILE_SITE_KEY, Turnstile, type TurnstileEvent, type TurnstileHandle } from '@/components/ui/Turnstile';
@@ -749,6 +749,7 @@ export function Contact() {
                                 <IndustryGallery
                                   industryId={v.niche}
                                   industryLabel={industryName(industries.find((i) => i.id === v.niche), locale)}
+                                  types={galleryTypesForNeeds(v.needs)}
                                   likes={v.likes ?? []}
                                   onLikes={(ids) => setValue('likes', ids)}
                                   onLike={() => setSaid(t('gallery.react'))}
