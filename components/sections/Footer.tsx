@@ -136,7 +136,7 @@ export function Footer() {
         viewport={{ once: true }}
         transition={{ duration: 1 }}
       >
-        <Logo height={110} className="!h-auto w-full max-w-4xl" />
+        <Logo height={110} className="!h-auto max-w-full" />
       </motion.div>
     </footer>
   );

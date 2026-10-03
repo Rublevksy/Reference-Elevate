@@ -3,19 +3,21 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Logo } from '@/components/ui/Logo';
+import { whenHeroPainted } from '@/lib/heroReveal';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const SEEN_KEY = 'elevate:preloader';
 const EASE = [0.76, 0, 0.24, 1] as const;
 
-/** Načtení stránky (fonty + load), nejdéle však `cap` ms. */
+/**
+ * Připraveno k odkrytí: písma a pozadí úvodní obrazovky, nejdéle však `cap` ms.
+ * Na událost `load` se nečeká — tu zdržují obrázky hluboko pod úvodní
+ * obrazovkou (na pomalém připojení by clona visela zbytečně dlouho).
+ */
 function pageReady(cap: number) {
-  const load = new Promise<void>((resolve) => {
-    if (document.readyState === 'complete') resolve();
-    else window.addEventListener('load', () => resolve(), { once: true });
-  });
   const fonts = document.fonts?.ready.then(() => undefined) ?? Promise.resolve();
-  return Promise.race([Promise.all([load, fonts]), new Promise<void>((resolve) => window.setTimeout(resolve, cap))]);
+  const hero = document.getElementById('hero') || document.getElementById('hero-m') ? whenHeroPainted() : Promise.resolve();
+  return Promise.race([Promise.all([fonts, hero]), new Promise<void>((resolve) => window.setTimeout(resolve, cap))]);
 }
 
 /**
@@ -53,7 +55,7 @@ export function Preloader() {
     // úvod běží od prvního vykreslení (CSS) — minimum se počítá od začátku načítání
     const minimum = new Promise<void>((resolve) => window.setTimeout(resolve, Math.max(250, 1500 - performance.now())));
 
-    Promise.all([minimum, pageReady(2600)]).then(() => {
+    Promise.all([minimum, pageReady(2000)]).then(() => {
       if (cancelled) return;
       // cíl letu: logo v horní liště (stejná velikost jako všude na webu)
       const target = document.querySelector('header [role="img"][aria-label="ELEVATE"]');

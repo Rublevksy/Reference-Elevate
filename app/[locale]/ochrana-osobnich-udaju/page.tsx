@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { locales } from '@/i18n/routing';
+import { htmlLang, locales, type Locale } from '@/i18n/routing';
 import { site } from '@/content/site';
 import { getSettings } from '@/lib/content/server';
 
 type Params = { params: Promise<{ locale: string }> };
+
+/** Datum poslední úpravy textu (při změně textů v messages/*.json přepsat). */
+const UPDATED = '2026-10-03';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -39,7 +42,8 @@ export default async function PrivacyPage({ params }: Params) {
     body
       .replace('{company}', company)
       .replace('{city}', settings.city)
-      .replace('{postal}', site.address.postalCode)
+      // PSČ jen když je vyplněné — vymyšlené do právního textu nepatří
+      .replace('{postal}, ', site.address.postalCode ? `${site.address.postalCode}, ` : '')
       .replace('{email}', settings.contactEmail);
 
   return (
@@ -59,7 +63,9 @@ export default async function PrivacyPage({ params }: Params) {
         ))}
       </div>
 
-      <p className="mt-14 text-xs text-muted">{t('updated')}: [PLACEHOLDER]</p>
+      <p className="mt-14 text-xs text-muted">
+        {t('updated')}: {new Intl.DateTimeFormat(htmlLang[locale as Locale] ?? locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${UPDATED}T12:00:00Z`))}
+      </p>
     </article>
   );
 }

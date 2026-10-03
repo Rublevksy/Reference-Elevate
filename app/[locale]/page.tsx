@@ -8,6 +8,7 @@ import { Cases } from '@/components/sections/Cases';
 import { Pricing } from '@/components/sections/Pricing';
 import { Contact } from '@/components/sections/ContactForm';
 import { TransitionScene } from '@/components/sections/TransitionScene';
+import { WarmAssets } from '@/components/ui/WarmAssets';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -29,6 +30,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Pricing />
       <TransitionScene variant="fanRing" />
       <Contact />
+      <WarmAssets />
     </>
   );
 }

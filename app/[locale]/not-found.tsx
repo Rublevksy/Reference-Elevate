@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+
+/** Stránka 404 má vlastní titulek (ne titulek úvodní stránky) a neindexuje se. */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('notFound');
+  return { title: t('title'), robots: { index: false, follow: true } };
+}
 
 export default function NotFound() {
   const t = useTranslations('notFound');

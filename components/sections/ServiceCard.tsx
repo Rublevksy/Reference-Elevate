@@ -22,6 +22,7 @@ function Watermark({ className = '' }: { className?: string }) {
 export const ServiceCardBack = memo(function ServiceCardBack({ item, label, className = '' }: { item: Item; label: string; className?: string }) {
   return (
     <span
+      aria-hidden
       className={`absolute inset-0 overflow-hidden rounded-2xl border border-[rgba(80,120,255,0.28)] ${className}`}
       style={{ background: 'linear-gradient(170deg,#0c1638 0%,#070b1c 58%,#0a1330 100%)' }}
     >
@@ -50,19 +51,75 @@ export const ServiceCardBack = memo(function ServiceCardBack({ item, label, clas
   );
 });
 
-export const ServiceCardFront = memo(function ServiceCardFront({ item, title, className = '' }: { item: Item; title: string; className?: string }) {
+/** Šířka jednoho znaku verzálkového názvu vůči velikosti písma (Unbounded Bold, s rezervou pro cyrilici). */
+const TITLE_CHAR = 0.96;
+
+/**
+ * Název na kartě: poslední slovo stojí vždy samo na posledním řádku (vedle
+ * něj je v rohu šipka), zbytek nad ním. Dlouhé slovo se spojovníkem
+ * („Интернет-магазины") se dělí za spojovníkem, krátké („E-shopy") ne.
+ */
+function splitTitle(title: string) {
+  const words = title.trim().split(/\s+/);
+  let tail = words.pop() ?? '';
+  const hyphen = tail.lastIndexOf('-');
+  if (tail.length > 10 && hyphen > 0 && hyphen < tail.length - 1) {
+    words.push(tail.slice(0, hyphen + 1));
+    tail = tail.slice(hyphen + 1);
+  }
+  return { head: words, tail };
+}
+
+/**
+ * Velikost názvu: 15 px, nebo méně, když by se nejdelší slovo nevešlo —
+ * řádky nad posledním mají celou šířku karty, poslední končí před šipkou.
+ * Jednotka cqw = šířka vnitřku karty, takže platí pro stůl služeb, mobilní
+ * řadu i letící klony. Počítá se pro celou sadu, ať mají karty stejné písmo.
+ */
+export function cardTitleSize(titles: string[]) {
+  let inner = 1;
+  let last = 1;
+  for (const title of titles) {
+    const { head, tail } = splitTitle(title);
+    last = Math.max(last, tail.length);
+    for (const word of head) inner = Math.max(inner, word.length);
+  }
+  return `min(15px, calc(100cqw / ${(inner * TITLE_CHAR).toFixed(2)}), calc((100cqw - 16px) / ${(last * TITLE_CHAR).toFixed(2)}))`;
+}
+
+export const ServiceCardFront = memo(function ServiceCardFront({
+  item,
+  title,
+  titleSize,
+  className = '',
+}: {
+  item: Item;
+  title: string;
+  /** společná velikost názvu pro celou sadu karet (cardTitleSize) */
+  titleSize?: string;
+  className?: string;
+}) {
+  const { head, tail } = splitTitle(title);
   return (
     <span className={`absolute inset-0 overflow-hidden rounded-2xl p-px ${className}`} style={{ background: 'linear-gradient(160deg,#8fb2ff,#1f5bff 45%,#00c2ff)' }}>
       <span
-        className="relative flex h-full w-full flex-col rounded-[15px] p-4"
-        style={{ background: 'linear-gradient(170deg,rgba(22,38,92,0.98),rgba(7,11,26,0.98) 70%)', boxShadow: 'inset 0 -40px 60px -30px rgba(31,91,255,0.55)' }}
+        className="relative flex h-full w-full flex-col rounded-[15px] p-4 text-left"
+        style={{ containerType: 'inline-size', background: 'linear-gradient(170deg,rgba(22,38,92,0.98),rgba(7,11,26,0.98) 70%)', boxShadow: 'inset 0 -40px 60px -30px rgba(31,91,255,0.55)' }}
       >
         <Watermark className="-right-6 -top-6 h-32 w-24 text-[rgba(143,178,255,0.16)]" />
-        <span className="font-display text-xs tracking-[0.22em] text-[#9fc0ff]">{item.num}</span>
+        <span aria-hidden className="font-display text-xs tracking-[0.22em] text-[#9fc0ff]">{item.num}</span>
         <span className="mt-auto grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--blue),var(--blue-bright))] text-white shadow-[0_0_26px_rgba(31,91,255,0.7)]">
           <Icon name={item.icon} className="h-6 w-6" />
         </span>
-        <span className="mt-3 font-display text-[15px] font-bold uppercase leading-[1.1] text-ink">{title}</span>
+        <span className="mt-3 font-display text-[15px] font-bold uppercase leading-[1.1] text-ink" style={{ fontSize: titleSize ?? cardTitleSize([title]) }}>
+          {head.length ? (
+            <>
+              {head.join(' ')}
+              <br />
+            </>
+          ) : null}
+          {tail}
+        </span>
         <svg viewBox={SYMBOL_VIEWBOX} aria-hidden className="absolute bottom-4 right-4 h-4 w-3 text-[var(--blue-bright)]">
           <polygon points={SYMBOL_POINTS} fill="currentColor" />
         </svg>

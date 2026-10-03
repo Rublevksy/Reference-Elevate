@@ -101,7 +101,8 @@ function Cap({ on, onClick, disc, children }: { on: boolean; onClick: () => void
   return (
     <button type="button" aria-pressed={on} onClick={onClick} className="ga-cap">
       {disc ? <i className="ga-cap-disc">{disc}</i> : <i className="ga-cap-dot">{on ? <Check size={13} strokeWidth={3.4} /> : null}</i>}
-      <span>{children}</span>
+      {/* slovo se spojovníkem („e-commerce") se uprostřed neláme */}
+      <span>{typeof children === 'string' ? children.replace(/(\p{L})-(\p{L})/gu, '$1\u2011$2') : children}</span>
     </button>
   );
 }
@@ -168,6 +169,7 @@ export function Contact() {
   const [captchaAsk, setCaptchaAsk] = useState(false);
   const [captchaBroken, setCaptchaBroken] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const peekRef = useRef<HTMLSpanElement>(null);
   const nicheDetailRef = useRef<HTMLInputElement | null>(null);
 
   const steps = t.raw('steps') as string[];
@@ -433,6 +435,20 @@ export function Contact() {
     return () => observer.disconnect();
   }, []);
 
+  // telefon: přilepená lišta s tlačítkem vyjede, až je z formuláře vidět stepper a nadpis
+  // (dokud panel jen vykukuje zespodu, překrývala by je)
+  useEffect(() => {
+    const panel = cardRef.current;
+    const mark = peekRef.current;
+    if (!panel || !mark) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => panel.toggleAttribute('data-peek', !entry.isIntersecting && entry.boundingClientRect.top > 0),
+      { rootMargin: '0px 0px -320px 0px' },
+    );
+    observer.observe(mark);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section id="kontakt" className="relative overflow-x-clip py-20 md:py-28" aria-labelledby="kontakt-title">
       <div className="shell max-sm:px-3">
@@ -455,6 +471,7 @@ export function Contact() {
           </div>
 
           <div ref={cardRef} className="ga-panel scroll-mt-24">
+            <span ref={peekRef} aria-hidden className="pointer-events-none absolute left-0 top-0 h-px w-px" />
             {/* průběh: kapsle, aktivní krok svítí, hotové jdou rozkliknout */}
             <ol className="ga-steps" aria-label={t('stepLabel')}>
               {steps.map((label, i) => {
@@ -462,9 +479,11 @@ export function Contact() {
                 const state = done || i < step ? 'done' : i === step ? 'current' : 'todo';
                 return (
                   <li key={label} data-state={state}>
-                    <button type="button" className="ga-step" onClick={() => void goStep(i)} disabled={!reachable} aria-current={state === 'current' ? 'step' : undefined} aria-label={`${t('stepLabel')} ${i + 1}: ${label}`}>
-                      <span className="ga-step-n">{state === 'done' ? <Check size={12} strokeWidth={3.2} aria-hidden /> : i + 1}</span>
-                      <span className="ga-step-l">{label}</span>
+                    <button type="button" className="ga-step" onClick={() => void goStep(i)} disabled={!reachable} aria-current={state === 'current' ? 'step' : undefined}>
+                      {/* název pro čtečky zvlášť („Krok 2: Výchozí stav") — na telefonu je popisek neaktivních kroků skrytý */}
+                      <span className="sr-only">{`${t('stepLabel')} ${i + 1}: ${label}`}</span>
+                      <span className="ga-step-n" aria-hidden>{state === 'done' ? <Check size={12} strokeWidth={3.2} aria-hidden /> : i + 1}</span>
+                      <span className="ga-step-l" aria-hidden>{label}</span>
                     </button>
                   </li>
                 );

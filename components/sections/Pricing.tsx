@@ -120,8 +120,11 @@ export function PriceCardFace({
             № {meta.num}
             <span className="text-[rgba(160,185,235,0.35)]"> / 05</span>
           </span>
-          {/* nezalamovat u spojovníku („E-shopy") */}
-          <span className="mt-0.5 block font-display text-[15px] font-bold uppercase leading-tight tracking-[0.06em] text-ink">{t(`${key}.name`).replace(/-/g, '\u2011')}</span>
+          {/* krátký název u spojovníku nezalamovat („E-shopy"); dlouhý se za ním zalomit smí, jinak ho karta ořízne.
+              Na počítači je místo vždy na dva řádky — ceny a perforace pak leží ve všech kartách stejně vysoko. */}
+          <span className="mt-0.5 block font-display text-[15px] font-bold uppercase leading-tight tracking-[0.06em] text-ink lg:min-h-[2.5em]">
+            {t(`${key}.name`).length <= 10 ? t(`${key}.name`).replace(/-/g, '\u2011') : t(`${key}.name`)}
+          </span>
         </span>
       </div>
 

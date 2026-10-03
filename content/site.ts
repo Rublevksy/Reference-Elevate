@@ -18,7 +18,7 @@ export const site = {
   address: {
     street: 'Praha', // PLACEHOLDER
     city: 'Praha',
-    postalCode: '110 00', // PLACEHOLDER
+    postalCode: '' as string, // PLACEHOLDER: skutečné PSČ sídla (prázdné = v textech se neuvádí)
     country: 'CZ',
   },
   ico: '', // PLACEHOLDER

@@ -24,6 +24,9 @@
   html {
     scroll-behavior: auto;
     -webkit-tap-highlight-color: transparent;
+    /* místo pro posuvník zůstává i při zamčeném skrolu (úvodní clona, galerie) —
+       jinak na Windows obsah při odemčení poskočí o šířku posuvníku */
+    scrollbar-gutter: stable;
   }
 
   /* Lenis drives the scroll; native smooth scrolling would fight it. */
@@ -306,8 +309,8 @@
 
 /* přeliv světla po logu (úvodní clona, obrazovka údržby) — maska ve tvaru loga */
 .logo-shimmer {
-  -webkit-mask: url('/brand/logo-elevate.png') center / 100% 100% no-repeat;
-  mask: url('/brand/logo-elevate.png') center / 100% 100% no-repeat;
+  -webkit-mask: url('/brand/logo-mask.webp') center / 100% 100% no-repeat;
+  mask: url('/brand/logo-mask.webp') center / 100% 100% no-repeat;
   background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, rgba(160, 205, 255, 0.6) 54%, transparent 64%);
   background-size: 260% 100%;
   background-repeat: no-repeat;
@@ -330,6 +333,16 @@
   animation-delay: calc(1.55s + var(--i, 0) * 0.06s);
 }
 .pl-seen .hero-word { animation-delay: calc(0.15s + var(--i, 0) * 0.05s); }
+/* popisek a tlačítka pod nadpisem: stejný nástup v CSS — nečekají na skripty */
+.hero-rise {
+  animation: hero-rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 1.85s;
+}
+.pl-seen .hero-rise { animation-delay: 0.4s; }
+@keyframes hero-rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
 @keyframes hero-word-in {
   from { opacity: 0; transform: translateY(45%); }
   to { opacity: 1; transform: none; }
@@ -341,7 +354,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .hero-word { animation: none; }
+  .hero-word,
+  .hero-rise { animation: none; }
   .beam,
   .platform-spin,
   .column-breathe { animation: none !important; }
@@ -456,6 +470,7 @@
 /* kapsle voleb */
 .ga-caps { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
 .ga-cap { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 7px 18px 7px 7px; border-radius: 999px; font-size: 14px; line-height: 1.2; text-align: left; color: rgba(216, 224, 248, 0.9); background: rgba(255, 255, 255, 0.045); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11); transition: color 0.25s ease, background 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.ga-cap > span { text-wrap: balance; }
 .ga-cap-dot, .ga-cap-disc { position: relative; display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; overflow: hidden; font-style: normal; transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease; }
 .ga-cap-dot { color: #3040d8; background: rgba(6, 8, 24, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
 .ga-cap-disc { color: #b9c6ff; background: rgba(120, 130, 255, 0.14); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2); }
@@ -663,6 +678,8 @@
   .ga-title { margin-top: 26px; }
   .ga-label { margin-top: 28px; }
   .ga-caps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* lichá poslední volba („Nevím, poraďte mi") zabere celý řádek — text se neláme po slovech */
+  .ga-caps > .ga-cap:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; }
   .ga-cap { min-height: 52px; padding-right: 10px; font-size: 13.5px; }
   .ga-cap-dot, .ga-cap-disc { width: 32px; height: 32px; }
   .ga-opts { grid-template-columns: 1fr; gap: 8px; }
@@ -695,10 +712,17 @@
   .ga-dots { flex-basis: 100%; }
   .ga-more { flex: 1; justify-content: center; height: 50px; font-size: 14px; }
   /* akce přilepené dole, tlačítko přes celou šířku */
-  .ga-actions { position: sticky; bottom: 0; z-index: 6; gap: 10px; margin-top: 22px; padding: 14px var(--pad) max(18px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(12, 14, 40, 0), rgba(12, 14, 40, 0.96) 36%); }
+  .ga-actions {
+    position: sticky; bottom: 0; z-index: 6; gap: 10px; margin-top: 22px; padding: 14px var(--pad) max(18px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(12, 14, 40, 0), rgba(12, 14, 40, 0.98) 30%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  }
+  /* formulář teprve vjíždí zespodu: lišta počká, až je vidět nadpis kroku (jinak by ho překryla) */
+  .ga-panel[data-peek] .ga-actions { transform: translateY(110%); opacity: 0; pointer-events: none; }
   .ga-back, .ga-cta { height: 62px; }
   .ga-back { width: 62px; background: rgba(40, 46, 100, 0.9); }
-  .ga-cta { flex: 1; min-width: 0; margin-left: 0; -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(180deg, rgba(96, 110, 220, 0.72), rgba(48, 50, 130, 0.8)); }
+  /* neprůhledné: přilepené tlačítko jede přes obsah formuláře a nesmí jím prosvítat text */
+  .ga-cta { flex: 1; min-width: 0; margin-left: 0; -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(180deg, #4d59b4, #2b2d75); }
   .ga-back:disabled { display: none; }
   /* úspěch */
   .ga-success { padding: 36px 0 30px; }

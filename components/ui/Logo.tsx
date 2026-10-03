@@ -24,6 +24,9 @@ export function Logo({
 }) {
   const reduced = useReducedMotion();
   const width = Math.round((logo.width / logo.height) * height);
+  // malá loga (lišta, úvodní clona, patička) sdílejí jednu velikost souboru —
+  // jinak prohlížeč přednačte dvě různé a jednu z nich zahodí
+  const sizes = width <= 300 ? '300px' : `${width}px`;
 
   return (
     <span
@@ -39,7 +42,7 @@ export function Logo({
         height={height}
         width={width}
         priority={priority}
-        sizes={`${width * 2}px`}
+        sizes={sizes}
         className="h-full w-full select-none"
       />
 

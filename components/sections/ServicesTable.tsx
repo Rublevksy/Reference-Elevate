@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { subscribeHeroFrame, type Pt } from '@/lib/heroScreen';
 import { ease, seg } from '@/lib/fx';
 import { scrollToId } from '@/lib/scrollTo';
-import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
+import { ServiceCardBack, ServiceCardFront, cardTitleSize } from './ServiceCard';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import { PlatformScene } from './PlatformScene';
 
@@ -77,6 +77,8 @@ const quadBezier = (a: Pt, c: Pt, b: Pt, t: number): Pt => ({
 export function ServicesTable() {
   const t = useTranslations('services');
   const tItems = useTranslations('services.items');
+  // jedna velikost názvu pro všech pět karet (podle nejdelšího slova v daném jazyce)
+  const titleSize = cardTitleSize(services.map((item) => tItems(`${item.slug}.card`)));
   const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -449,7 +451,7 @@ export function ServicesTable() {
                 >
                   <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
                   <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
-                    <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                    <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                   </span>
                 </motion.div>
               </motion.div>
@@ -468,13 +470,12 @@ export function ServicesTable() {
             key={item.slug}
             type="button"
             onClick={() => scrollToId(`sluzba-${item.slug}`)}
-            aria-label={tItems(`${item.slug}.card`)}
             className="relative aspect-[150/240] w-[38vw] max-w-[180px] shrink-0 snap-start rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-bright)]"
             style={flat ? undefined : { perspective: 900 }}
           >
             {flat ? (
               <span className="absolute inset-0 rounded-2xl" style={{ boxShadow: '0 0 30px -6px rgba(31,91,255,0.5)' }}>
-                <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
               </span>
             ) : (
               <span
@@ -483,7 +484,7 @@ export function ServicesTable() {
               >
                 <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
                 <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)' }}>
-                  <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                  <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                 </span>
               </span>
             )}
@@ -506,7 +507,7 @@ export function ServicesTable() {
                   <div className="preserve-3d relative h-full w-full">
                     <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
                     <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
-                      <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+                      <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
                     </span>
                   </div>
                 </div>

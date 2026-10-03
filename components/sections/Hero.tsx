@@ -4,7 +4,7 @@ import { motion, useMotionValueEvent, useScroll, useTransform } from 'framer-mot
 import { useLocale, useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeroBook, HeroLink } from '@/components/ui/HeroCta';
-import { markHeroRevealed } from '@/lib/heroReveal';
+import { markHeroPainted, markHeroRevealed } from '@/lib/heroReveal';
 import { introSeen } from '@/lib/scrollTo';
 import { SITE_SHOT, anchorBox, coverZoom, homography, lerpQuad, publishHeroFrame, quadCenter, screenQuad, type Quad } from '@/lib/heroScreen';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -17,6 +17,9 @@ const HEADING_SIZE: Record<string, string> = {
   ru: 'text-[clamp(1.7rem,2.5vw,2.6rem)]',
   uk: 'text-[clamp(1.7rem,2.5vw,2.6rem)]',
 };
+
+/** Průhledný pixel — výchozí `src` obrázku, jehož skutečný zdroj vybírá <source media>. */
+const BLANK_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
 const DESKTOP_FRAMES = 361;
 const MOBILE_FRAMES = 181;
@@ -239,6 +242,7 @@ export function Hero() {
       await loadOne(0);
       if (cancelled) return;
       setReady(true);
+      markHeroPainted();
       const CONCURRENCY = 6;
       let next = 1;
       await Promise.all(
@@ -606,7 +610,7 @@ export function Hero() {
             style={{ width: SITE_SHOT.w, height: SITE_SHOT.h, opacity: 0 }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/hero/site-shot-${locale}.webp`} alt="" className="relative h-full w-full" />
+            <img src={`/hero/site-shot-${locale}.webp`} alt="" loading="lazy" decoding="async" className="relative h-full w-full" />
             {/* světlo displeje: web zpočátku „prosvítá" modrou září scény */}
             <div
               ref={tintRef}
@@ -652,8 +656,9 @@ export function Hero() {
               </Fly>
 
               <Fly x={240} y={80} r={6}>
+                {/* stín pod textem: na užších oknech (4:3) leží popisek přes světlo lampy */}
                 <motion.p
-                  className="mt-5 max-w-sm text-base leading-relaxed text-muted"
+                  className="mt-5 max-w-sm text-base leading-relaxed text-muted [text-shadow:0_1px_18px_rgba(4,6,11,0.95),0_0_4px_rgba(4,6,11,0.7)]"
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={tr({ delay: 0.85, duration: 0.7 })}
@@ -708,6 +713,23 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
   const text = useRef<HTMLDivElement>(null);
   const hint = useRef<HTMLDivElement>(null);
   const shade = useRef<HTMLDivElement>(null);
+  const still = useRef<HTMLImageElement>(null);
+
+  // pozadí je načtené → úvodní clona se může odkrýt (lib/heroReveal)
+  useEffect(() => {
+    const img = still.current;
+    if (!img || !window.matchMedia('(max-width: 767px)').matches) return;
+    if (img.complete) {
+      markHeroPainted();
+      return;
+    }
+    img.addEventListener('load', markHeroPainted, { once: true });
+    img.addEventListener('error', markHeroPainted, { once: true });
+    return () => {
+      img.removeEventListener('load', markHeroPainted);
+      img.removeEventListener('error', markHeroPainted);
+    };
+  }, []);
 
   useScrollFrame(() => {
     const el = root.current;
@@ -739,8 +761,12 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
     <section id="hero-m" ref={root} className="relative md:hidden" style={{ height: reduced ? '100svh' : '145svh' }} aria-label={t('eyebrow')}>
       <div className="sticky top-0 h-[100svh] overflow-hidden">
         <div ref={bg} className="absolute inset-0 origin-[62%_24%] will-change-transform" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hero/mobile-still.webp" alt="" fetchPriority="high" className="h-full w-full object-cover object-[72%_0%]" />
+          {/* <picture> s media: pozadí se stahuje jen na telefonu (na počítači je sekce skrytá) */}
+          <picture>
+            <source media="(max-width: 767px)" srcSet="/hero/mobile-still.webp" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img ref={still} src={BLANK_PIXEL} alt="" fetchPriority="high" className="h-full w-full object-cover object-[72%_0%]" />
+          </picture>
         </div>
         {/* „bzučení" neonu — světlo šipky dýchá a se scrollem zesílí */}
         <div ref={glow} aria-hidden className="pointer-events-none absolute inset-0 mix-blend-screen" style={{ opacity: 0.45 }}>
@@ -782,17 +808,14 @@ function MobileHero({ headingParts, headingClass }: { headingParts: { text: stri
             animate={{ scaleX: 1 }}
             transition={tr({ delay: 0.9, duration: 0.8, ease: [0.16, 1, 0.3, 1] })}
           />
-          <motion.div
-            initial={reduced ? false : { opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={tr({ delay: 0.7, duration: 0.7 })}
-          >
+          {/* nástup v CSS jako u nadpisu — popisek a tlačítko jsou vidět, i když se skripty teprve stahují */}
+          <div className="hero-rise">
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-muted">{t('subtitle')}</p>
             <div className="mt-6 flex flex-col items-start gap-4">
               <HeroBook href="#kontakt" label={t('ctaBook')} note={t('ctaBookNote')} />
               <HeroLink href="#reference" label={t('ctaWork')} />
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* pozvánka ke skrolování — tah prstem */}

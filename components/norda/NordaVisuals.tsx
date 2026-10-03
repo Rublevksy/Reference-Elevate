@@ -149,13 +149,13 @@ export function WebVisual() {
         </div>
         <div style={{ position: 'absolute', left: d(262), top: d(44), width: d(240), height: d(170), borderRadius: '50%', background: 'radial-gradient(closest-side, rgba(31,91,255,0.45), transparent)' }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={SNEAKER} alt="" style={{ position: 'absolute', left: d(252), top: d(62), width: d(250), transform: 'rotate(-8deg)', filter: 'drop-shadow(0 18px 18px rgba(0,0,0,0.55))' }} />
+        <img src={SNEAKER} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', left: d(252), top: d(62), width: d(250), transform: 'rotate(-8deg)', filter: 'drop-shadow(0 18px 18px rgba(0,0,0,0.55))' }} />
         <span style={{ position: 'absolute', left: d(418), top: d(170), padding: `${d(4)} ${d(9)}`, borderRadius: 999, background: '#f3f5fa', color: '#0b1024', fontSize: d(9), fontWeight: 800 }}>{t('price')}</span>
         {/* produkty */}
         {products.map((p, i) => (
           <div key={p.name} style={{ position: 'absolute', left: d(20 + i * 166), top: d(232), width: d(154), height: d(106), borderRadius: d(10), background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={SNEAKER} alt="" style={{ position: 'absolute', left: d(22), top: d(8), width: d(110), filter: `hue-rotate(${p.hue}deg) saturate(${p.hue ? 0.8 : 1})` }} />
+            <img src={SNEAKER} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', left: d(22), top: d(8), width: d(110), filter: `hue-rotate(${p.hue}deg) saturate(${p.hue ? 0.8 : 1})` }} />
             <div style={{ position: 'absolute', left: d(10), bottom: d(8), fontSize: d(8.5), fontWeight: 700 }}>{p.name}</div>
             <div style={{ position: 'absolute', right: d(10), bottom: d(8), fontSize: d(8), color: 'rgba(220,228,255,0.6)' }}>{p.price}</div>
           </div>
@@ -281,7 +281,7 @@ export function ShopVisual() {
         </div>
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img data-m="sneaker" src={SNEAKER} alt="" style={at(NORDA_BOXES.sneaker, { transform: 'rotate(-6deg)', filter: 'drop-shadow(0 16px 14px rgba(11,16,36,0.35))' })} />
+      <img data-m="sneaker" src={SNEAKER} alt="" loading="lazy" decoding="async" style={at(NORDA_BOXES.sneaker, { transform: 'rotate(-6deg)', filter: 'drop-shadow(0 16px 14px rgba(11,16,36,0.35))' })} />
       <span data-m="flash" style={at({ x: 106, y: 88, w: 80, h: 80 }, { borderRadius: '50%', border: '2px solid #5b8cff', opacity: 0 })} />
       {/* pokladna */}
       <div data-m="checkout" style={at(NORDA_BOXES.checkout, { borderRadius: d(16), background: '#fff', color: '#1b2133', overflow: 'hidden' })}>
@@ -305,7 +305,7 @@ export function ShopVisual() {
           <div style={{ display: 'flex', alignItems: 'center', gap: d(8), fontSize: d(8.5) }}>
             <span style={{ width: d(34), height: d(26), borderRadius: d(6), background: '#e8edf6', position: 'relative', overflow: 'hidden' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SNEAKER} alt="" style={{ position: 'absolute', left: d(1), top: d(6), width: d(32) }} />
+              <img src={SNEAKER} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', left: d(1), top: d(6), width: d(32) }} />
             </span>
             <span style={{ flex: 1 }}>Aero Run × 1</span>
             <span style={{ fontWeight: 700 }}>3 290 Kč</span>
@@ -486,7 +486,7 @@ export function AppVisual() {
           <div style={{ position: 'absolute', left: d(12), right: d(12), top: d(186), borderRadius: d(12), background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', padding: d(8), display: 'flex', alignItems: 'center', gap: d(7) }}>
             <span style={{ width: d(36), height: d(28), borderRadius: d(7), background: '#e8edf6', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={SNEAKER} alt="" style={{ position: 'absolute', left: d(2), top: d(7), width: d(32) }} />
+              <img src={SNEAKER} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', left: d(2), top: d(7), width: d(32) }} />
             </span>
             <span style={{ fontSize: d(7), lineHeight: 1.25 }}>{t('order')}</span>
           </div>
@@ -495,7 +495,7 @@ export function AppVisual() {
             {[0, 150, 300].map((h) => (
               <span key={h} style={{ flex: 1, height: d(62), borderRadius: d(9), background: 'rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={SNEAKER} alt="" style={{ position: 'absolute', left: d(2), top: d(16), width: d(46), filter: `hue-rotate(${h}deg)` }} />
+                <img src={SNEAKER} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', left: d(2), top: d(16), width: d(46), filter: `hue-rotate(${h}deg)` }} />
               </span>
             ))}
           </div>

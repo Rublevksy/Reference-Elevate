@@ -47,7 +47,8 @@ function Chars({ text }: { text: string }) {
       <span className="sr-only">{text}</span>
       <span aria-hidden>
         {[...text].map((c, i) => (
-          <span key={i} data-ch={c} className="whitespace-pre">
+          // mezera na telefonu dovolí zalomení (dlouhé nadpisy by roztáhly stránku do šířky)
+          <span key={i} data-ch={c} className={c === ' ' ? 'md:whitespace-pre' : 'whitespace-pre'}>
             {c}
           </span>
         ))}

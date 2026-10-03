@@ -15,7 +15,7 @@ import { CardBody } from './ServiceDeck';
 import { DEMO_FIRST_FRAME } from './DemoScreen';
 import { PRICE_CARD_BG, PRICE_CARD_CLASS, PriceCardDecor, PriceCardFace } from './Pricing';
 import { plans, type Plan } from '@/content/pricing';
-import { ServiceCardBack, ServiceCardFront } from './ServiceCard';
+import { ServiceCardBack, ServiceCardFront, cardTitleSize } from './ServiceCard';
 
 export type TransitionVariant =
   | 'cardToPanel'
@@ -356,6 +356,7 @@ export function TransitionScene({ variant }: { variant: TransitionVariant }) {
     <section
       ref={section}
       aria-hidden
+      inert
       data-transition
       className="pointer-events-none relative z-10 md:-my-[100dvh] md:h-[var(--th)]"
       style={{ '--th': HEIGHT[variant] } as CSSProperties}
@@ -387,6 +388,7 @@ function deckPanel(vw: number, vh: number) {
 
 function DealToPanel({ renderRef }: SceneProps) {
   const tItems = useTranslations('services.items');
+  const titleSize = cardTitleSize(services.map((item) => tItems(`${item.slug}.card`)));
   const cards = useRef<(HTMLDivElement | null)[]>([]);
   const trails = useRef<(HTMLSpanElement | null)[]>([]);
   const edge = useRef<HTMLDivElement>(null);
@@ -515,7 +517,7 @@ function DealToPanel({ renderRef }: SceneProps) {
         >
           <ServiceCardBack item={item} label={tItems(`${item.slug}.tab`)} className="backface-hidden" />
           <span className="backface-hidden absolute inset-0 rounded-2xl" style={{ transform: 'rotateY(180deg)', boxShadow: '0 0 46px rgba(31,91,255,0.45)' }}>
-            <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} />
+            <ServiceCardFront item={item} title={tItems(`${item.slug}.card`)} titleSize={titleSize} />
           </span>
         </div>
       ))}
@@ -593,7 +595,7 @@ function PanelToLaptop({ renderRef }: SceneProps) {
           <CardBody index={services.length - 1} role="current" />
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={shot} src={DEMO_FIRST_FRAME} alt="" className="absolute inset-0 h-full w-full object-cover object-top opacity-0" />
+        <img ref={shot} src={DEMO_FIRST_FRAME} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-top opacity-0" />
         <div ref={sweep} className="pointer-events-none absolute -inset-y-1/4 left-0 w-40" style={{ background: 'linear-gradient(90deg, transparent, rgba(170,200,255,0.18), transparent)' }} />
       </div>
     </>
@@ -1024,7 +1026,7 @@ function PricingToEnvelope({ renderRef }: SceneProps) {
         />
         <div ref={seal} className="absolute left-1/2 top-[62%] grid h-14 w-14 place-items-center rounded-full bg-[linear-gradient(135deg,var(--blue),var(--blue-bright))] shadow-glow">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/elevate-symbol.svg" alt="" className="h-7 w-7 brightness-0 invert" />
+          <img src="/brand/elevate-symbol.svg" alt="" loading="lazy" decoding="async" className="h-7 w-7 brightness-0 invert" />
         </div>
       </div>
     </>

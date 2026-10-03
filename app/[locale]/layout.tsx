@@ -20,11 +20,14 @@ import { getIndustries, getProjects, getSettings, getSiteStatus } from '@/lib/co
 import { MaintenancePreview, MaintenanceScreen } from '@/components/ui/MaintenanceScreen';
 
 /**
- * Cyrilici tahá jen ru/uk — pro cs/en by to byla čtvrt megabajtu navíc
- * (latinka se přednačítá, cyrilice ne).
- * Rukopisné Caveat se používá až v jedné sekci, proto bez preloadu.
+ * Jedna instance na rodinu. Dvě instance téže rodiny (latinka / cyrilice)
+ * dostanou v CSS stejné jméno, jejich @font-face se přepíšou a prohlížeč pak
+ * stahuje tytéž soubory dvakrát (přednačtený .p.woff2 i ten z pozdějšího
+ * pravidla). `subsets` určuje jen to, co se přednačítá — ostatní rozsahy
+ * (cyrilice u nadpisů) si prohlížeč stáhne sám podle unicode-range, až když
+ * je na stránce potřebuje.
  */
-const displayLatin = Unbounded({
+const display = Unbounded({
   subsets: ['latin', 'latin-ext'],
   variable: '--font-display',
   display: 'swap',
@@ -33,16 +36,7 @@ const displayLatin = Unbounded({
   preload: true,
 });
 
-const displayCyrillic = Unbounded({
-  subsets: ['latin', 'latin-ext', 'cyrillic'],
-  variable: '--font-display',
-  display: 'swap',
-  weight: ['600', '700'],
-  preload: false,
-});
-
-const sansLatin = Manrope({ subsets: ['latin', 'latin-ext'], variable: '--font-sans', display: 'swap' });
-const sansCyrillic = Manrope({ subsets: ['latin', 'latin-ext', 'cyrillic'], variable: '--font-sans', display: 'swap' });
+const sans = Manrope({ subsets: ['latin', 'latin-ext', 'cyrillic'], variable: '--font-sans', display: 'swap' });
 
 const hand = Caveat({
   subsets: ['latin', 'latin-ext'],
@@ -52,7 +46,6 @@ const hand = Caveat({
   preload: false,
 });
 
-const CYRILLIC = new Set(['ru', 'uk']);
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -178,11 +171,6 @@ export default async function LocaleLayout({
       },
     ],
   };
-
-  // obrazovka údržby střídá i ruštinu a ukrajinštinu → písmo s cyrilicí
-  const cyrillic = CYRILLIC.has(locale) || status.maintenance;
-  const display = cyrillic ? displayCyrillic : displayLatin;
-  const sans = cyrillic ? sansCyrillic : sansLatin;
 
   return (
     <html lang={htmlLang[locale as Locale]} className={`${display.variable} ${sans.variable} ${hand.variable}`} suppressHydrationWarning>

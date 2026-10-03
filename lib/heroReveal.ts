@@ -38,3 +38,25 @@ export function useHeroRevealed() {
 
   return value;
 }
+
+/**
+ * Signál „pozadí úvodní obrazovky je načtené" (první snímek filmu, na
+ * telefonu fotka). Úvodní clona na něj počká, ať neodkryje prázdnou scénu —
+ * na zbytek stránky už nečeká.
+ */
+let painted = false;
+const paintWaiters = new Set<() => void>();
+
+export function markHeroPainted() {
+  if (painted) return;
+  painted = true;
+  paintWaiters.forEach((resolve) => resolve());
+  paintWaiters.clear();
+}
+
+export function whenHeroPainted() {
+  return new Promise<void>((resolve) => {
+    if (painted) resolve();
+    else paintWaiters.add(resolve);
+  });
+}
