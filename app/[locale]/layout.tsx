@@ -52,12 +52,26 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
+/**
+ * Jen čtyři jazykové verze. Cokoli jiného na místě jazyka (/soubor.png,
+ * /wp-login.php — adresy s tečkou obcházejí middleware) dostane rovnou 404
+ * a stránka se pro ně vůbec nesestavuje. Bez toho se taková adresa
+ * generovala jako statická stránka, značky stránky 404 si při tom řekly
+ * o hlavičky požadavku a server odpověděl chybou 500.
+ */
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale: requested } = await params;
+  // Neplatný „jazyk" v adrese (např. /soubor.png, /wp-login.php) končí stránkou 404 — ta se popíše
+  // výchozím jazykem. Jazyk se tu nastaví dřív, než si o něj řeknou značky stránky 404: jinak by
+  // ho next-intl hledal v hlavičkách požadavku, což staticky generovaná cesta nesmí (chyba 500).
+  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'meta' });
   // během údržby vyhledávače stránku neindexují (jinak by si uložily obrazovku údržby)
   const { maintenance } = await getSiteStatus();
@@ -92,7 +106,11 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) notFound();
+  if (!hasLocale(routing.locales, locale)) {
+    // stránka 404 se vykreslí ve výchozím jazyce (bez čtení hlaviček, viz generateMetadata)
+    setRequestLocale(routing.defaultLocale);
+    notFound();
+  }
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'a11y' });
