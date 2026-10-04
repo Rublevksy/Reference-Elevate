@@ -637,7 +637,8 @@
         "eshop": "E-shop",
         "logo": "Logo",
         "app": "Aplikace"
-      }
+      },
+      "alt": "Ukázka designu: {label}"
     },
     "successNext": [
       "Projdeme vaše odpovědi i vybrané ukázky",
@@ -700,14 +701,15 @@
       "tvorba loga",
       "webové aplikace",
       "animované weby"
-    ]
+    ],
+    "ogImageAlt": "ELEVATE — digitální studio z Prahy: weby, e-shopy, SEO, design a aplikace"
   },
   "privacy": {
     "eyebrow": "Právní informace",
     "title": "Ochrana osobních údajů",
     "lead": "Tento dokument popisuje, jak nakládáme s údaji, které nám pošlete přes formulář na tomto webu.",
     "updated": "Poslední aktualizace",
-    "metaDescription": "Jak ve studiu ELEVATE nakládáme s osobními údaji z poptávkového formuláře.",
+    "metaDescription": "Jak studio ELEVATE zpracovává osobní údaje z poptávkového formuláře: jaké údaje, proč, jak dlouho je uchovává a jaká máte práva.",
     "sections": [
       {
         "title": "1. Správce údajů",
@@ -742,7 +744,8 @@
   "notFound": {
     "title": "Tahle stránka se nám ztratila",
     "lead": "Zkuste to z domovské stránky — odtud vede cesta všude.",
-    "cta": "Zpět domů"
+    "cta": "Zpět domů",
+    "description": "Stránka, kterou hledáte, na webu ELEVATE není. Pokračujte na úvodní stránku — najdete tam služby, ceník i kontakt."
   },
   "a11y": {
     "skip": "Přeskočit na obsah",

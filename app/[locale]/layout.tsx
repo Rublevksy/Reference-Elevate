@@ -18,6 +18,7 @@ import { Analytics } from '@/components/ui/Analytics';
 import { ContentProvider } from '@/components/ContentProvider';
 import { getIndustries, getProjects, getSettings, getSiteStatus } from '@/lib/content/server';
 import { MaintenancePreview, MaintenanceScreen } from '@/components/ui/MaintenanceScreen';
+import { languageLinks, shareCard, shareImage } from '@/lib/seo';
 
 /**
  * Jedna instance na rodinu. Dvě instance téže rodiny (latinka / cyrilice)
@@ -61,29 +62,18 @@ export async function generateMetadata({
   // během údržby vyhledávače stránku neindexují (jinak by si uložily obrazovku údržby)
   const { maintenance } = await getSiteStatus();
 
-  const languages = Object.fromEntries(
-    locales.map((l) => [htmlLang[l], `${site.url}/${l}`]),
-  );
-
   return {
     metadataBase: new URL(site.url),
     title: { default: t('home.title'), template: '%s | ELEVATE' },
     description: t('home.description'),
     keywords: t.raw('keywords') as string[],
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { ...languages, 'x-default': `${site.url}/cs` },
-    },
-    openGraph: {
-      type: 'website',
-      locale,
-      url: `${site.url}/${locale}`,
-      siteName: site.name,
-      title: t('ogTitle'),
-      description: t('home.description'),
-      images: [{ url: `/${locale}/opengraph-image`, width: 1200, height: 630, alt: site.name }],
-    },
-    twitter: { card: 'summary_large_image', title: t('ogTitle'), description: t('home.description') },
+    applicationName: site.name,
+    authors: [{ name: site.name, url: site.url }],
+    creator: site.name,
+    publisher: site.name,
+    // kanonická adresa + hreflang; karta pro sdílení (lib/seo.ts)
+    alternates: languageLinks(locale),
+    ...shareCard({ locale, title: t('ogTitle'), description: t('home.description'), imageAlt: t('ogImageAlt') }),
     // produkce = index, follow; noindex jen při údržbě a na preview nasazeních Vercelu
     robots: maintenance || process.env.VERCEL_ENV === 'preview' ? { index: false, follow: false } : { index: true, follow: true },
   };
@@ -109,30 +99,49 @@ export default async function LocaleLayout({
 
   const [projects, settings, status, industries] = await Promise.all([getProjects(), getSettings(), getSiteStatus(), getIndustries()]);
   // Schema.org pro Google: firma (služby s cenami „od" z Ceníku) + web.
-  // Adresa jen město z administrace — bez vymyšleného PSČ či ulice.
-  const [tMeta, tPricing] = await Promise.all([
+  // Jen skutečné údaje: adresa je město z administrace (bez vymyšlené ulice a PSČ),
+  // telefon, sociální sítě a IČO se přidají samy, jakmile je v administraci vyplníte.
+  // Hodnocení (hvězdičky) tu záměrně není — smí se uvádět jen se skutečnými recenzemi.
+  const [tMeta, tPricing, tHero] = await Promise.all([
     getTranslations({ locale, namespace: 'meta' }),
     getTranslations({ locale, namespace: 'pricing' }),
+    getTranslations({ locale, namespace: 'hero' }),
   ]);
   const price = (v: string) => Number(v.replace(/[^\d]/g, '')) || undefined;
+  const prices = plans.map((plan) => price(tPricing(`plans.${plan.id}.price`))).filter((v): v is number => Boolean(v));
+  const czk = (v: number) => new Intl.NumberFormat('cs-CZ').format(v).replace(/\u00a0/g, ' ');
   const businessId = `${site.url}/#business`;
+  const profiles = settings.social.filter((s) => s.kind === 'social').map((s) => s.href);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
       {
+        // ProfessionalService je podtyp LocalBusiness (místní firma poskytující odborné služby)
         '@type': 'ProfessionalService',
         '@id': businessId,
         name: site.name,
+        // právní název a IČO až po vyplnění v administraci (výchozí název je jen zástupný)
+        ...(settings.ico ? { legalName: settings.legalName, identifier: { '@type': 'PropertyValue', propertyID: 'IČO', value: settings.ico } } : {}),
+        slogan: `${(tHero.raw('tagline') as string[]).join(' ')} ${tHero('taglineAccent')}`,
         description: tMeta('home.description'),
         url: `${site.url}/${locale}`,
         logo: `${site.url}/brand/icon-512.png`,
-        image: `${site.url}/${locale}/opengraph-image`,
+        image: `${site.url}${shareImage(locale)}`,
         email: settings.contactEmail,
         ...(site.phone ? { telephone: site.phone } : {}),
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer service',
+          email: settings.contactEmail,
+          ...(site.phone ? { telephone: site.phone } : {}),
+          availableLanguage: ['Czech', 'English', 'Russian', 'Ukrainian'],
+          areaServed: 'CZ',
+        },
         address: {
           '@type': 'PostalAddress',
           addressLocality: settings.city,
           addressRegion: 'Hlavní město Praha',
+          ...(site.address.postalCode ? { postalCode: site.address.postalCode } : {}),
           addressCountry: site.address.country,
         },
         areaServed: [
@@ -140,7 +149,7 @@ export default async function LocaleLayout({
           { '@type': 'Country', name: 'Česko' },
         ],
         knowsLanguage: ['cs', 'en', 'ru', 'uk'],
-        priceRange: '2 000–15 000+ Kč',
+        ...(prices.length ? { priceRange: `${czk(Math.min(...prices))}–${czk(Math.max(...prices))}+ Kč` } : {}),
         hasOfferCatalog: {
           '@type': 'OfferCatalog',
           name: tPricing('title'),
@@ -150,6 +159,7 @@ export default async function LocaleLayout({
               '@type': 'Service',
               name: tPricing(`plans.${plan.id}.name`),
               description: tPricing(`plans.${plan.id}.tagline`),
+              provider: { '@id': businessId },
               areaServed: { '@type': 'City', name: 'Praha' },
             },
             priceSpecification: {
@@ -159,13 +169,14 @@ export default async function LocaleLayout({
             },
           })),
         },
-        sameAs: settings.social.filter((s) => s.kind === 'social').map((s) => s.href),
+        ...(profiles.length ? { sameAs: profiles } : {}),
       },
       {
         '@type': 'WebSite',
         '@id': `${site.url}/#website`,
         url: site.url,
         name: site.name,
+        description: tMeta('home.description'),
         inLanguage: htmlLang[locale as Locale],
         publisher: { '@id': businessId },
       },

@@ -344,7 +344,7 @@ export function IndustryGallery({
                     }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.thumb} alt={item.label} draggable={false} decoding="async" />
+                    <img src={item.thumb} alt={t('alt', { label: item.label })} draggable={false} decoding="async" />
                     {item.video ? (
                       <span aria-hidden className="ga-card-play">
                         <Play size={16} fill="currentColor" />
@@ -409,7 +409,7 @@ export function IndustryGallery({
           {likedItems.map((item) => (
             <span key={item.id}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.thumb} alt={item.label} />
+              <img src={item.thumb} alt={t('alt', { label: item.label })} />
               <button type="button" onClick={() => toggle(item.id)} aria-label={`${t('unlike')}${item.label ? ` — ${item.label}` : ''}`}>
                 <X size={12} aria-hidden />
               </button>
@@ -420,7 +420,7 @@ export function IndustryGallery({
         <p className="ga-note">{t('noneLiked')}</p>
       ) : null}
 
-      <Lightbox items={visible} index={zoom} onIndex={setZoom} likes={likes} onToggle={toggle} labels={{ close: t('close'), prev: t('prev'), next: t('next'), like: t('like') }} />
+      <Lightbox items={visible} index={zoom} onIndex={setZoom} likes={likes} onToggle={toggle} labels={{ close: t('close'), prev: t('prev'), next: t('next'), like: t('like'), alt: (label) => t('alt', { label }) }} />
     </div>
   );
 }
@@ -439,7 +439,7 @@ function Lightbox({
   onIndex: (i: number | null) => void;
   likes: string[];
   onToggle: (id: string) => void;
-  labels: { close: string; prev: string; next: string; like: string };
+  labels: { close: string; prev: string; next: string; like: string; alt: (label: string) => string };
 }) {
   const [mounted, setMounted] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
@@ -502,7 +502,7 @@ function Lightbox({
               <video key={item.video} src={item.video} poster={item.url} autoPlay muted loop playsInline controls />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.url} alt={item.label} style={{ maxWidth: Math.min(1000, item.width || 1000) }} />
+              <img src={item.url} alt={labels.alt(item.label)} style={{ maxWidth: Math.min(1000, item.width || 1000) }} />
             )}
           </div>
           <div className="ga-lightbox-bar">

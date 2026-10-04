@@ -637,7 +637,8 @@
         "eshop": "E-shop",
         "logo": "Logo",
         "app": "App"
-      }
+      },
+      "alt": "Design example: {label}"
     },
     "successNext": [
       "We’ll go through your answers and picked examples",
@@ -699,14 +700,15 @@
       "web design Prague",
       "logo design",
       "web applications"
-    ]
+    ],
+    "ogImageAlt": "ELEVATE — digital studio from Prague: websites, e-shops, SEO, design and apps"
   },
   "privacy": {
     "eyebrow": "Legal",
     "title": "Privacy policy",
     "lead": "This document describes how we handle the data you send us through the form on this site.",
     "updated": "Last updated",
-    "metaDescription": "How ELEVATE handles personal data from the enquiry form.",
+    "metaDescription": "How ELEVATE handles personal data from the enquiry form: what we collect, why, how long we keep it, and your rights.",
     "sections": [
       {
         "title": "1. Data controller",
@@ -741,7 +743,8 @@
   "notFound": {
     "title": "This page got lost",
     "lead": "Try from the homepage — everything is reachable from there.",
-    "cta": "Back home"
+    "cta": "Back home",
+    "description": "The page you are looking for is not on the ELEVATE website. Head to the homepage for services, pricing and contact."
   },
   "a11y": {
     "skip": "Skip to content",

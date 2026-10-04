@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { htmlLang, locales, type Locale } from '@/i18n/routing';
 import { site } from '@/content/site';
 import { getSettings } from '@/lib/content/server';
+import { languageLinks, shareCard } from '@/lib/seo';
 
 type Params = { params: Promise<{ locale: string }> };
 
@@ -13,19 +14,17 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
+const PATH = '/ochrana-osobnich-udaju';
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'privacy' });
+  const [t, tMeta] = await Promise.all([getTranslations({ locale, namespace: 'privacy' }), getTranslations({ locale, namespace: 'meta' })]);
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: {
-      canonical: `/${locale}/ochrana-osobnich-udaju`,
-      languages: {
-        ...Object.fromEntries(locales.map((l) => [l, `${site.url}/${l}/ochrana-osobnich-udaju`])),
-        'x-default': `${site.url}/cs/ochrana-osobnich-udaju`,
-      },
-    },
+    alternates: languageLinks(locale, PATH),
+    ...shareCard({ locale, path: PATH, title: `${t('title')} | ${site.name}`, description: t('metaDescription'), imageAlt: tMeta('ogImageAlt') }),
+    // právní text nemá ve vyhledávání co nabídnout — neindexuje se (a není ani v mapě webu)
     robots: { index: false, follow: true },
   };
 }

@@ -1,14 +1,24 @@
 import type { Metadata } from 'next';
 import { useTranslations } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { DocumentTitle } from '@/components/ui/DocumentTitle';
 import { site } from '@/content/site';
+import { shareCard } from '@/lib/seo';
 
-/** Stránka 404 má vlastní titulek (ne titulek úvodní stránky) a neindexuje se. */
+/**
+ * Stránka 404: vlastní titulek a popis, neindexuje se a nemá kanonickou
+ * adresu ani hreflang (jinak by zdědila ty z úvodní stránky).
+ */
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('notFound');
-  return { title: t('title'), robots: { index: false, follow: true } };
+  const [t, tMeta, locale] = await Promise.all([getTranslations('notFound'), getTranslations('meta'), getLocale()]);
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: {},
+    ...shareCard({ locale, path: null, title: `${t('title')} | ${site.name}`, description: t('description'), imageAlt: tMeta('ogImageAlt') }),
+    robots: { index: false, follow: true },
+  };
 }
 
 export default function NotFound() {
