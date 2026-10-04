@@ -29,6 +29,8 @@ const FONT = "'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helve
 /** Nadpisy: firemní Unbounded tam, kde klient načte webové písmo (Apple Mail), jinde tučný bezpatkový řez. */
 const DISPLAY = "'Unbounded','Helvetica Neue',Helvetica,Arial,sans-serif";
 const GRADIENT = 'linear-gradient(90deg,#1F5BFF 0%,#3D7BFF 45%,#00C2FF 100%)';
+/** Výplň za skrytým úvodním textem — v seznamu zpráv pak za shrnutím nepokračuje text z těla e-mailu. */
+const PREHEADER_PAD = '&nbsp;&zwnj;'.repeat(90);
 
 export type InquiryEmailChannel = 'email' | 'phone' | 'telegram' | 'whatsapp';
 
@@ -80,7 +82,12 @@ const siteLink = (value: string) => {
 };
 
 /** Částky a krátká spojení se nelámou uprostřed („30–60 000 Kč"). */
-const nowrapNumbers = (value: string) => esc(value).replace(/(\d) (?=\d)/g, '$1&nbsp;').replace(/ Kč/g, '&nbsp;Kč');
+const nowrapNumbers = (value: string) =>
+  esc(value)
+    .replace(/(\d) (?=\d)/g, '$1&nbsp;')
+    .replace(/ Kč/g, '&nbsp;Kč')
+    // za pomlčkou v rozsahu se řádek neláme („60–" / „120 000 Kč")
+    .replace(/–(?=\d)/g, '–&#8288;');
 
 /**
  * Náhled ukázky pro e-mail: přes optimalizátor obrázků webu. Snímky galerie
@@ -270,12 +277,12 @@ export function renderInquiryEmail(mail: InquiryEmail) {
     .px { padding-left: 14px !important; padding-right: 14px !important; }
     .hero { padding: 26px 18px 22px 18px !important; }
     .h1 { font-size: 25px !important; }
-    .stat { font-size: 21px !important; }
+    .stat { font-size: 20px !important; }
   }
 </style>
 </head>
 <body bgcolor="${C.bg}" style="margin:0;padding:0;background:${C.bg};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.bg};font-size:1px;line-height:1px;">${esc([mail.name, mail.needs, mail.industry, mail.budget].filter(Boolean).join(' · '))}</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.bg};font-size:1px;line-height:1px;">${esc([mail.name, mail.needs, mail.industry, mail.budget].filter(Boolean).join(' · '))}${PREHEADER_PAD}</div>
 <table ${TABLE} width="100%" bgcolor="${C.bg}" style="background:${C.bg};">
   <tr>
     <td align="center" style="padding:0;">
@@ -314,9 +321,9 @@ ${
         ${mail.industry ? `<div class="h1" style="font-family:${DISPLAY};font-size:${headingSize}px;line-height:1.14;font-weight:700;text-transform:uppercase;color:#5E91FF;">${esc(mail.industry)}</div>` : ''}
         <table ${TABLE} width="100%" style="margin-top:22px;">
           <tr>
-            <td width="58%" valign="top" style="padding:16px 12px 0 0;border-top:1px solid ${C.line};">
+            <td width="62%" valign="top" style="padding:16px 12px 0 0;border-top:1px solid ${C.line};">
               ${label('Rozpočet', C.muted)}
-              <div class="stat" style="padding-top:6px;font-family:${DISPLAY};font-size:25px;line-height:1.2;font-weight:700;color:#FFFFFF;">${nowrapNumbers(mail.budget || '—')}</div>
+              <div class="stat" style="padding-top:6px;font-family:${DISPLAY};font-size:23px;line-height:1.2;font-weight:700;color:#FFFFFF;">${nowrapNumbers(mail.budget || '—')}</div>
             </td>
             <td valign="top" style="padding:16px 0 0 0;border-top:1px solid ${C.line};">
               ${label('Termín', C.muted)}
