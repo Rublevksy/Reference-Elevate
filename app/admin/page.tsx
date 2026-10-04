@@ -8,13 +8,18 @@ import { AdminApp } from './_components/AdminApp';
 import type { SettingsInput } from './actions';
 import { EDITABLE_PATHS, getPath } from '@/lib/content/editable';
 import { readInquiries, type Inquiry } from '@/lib/content/inquiries';
+import { INQUIRY_PARAM, isInquiryKey } from '@/lib/inquiryLink';
 import { getGallery, getIndustries, readSocialInputs } from '@/lib/content/server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ inquiry?: string }> }) {
   const admin = await currentAdmin();
-  if (!admin) redirect('/admin/login');
+  if (!admin) {
+    // odkaz z e-mailu na konkrétní poptávku přežije přihlášení
+    const { inquiry } = await searchParams;
+    redirect(isInquiryKey(inquiry) ? `/admin/login?${INQUIRY_PARAM}=${encodeURIComponent(inquiry)}` : '/admin/login');
+  }
 
   const db = supabaseAdmin();
   const [projects, blocks] = await Promise.all([

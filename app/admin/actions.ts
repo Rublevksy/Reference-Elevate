@@ -344,12 +344,23 @@ export async function sendTestMail(): Promise<Result> {
   try {
     await requireAdmin();
     const { mailConfig, sendMail } = await import('@/lib/mail');
+    const { inquiryEmailSubject, renderInquiryEmail, sampleInquiryEmail } = await import('@/lib/inquiryEmail');
+    const { getGallery } = await import('@/lib/content/server');
+    const { site } = await import('@/content/site');
     const { to } = await mailConfig();
+    // zkušební e-mail = skutečná šablona upozornění s vymyšlenou poptávkou (ať je vidět, jak dorazí),
+    // náhledy z galerie skutečné
+    const abs = (url: string) => (url.startsWith('/') ? `${site.url}${url}` : url);
+    const likes = (await getGallery())
+      .filter((item) => !item.video)
+      .slice(0, 3)
+      .map((item) => ({ url: abs(item.url), thumb: abs(item.thumb), label: item.label }));
+    const sample = sampleInquiryEmail(likes);
     const result = await sendMail({
       to,
-      subject: 'Zkušební e-mail z administrace ELEVATE',
-      html: '<div style="font-family:system-ui,sans-serif;padding:24px;background:#04060b;color:#f2f5ff"><h1 style="font-size:18px">Doručování funguje ✓</h1><p style="color:#8a93a8">Poptávky z formuláře budou chodit sem.</p></div>',
-      text: 'Doručování funguje. Poptávky z formuláře budou chodit sem.',
+      subject: inquiryEmailSubject(sample),
+      html: renderInquiryEmail(sample),
+      text: 'Zkušební e-mail z administrace ELEVATE. Doručování funguje — poptávky z formuláře budou chodit sem.',
     });
     return result.delivered ? { ok: true } : { ok: false, error: result.error };
   } catch (e) {

@@ -36,6 +36,7 @@ import { PLATFORMS, detectPlatform, resolveSocial, type SocialInput } from '@/li
 import { SocialIcon } from '@/components/ui/SocialIcon';
 import type { GalleryItem, Industry } from '@/lib/content/gallery';
 import { GalleryTab } from './GalleryTab';
+import { INQUIRY_PARAM, INQUIRY_STORE, isInquiryKey } from '@/lib/inquiryLink';
 
 const SITE_URL = site.url;
 
@@ -1175,9 +1176,10 @@ function InquiryDetail({
   );
 }
 
-function InquiriesTab({ initial, onNewCount }: { initial: Inquiry[]; onNewCount: (n: number) => void }) {
+function InquiriesTab({ initial, onNewCount, focus }: { initial: Inquiry[]; onNewCount: (n: number) => void; focus?: string | null }) {
   const [items, setItems] = useState(initial);
   const [selected, setSelected] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
   const [filter, setFilter] = useState<'all' | InquiryStatus>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -1209,6 +1211,35 @@ function InquiriesTab({ initial, onNewCount }: { initial: Inquiry[]; onNewCount:
 
   const newCount = items.filter((i) => i.status === 'new').length;
   useEffect(() => onNewCount(newCount), [newCount, onNewCount]);
+
+  // poptávka z odkazu v e-mailu: otevřít ji (když v načteném seznamu ještě není, načíst znovu)
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  useEffect(() => {
+    if (!focus) return;
+    let cancelled = false;
+    void (async () => {
+      let found = itemsRef.current.some((i) => i.id === focus);
+      if (!found) {
+        const res = await listInquiries();
+        if (cancelled) return;
+        if (res.ok) {
+          setItems(res.items);
+          found = res.items.some((i) => i.id === focus);
+        }
+      }
+      if (!found) {
+        setMissing(true);
+        return;
+      }
+      setFilter('all');
+      setSelected(focus);
+      window.requestAnimationFrame(() => document.querySelector(`[data-inquiry="${focus}"]`)?.scrollIntoView({ block: 'nearest' }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [focus]);
 
   const update = async (id: string, patch: Partial<Inquiry>, run: () => Promise<{ ok: boolean; error?: string }>) => {
     const prev = items;
@@ -1248,6 +1279,7 @@ function InquiriesTab({ initial, onNewCount }: { initial: Inquiry[]; onNewCount:
         </Btn>
       </div>
       {error ? <p className="mb-4 text-sm text-[#ffb3be]">{error}</p> : null}
+      {missing ? <p className="mb-4 rounded-xl border border-[var(--line)] bg-white/[0.03] px-4 py-3 text-sm text-muted">Poptávka z odkazu v e-mailu už v administraci není — nejspíš byla smazaná.</p> : null}
 
       {items.length === 0 ? (
         <Card>
@@ -1261,6 +1293,7 @@ function InquiriesTab({ initial, onNewCount }: { initial: Inquiry[]; onNewCount:
                 <button
                   type="button"
                   onClick={() => setSelected(item.id)}
+                  data-inquiry={item.id}
                   className={`w-full rounded-2xl border p-3.5 text-left transition-colors ${
                     selected === item.id ? 'border-[rgba(97,150,255,0.7)] bg-[rgba(31,91,255,0.12)]' : 'border-[var(--line)] bg-white/[0.02] hover:border-[rgba(80,120,255,0.45)]'
                   }`}
@@ -1415,6 +1448,23 @@ export function AdminApp({
     const fromHash = TABS.find(([id]) => `#${id}` === window.location.hash)?.[0];
     if (fromHash) setTab(fromHash);
   }, []);
+  // odkaz z e-mailu: /admin?inquiry=<klíč> → záložka Poptávky s otevřenou poptávkou
+  // (po přihlášení se klíč vrací z úložiště prohlížeče, viz RememberInquiry)
+  const [focusInquiry, setFocusInquiry] = useState<string | null>(null);
+  useEffect(() => {
+    let id = new URLSearchParams(window.location.search).get(INQUIRY_PARAM);
+    try {
+      const stored = JSON.parse(localStorage.getItem(INQUIRY_STORE) ?? 'null') as { id?: string; at?: number } | null;
+      localStorage.removeItem(INQUIRY_STORE);
+      if (!id && stored?.id && Date.now() - (stored.at ?? 0) < 2 * 60 * 60 * 1000) id = stored.id;
+    } catch {
+      /* úložiště není dostupné */
+    }
+    if (!isInquiryKey(id)) return;
+    setTab('inquiries');
+    setFocusInquiry(id);
+    window.history.replaceState(null, '', '/admin#inquiries');
+  }, []);
   const go = (id: Tab) => {
     setTab(id);
     window.history.replaceState(null, '', `#${id}`);
@@ -1497,7 +1547,7 @@ export function AdminApp({
 
       {/* záložky zůstávají připojené — přepnutí je okamžité a rozepsané změny se neztratí */}
       <main className="relative mx-auto max-w-6xl px-4 py-6 sm:px-5 sm:py-8">
-        <div hidden={tab !== 'inquiries'}><InquiriesTab initial={inquiries} onNewCount={setNewCount} /></div>
+        <div hidden={tab !== 'inquiries'}><InquiriesTab initial={inquiries} onNewCount={setNewCount} focus={focusInquiry} /></div>
         <div hidden={tab !== 'projects'}><ProjectsTab projects={projects} /></div>
         <div hidden={tab !== 'gallery'}><GalleryTab initialItems={gallery} initialIndustries={industries} projects={projects} /></div>
         <div hidden={tab !== 'texts'}><TextsTab defaults={textDefaults} overrides={textOverrides} /></div>

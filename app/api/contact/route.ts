@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import cs from '@/messages/cs.json';
-import { CHANNEL, START_OLD_SITE, conditionalIssues, contactSchema } from '@/lib/contactSchema';
+import { CHANNEL, COLOR_SWATCHES, START_OLD_SITE, conditionalIssues, contactSchema } from '@/lib/contactSchema';
 import { getBlock, getGallery, getIndustries } from '@/lib/content/server';
 import { MAX_LIKES, OTHER_INDUSTRY, industryName } from '@/lib/content/gallery';
 import { applyTextOverrides } from '@/lib/content/editable';
 import { patchInquiry, saveInquiry, type InquiryData } from '@/lib/content/inquiries';
 import { mailConfig, sendMail } from '@/lib/mail';
+import { inquiryEmailSubject, renderInquiryEmail, type InquiryEmail, type InquiryEmailChannel } from '@/lib/inquiryEmail';
 import { site } from '@/content/site';
 
 export const runtime = 'nodejs';
@@ -35,27 +36,14 @@ function isRateLimited(ip: string) {
   return recent.length > MAX_PER_WINDOW;
 }
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (char) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char,
-  );
-
-/** Odkaz z volného textu (reference) — jen http(s), nic jiného se neprolinkuje. */
-const linkify = (value: string) => {
-  const safe = escapeHtml(value);
-  return safe.replace(/(https?:\/\/[^\s<]+)/g, (url) => `<a href="${url}" style="color:#7da6ff">${url}</a>`);
-};
-
 const absolute = (url: string) => (url.startsWith('/') ? `${site.url}${url}` : url);
-
-const chunk = <T,>(list: T[], size: number) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
 
 const formatDate = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number);
   return y && m && d ? `${d}. ${m}. ${y}` : iso;
 };
 
-type Section = { title: string; rows: [string, string, boolean?][] };
+type Section = { title: string; rows: [string, string][] };
 
 /**
  * Ověření tokenu Turnstile. Neplatný / chybějící / použitý token = robot.
@@ -184,7 +172,7 @@ export async function POST(request: Request) {
       title: 'Výchozí stav',
       rows: [
         ['Co už mají', one(c.starts, data.start)],
-        ['Současný web', data.start === START_OLD_SITE ? data.currentSite || '' : '', true],
+        ['Současný web', data.start === START_OLD_SITE ? data.currentSite || '' : ''],
         ['Podklady', list(c.assets, data.assets)],
       ],
     },
@@ -192,7 +180,7 @@ export async function POST(request: Request) {
       title: 'Vzhled',
       rows: [
         ['Vybrané ukázky', liked.length ? `${liked.length} z galerie oboru${liked.some((l) => l.label) ? ` — ${liked.map((l) => l.label).filter(Boolean).join(', ')}` : ''}` : ''],
-        ['Líbí se jim', refs.join('\n'), true],
+        ['Líbí se jim', refs.join('\n')],
         ['Styl', one(c.styles, data.style)],
         ['Barvy', [list(c.colors, data.colors), data.colorNote].filter(Boolean).join(' · ')],
       ],
@@ -216,50 +204,6 @@ export async function POST(request: Request) {
       ],
     },
   ];
-
-  const html = `
-    <div style="font-family:system-ui,sans-serif;background:#04060b;color:#f2f5ff;padding:28px">
-      <h1 style="font-size:18px;margin:0 0 6px">Nová poptávka z webu ELEVATE</h1>
-      <p style="margin:0 0 20px;color:#8a93a8;font-size:13px">${escapeHtml(data.name)} · ${escapeHtml(list(c.needs, data.needs))} · ${escapeHtml(one(c.budgets, data.budget))}</p>
-      ${sections
-        .map(
-          (section) => `
-      <h2 style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#7da6ff;margin:22px 0 6px">${section.title}</h2>
-      <table style="border-collapse:collapse;width:100%;max-width:600px">
-        ${section.rows
-          .map(
-            ([label, value, links]) => `
-          <tr>
-            <td style="padding:7px 12px 7px 0;border-bottom:1px solid rgba(80,120,255,0.2);color:#8a93a8;white-space:nowrap;vertical-align:top;width:150px">${label}</td>
-            <td style="padding:7px 0;border-bottom:1px solid rgba(80,120,255,0.2);white-space:pre-line">${value ? (links ? linkify(value) : escapeHtml(value)) : '<span style="color:#4d5670">—</span>'}</td>
-          </tr>`,
-          )
-          .join('')}
-      </table>`,
-        )
-        .join('')}
-      ${
-        liked.length
-          ? `<h2 style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#7da6ff;margin:26px 0 10px">Vybrané ukázky z galerie (${liked.length})</h2>
-      <table style="border-collapse:separate;border-spacing:0 0">
-        ${chunk(liked, 3)
-          .map(
-            (row) => `<tr>${row
-              .map(
-                (item) => `<td style="padding:0 10px 12px 0;vertical-align:top;width:190px">
-          <a href="${escapeHtml(item.url)}" style="text-decoration:none;color:#c8d4f0">
-            <img src="${escapeHtml(item.thumb)}" width="180" height="113" alt="${escapeHtml(item.label || 'Ukázka')}" style="display:block;width:180px;height:113px;object-fit:cover;border-radius:8px;border:1px solid rgba(80,120,255,0.35)">
-            <span style="display:block;margin-top:5px;font-size:11px">${escapeHtml(item.label || 'Ukázka')}</span>
-          </a></td>`,
-              )
-              .join('')}</tr>`,
-          )
-          .join('')}
-      </table>`
-          : ''
-      }
-      <p style="margin-top:22px;font-size:12px;color:#8a93a8">Poptávka je uložená i v administraci: <a href="${site.url}/admin#inquiries" style="color:#7da6ff">${site.url.replace(/^https?:\/\//, '')}/admin</a> · IP: ${escapeHtml(ip)}</p>
-    </div>`;
 
   const text = sections
     .map((section) => `${section.title.toUpperCase()}\n${section.rows.map(([label, value]) => `${label}: ${value || '—'}`).join('\n')}`)
@@ -286,13 +230,42 @@ export async function POST(request: Request) {
   }
   const stored = Boolean(key);
 
-  // 2) upozornění e-mailem
+  // 2) upozornění e-mailem (šablona v lib/inquiryEmail.ts; tlačítko vede rovnou na tuhle poptávku)
+  const channelKey = (Object.keys(CHANNEL) as InquiryEmailChannel[]).find((name) => CHANNEL[name] === data.channel) ?? 'email';
+  const message: InquiryEmail = {
+    id: key,
+    createdAt: inquiry.created_at,
+    name: data.name,
+    email: data.email,
+    phone: data.channel === CHANNEL.phone || data.channel === CHANNEL.whatsapp ? data.phone || '' : '',
+    telegram: data.channel === CHANNEL.telegram ? data.telegram || '' : '',
+    channel: channelKey,
+    channelLabel: channel,
+    needs: list(c.needs, data.needs),
+    plan: data.plan || '',
+    industry: niche,
+    nicheDetail: data.nicheDetail || '',
+    start: one(c.starts, data.start),
+    currentSite: data.start === START_OLD_SITE ? data.currentSite || '' : '',
+    assets: list(c.assets, data.assets),
+    likes: liked,
+    refs,
+    style: one(c.styles, data.style),
+    colors: (data.colors ?? []).map((i) => ({ name: c.colors[i] ?? '', hex: COLOR_SWATCHES[i] ?? '#888888' })).filter((color) => color.name),
+    colorNote: data.colorNote || '',
+    budget: one(c.budgets, data.budget),
+    timeline: one(c.timelines, data.timeline),
+    deadline: data.deadline ? formatDate(data.deadline) : '',
+    message: data.message || '',
+    locale: data.locale || 'cs',
+    ip,
+  };
   const mail = await sendMail({
     to,
     replyTo: data.email,
-    subject: `Nová poptávka: ${list(c.needs, data.needs)}${niche ? ` · ${niche}` : ''} — ${data.name}`,
-    html,
-    text,
+    subject: inquiryEmailSubject(message),
+    html: renderInquiryEmail(message),
+    text: `${text}\n\nAdministrace: ${site.url}/admin${key ? `?inquiry=${encodeURIComponent(key)}` : '#inquiries'}`,
   });
   if (!mail.delivered) console.error('[contact] e-mail neodešel:', mail.error, stored ? '(poptávka je v administraci)' : '\n' + text);
 
